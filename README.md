@@ -185,6 +185,143 @@ asyncParallelBatchFlow.prepAsync = async () => [ { item: 1 }, { item: 2 }, { ite
 await asyncParallelBatchFlow.runAsync({});
 ```
 
+## Extending qflow with LLM Nodes
+
+qflow's flexible node structure makes it straightforward to integrate with external APIs, including Large Language Models (LLMs). By creating custom `AsyncNode` implementations, you can easily add capabilities like text generation, summarization, and more to your workflows.
+
+Below are examples of how you might create nodes for popular LLM providers. Remember to handle API keys securely (e.g., using environment variables) and to include necessary `fetch` polyfills or libraries if running in environments that don't natively support `fetch` (like Node.js without a recent version or a polyfill).
+
+### OpenAI GPT-3.5 Turbo Node
+
+This example demonstrates an `AsyncNode` that interacts with the OpenAI Chat Completions API.
+
+```javascript
+import { AsyncNode } from './qflow.js';
+
+class OpenAILLMNode extends AsyncNode {
+  async execAsync() {
+    const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
+
+    if (!prompt) {
+      throw new Error('Prompt is required for OpenAILLMNode.');
+    }
+    if (!apiKey) {
+      throw new Error('OpenAI API Key is required.');
+    }
+
+    console.log(`OpenAILLMNode: Sending prompt to OpenAI: "${prompt.substring(0, 50)}..."`);
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 150
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error.message}`);
+      }
+
+      const data = await response.json();
+      const llmResponse = data.choices[0].message.content.trim();
+      console.log(`OpenAILLMNode: Received response: "${llmResponse.substring(0, 50)}..."`);
+      return llmResponse; // Return the LLM's response
+    } catch (error) {
+      console.error('OpenAILLMNode: Error during API call:', error);
+      throw error; // Re-throw to trigger qflow's retry/fallback
+    }
+  }
+}
+
+// Example Usage in a Flow:
+/*
+import { AsyncFlow } from './qflow.js';
+
+const openAILLMNode = new OpenAILLMNode();
+// Pass prompt and API key via params
+openAILLMNode.setParams({
+  prompt: 'Write a short, creative slogan for a new coffee shop.',
+  apiKey: process.env.OPENAI_API_KEY // Load from environment variable
+});
+
+const llmFlow = new AsyncFlow(openAILLMNode);
+const llmResult = await llmFlow.runAsync({});
+console.log('LLM Flow Result:', llmResult);
+*/
+```
+
+### Google Gemini Node
+
+This example demonstrates an `AsyncNode` that interacts with the Google Gemini API.
+
+```javascript
+import { AsyncNode } from './qflow.js';
+
+class GeminiLLMNode extends AsyncNode {
+  async execAsync() {
+    const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
+
+    if (!prompt) {
+      throw new Error('Prompt is required for GeminiLLMNode.');
+    }
+    if (!apiKey) {
+      throw new Error('Google Gemini API Key is required.');
+    }
+
+    console.log(`GeminiLLMNode: Sending prompt to Gemini: "${prompt.substring(0, 50)}..."`);
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Gemini API error: ${response.status} - ${errorData.error.message}`);
+      }
+
+      const data = await response.json();
+      const llmResponse = data.candidates[0].content.parts[0].text.trim();
+      console.log(`GeminiLLMNode: Received response: "${llmResponse.substring(0, 50)}..."`);
+      return llmResponse; // Return the LLM's response
+    } catch (error) {
+      console.error('GeminiLLMNode: Error during API call:', error);
+      throw error; // Re-throw to trigger qflow's retry/fallback
+    }
+  }
+}
+
+// Example Usage in a Flow:
+/*
+import { AsyncFlow } from './qflow.js';
+
+const geminiLLMNode = new GeminiLLMNode();
+// Pass prompt and API key via params
+geminiLLMNode.setParams({
+  prompt: 'Generate a short, catchy headline for a tech blog post about AI in healthcare.',
+  apiKey: process.env.GEMINI_API_KEY // Load from environment variable
+});
+
+const llmFlow = new AsyncFlow(geminiLLMNode);
+const llmResult = await llmFlow.runAsync({});
+console.log('LLM Flow Result:', llmResult);
+*/
+```
+
 ## Installation
 
 Since qflow is a single file, you can simply import it into your project.
