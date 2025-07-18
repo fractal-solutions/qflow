@@ -242,7 +242,6 @@ class OpenAILLMNode extends AsyncNode {
 }
 
 // Example Usage in a Flow:
-/*
 import { AsyncFlow } from './qflow.js';
 
 const openAILLMNode = new OpenAILLMNode();
@@ -255,7 +254,7 @@ openAILLMNode.setParams({
 const llmFlow = new AsyncFlow(openAILLMNode);
 const llmResult = await llmFlow.runAsync({});
 console.log('LLM Flow Result:', llmResult);
-*/
+
 ```
 
 ### Google Gemini Node
@@ -306,7 +305,6 @@ class GeminiLLMNode extends AsyncNode {
 }
 
 // Example Usage in a Flow:
-/*
 import { AsyncFlow } from './qflow.js';
 
 const geminiLLMNode = new GeminiLLMNode();
@@ -319,7 +317,7 @@ geminiLLMNode.setParams({
 const llmFlow = new AsyncFlow(geminiLLMNode);
 const llmResult = await llmFlow.runAsync({});
 console.log('LLM Flow Result:', llmResult);
-*/
+
 ```
 
 ## Installation
