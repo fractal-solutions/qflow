@@ -402,6 +402,14 @@ console.log('Chained LLM Flow Final Result:', finalResult);
 
 ```
 
+## More Examples
+
+For more detailed usage examples and advanced workflows, refer to the following test files:
+
+*   [test.js](./test.js) - Basic flow and node usage.
+*   [test2.js](./test2.js) - Demonstrates async flows, conditional transitions, retries, and batch processing.
+*   [test3.js](./test3.js) - Advanced workflow integrating with a public API and chaining LLM-like responses.
+
 ## Installation
 
 Since qflow is a single file, you can simply import it into your project.
