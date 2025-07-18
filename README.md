@@ -1,6 +1,6 @@
 # qflow
 
-A lightweight and flexible JavaScript library for creating and managing workflows.
+A lightweight and flexible JavaScript library for creating and managing workflows. Adopted Pocket Flow design.
 
 ## Core Concepts
 
