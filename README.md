@@ -320,6 +320,88 @@ console.log('LLM Flow Result:', llmResult);
 
 ```
 
+### Chaining LLM Responses in a Flow
+
+One of the powerful features of qflow is the ability to chain nodes, allowing the output of one node to become the input for the next. This is particularly useful for multi-step LLM interactions, such as generating an initial response and then refining or expanding upon it.
+
+This example demonstrates a flow where an OpenAI LLM generates a slogan, and then a second OpenAI LLM expands on that slogan.
+
+```javascript
+import { AsyncNode, AsyncFlow } from './qflow.js';
+
+// Re-using the OpenAILLMNode defined above
+// class OpenAILLMNode extends AsyncNode { ... }
+
+class SloganExpansionNode extends AsyncNode {
+  async execAsync() {
+    const { slogan, apiKey } = this.params; // slogan from previous node, apiKey
+
+    if (!slogan) {
+      throw new Error('Slogan is required for SloganExpansionNode.');
+    }
+    if (!apiKey) {
+      throw new Error('OpenAI API Key is required.');
+    }
+
+    const prompt = `Expand on the following coffee shop slogan: "${slogan}"`;
+    console.log(`SloganExpansionNode: Sending prompt to OpenAI: "${prompt.substring(0, 50)}..."`);
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/complements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 200
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error.message}`);
+      }
+
+      const data = await response.json();
+      const expandedSlogan = data.choices[0].message.content.trim();
+      console.log(`SloganExpansionNode: Received response: "${expandedSlogan.substring(0, 50)}..."`);
+      return expandedSlogan; // Return the expanded slogan
+    } catch (error) {
+      console.error('SloganExpansionNode: Error during API call:', error);
+      throw error; // Re-throw to trigger qflow's retry/fallback
+    }
+  }
+}
+
+// Example Usage in a Chained Flow:
+
+import { AsyncFlow } from './qflow.js';
+
+const apiKey = process.env.OPENAI_API_KEY; // Load from environment variable
+
+const sloganGenerator = new OpenAILLMNode();
+sloganGenerator.setParams({
+  prompt: 'Generate a short, creative slogan for a new coffee shop.',
+  apiKey: apiKey
+});
+
+const sloganExpander = new SloganExpansionNode();
+sloganExpander.setParams({
+  apiKey: apiKey
+});
+
+// Chain the nodes: output of sloganGenerator becomes input for sloganExpander
+sloganGenerator.next(sloganExpander);
+
+const chainedLLMFlow = new AsyncFlow(sloganGenerator);
+const finalResult = await chainedLLMFlow.runAsync({});
+console.log('Chained LLM Flow Final Result:', finalResult);
+
+```
+
 ## Installation
 
 Since qflow is a single file, you can simply import it into your project.
