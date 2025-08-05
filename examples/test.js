@@ -1,4 +1,4 @@
-import { Node, Flow } from './qflow'
+import { Node, Flow } from '../src/qflow.js'
 let count = 0;
 let count2 = 0;
 

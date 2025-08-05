@@ -1,4 +1,4 @@
-import { AsyncNode, Node, AsyncFlow } from './qflow.js';
+import { AsyncNode, Node, AsyncFlow } from '../src/qflow.js';
 
 // Test 3: Advanced Workflow with Public API
 console.log('--- Running Test 3: Advanced Workflow with Public API ---');

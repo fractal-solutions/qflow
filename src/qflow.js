@@ -28,7 +28,7 @@ class BaseNode {
 
   _run(shared) {
     const prepRes = this.prep(shared);
-    const execRes = this._exec(prepRes);
+    const execRes = this._exec(prepRes, shared);
     return this.post(shared, prepRes, execRes);
   }
 
@@ -66,10 +66,10 @@ class Node extends BaseNode {
     throw error;
   }
 
-  _exec(prepRes) {
+  _exec(prepRes, shared) {
     for (let i = 0; i < this.maxRetries; i++) {
       try {
-        return this.exec(prepRes);
+        return this.exec(prepRes, shared);
       } catch (e) {
         if (i === this.maxRetries - 1) return this.execFallback(prepRes, e);
         if (this.wait > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, this.wait * 1000);
@@ -147,10 +147,10 @@ class AsyncNode extends Node {
   }
   async postAsync(shared, prepRes, execRes) {}
 
-  async _exec(prepRes) {
+  async _exec(prepRes, shared) {
     for (let i = 0; i < this.maxRetries; i++) {
       try {
-        return await this.execAsync(prepRes);
+        return await this.execAsync(prepRes, shared);
       } catch (e) {
         if (i === this.maxRetries - 1) return await this.execFallbackAsync(prepRes, e);
         if (this.wait > 0) await new Promise(resolve => setTimeout(resolve, this.wait * 1000));
@@ -167,7 +167,7 @@ class AsyncNode extends Node {
 
   async _runAsync(shared) {
     const prepRes = await this.prepAsync(shared);
-    const execRes = await this._exec(prepRes);
+    const execRes = await this._exec(prepRes, shared);
     return await this.postAsync(shared, prepRes, execRes);
   }
 
@@ -198,18 +198,30 @@ class AsyncFlow extends Flow {
     return execRes;
   }
 
-  async _orchAsync(shared, params = {}) {
-    let curr = this.startNode;
+  async _orchAsync(shared, params = {}, initialNode = this.startNode) {
+    let curr = initialNode;
     let lastAction = null;
+    let lastExecRes = null;
     let p = { ...this.params, ...params };
+    let currentPrepRes = undefined; // This will hold the prepRes for the current node
+
     while (curr) {
       curr.setParams(p);
-      lastAction = curr instanceof AsyncNode
-        ? await curr._runAsync(shared)
-        : curr._run(shared);
+
+      // If there was a previous execution result, that becomes the prepRes for the current node.
+      // Otherwise, use the current node's own prepAsync/prep method.
+      if (lastExecRes !== null) {
+        currentPrepRes = lastExecRes;
+      } else {
+        currentPrepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
+      }
+
+      const execRes = curr instanceof AsyncNode ? await curr._exec(currentPrepRes, shared) : curr._exec(currentPrepRes, shared);
+      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, currentPrepRes, execRes) : curr.post(shared, currentPrepRes, execRes);
+      lastExecRes = execRes; // Store execRes for the next iteration
       curr = this.getNextNode(curr, lastAction);
     }
-    return lastAction;
+    return lastExecRes;
   }
 
   async _runAsync(shared) {
@@ -241,9 +253,13 @@ class AsyncBatchFlow extends AsyncFlow {
 class AsyncParallelBatchFlow extends AsyncFlow {
   async _runAsync(shared) {
     const prepResults = await this.prepAsync(shared) || [];
-    const results = await Promise.all(prepResults.map(bp =>
-      this._orchAsync(shared, { ...this.params, ...bp })
-    ));
+    const results = await Promise.all(prepResults.map(bp => {
+      // Create a new instance of the startNode for each batch item
+      const newStartNode = new this.startNode.constructor();
+      // Copy successors from the original startNode to the new instance
+      Object.assign(newStartNode.successors, this.startNode.successors);
+      return this._orchAsync(shared, { ...this.params, ...bp }, newStartNode);
+    }));
     return await this.postAsync(shared, prepResults, results);
   }
 }

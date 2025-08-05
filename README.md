@@ -320,103 +320,178 @@ console.log('LLM Flow Result:', llmResult);
 
 ```
 
-### Chaining LLM Responses in a Flow
+### Chaining Nodes and Passing Data
 
-One of the powerful features of qflow is the ability to chain nodes, allowing the output of one node to become the input for the next. This is particularly useful for multi-step LLM interactions, such as generating an initial response and then refining or expanding upon it.
+One of the powerful features of qflow is the ability to chain nodes, allowing the output of one node to become the input for the next. This is particularly useful for multi-step workflows where the output of one operation is required for the next.
 
-This example demonstrates a flow where an OpenAI LLM generates a slogan, and then a second OpenAI LLM expands on that slogan.
+The recommended way to pass data between asynchronous nodes is to use the `shared` object. The first node should place its result into the `shared` object in its `postAsync` method, and the second node can then access that data in its `prepAsync` method.
+
+This example demonstrates a flow where a GitHub issue is created, and then the created issue is retrieved:
 
 ```javascript
-import { AsyncNode, AsyncFlow } from './qflow.js';
+import { AsyncFlow } from 'qflow';
+import { CreateIssueNode, GetIssueNode } from 'qflow/nodes';
 
-// Re-using the OpenAILLMNode defined above
-// class OpenAILLMNode extends AsyncNode { ... }
+// 1. Create instances of the nodes
+const createIssue = new CreateIssueNode();
+createIssue.setParams({
+  token: process.env.GITHUB_TOKEN,
+  owner: 'your-username',
+  repo: 'your-repo',
+  title: '[qflow] Test Issue'
+});
 
-class SloganExpansionNode extends AsyncNode {
+const getIssue = new GetIssueNode();
+getIssue.setParams({
+  token: process.env.GITHUB_TOKEN,
+  owner: 'your-username',
+  repo: 'your-repo'
+});
+
+// 2. Define the workflow
+createIssue.next(getIssue);
+
+// 3. Create and run the flow
+const githubFlow = new AsyncFlow(createIssue);
+const result = await githubFlow.runAsync({});
+```
+
+### Web Scraping Example
+
+This example demonstrates how to use the `ScrapeURLNode` to fetch content from multiple URLs in parallel and then process them with another node.
+
+```javascript
+import { AsyncFlow, AsyncNode, AsyncParallelBatchFlow } from 'qflow';
+import { ScrapeURLNode } from 'qflow/nodes';
+
+/**
+ * A node to display the scraped content.
+ */
+class DisplayScrapedContentNode extends AsyncNode {
+  async prepAsync(shared) {
+    this.params.html = shared.scrapedHTML;
+    this.params.url = shared.scrapedURL;
+  }
+
   async execAsync() {
-    const { slogan, apiKey } = this.params; // slogan from previous node, apiKey
-
-    if (!slogan) {
-      throw new Error('Slogan is required for SloganExpansionNode.');
-    }
-    if (!apiKey) {
-      throw new Error('OpenAI API Key is required.');
+    const { html, url } = this.params;
+    if (!html) {
+      console.log(`[DisplayContent] No HTML content found for ${url || 'unknown URL'}.`);
+      return 'error';
     }
 
-    const prompt = `Expand on the following coffee shop slogan: "${slogan}"`;
-    console.log(`SloganExpansionNode: Sending prompt to OpenAI: "${prompt.substring(0, 50)}..."`);
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/complements', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 200
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error.message}`);
-      }
-
-      const data = await response.json();
-      const expandedSlogan = data.choices[0].message.content.trim();
-      console.log(`SloganExpansionNode: Received response: "${expandedSlogan.substring(0, 50)}..."`);
-      return expandedSlogan; // Return the expanded slogan
-    } catch (error) {
-      console.error('SloganExpansionNode: Error during API call:', error);
-      throw error; // Re-throw to trigger qflow's retry/fallback
-    }
+    console.log(`\n--- Scraped Content for: ${url} ---\n`);
+    console.log(html.substring(0, 500) + '...'); // Log first 500 characters
+    console.log(`\n--- End Content for: ${url} ---\n`);
+    return html.length; // Return character count as the result
   }
 }
 
-// Example Usage in a Chained Flow:
+// 1. Create instances of the nodes
+const scrapeNode = new ScrapeURLNode();
+// Override postAsync to pass data to the shared object for the next node
+scrapeNode.postAsync = async (shared, prepRes, execRes) => {
+  shared.scrapedHTML = execRes; // execRes is the returned HTML
+  // We also need to store the URL that was just scraped for context in the next node
+  shared.scrapedURL = scrapeNode.params.url; 
+  return 'default'; // Return a static action for the flow to transition
+};
 
-import { AsyncFlow } from './qflow.js';
+const displayNode = new DisplayScrapedContentNode();
 
-const apiKey = process.env.OPENAI_API_KEY; // Load from environment variable
+// 2. Define the workflow
+scrapeNode.next(displayNode);
 
-const sloganGenerator = new OpenAILLMNode();
-sloganGenerator.setParams({
-  prompt: 'Generate a short, creative slogan for a new coffee shop.',
-  apiKey: apiKey
-});
+// 3. Create the batch flow
+const scraperBatchFlow = new AsyncParallelBatchFlow(scrapeNode);
 
-const sloganExpander = new SloganExpansionNode();
-sloganExpander.setParams({
-  apiKey: apiKey
-});
+// Define the URLs to scrape in the prepAsync of the flow
+scraperBatchFlow.prepAsync = async () => [
+  { url: 'https://example.com' },
+  { url: 'https://www.iana.org/domains/example' },
+  { url: 'https://www.w3.org/' }
+];
 
-// Chain the nodes: output of sloganGenerator becomes input for sloganExpander
-sloganGenerator.next(sloganExpander);
-
-const chainedLLMFlow = new AsyncFlow(sloganGenerator);
-const finalResult = await chainedLLMFlow.runAsync({});
-console.log('Chained LLM Flow Final Result:', finalResult);
-
+// 4. Run the flow
+const results = await scraperBatchFlow.runAsync({});
+console.log('Final Results (character counts):', results);
 ```
 
 ## More Examples
 
-For more detailed usage examples and advanced workflows, refer to the following test files:
+For more detailed usage examples and advanced workflows, refer to the `examples/` directory.
 
-*   [test.js](./test.js) - Basic flow and node usage.
-*   [test2.js](./test2.js) - Demonstrates async flows, conditional transitions, retries, and batch processing.
-*   [test3.js](./test3.js) - Advanced workflow integrating with a public API and chaining LLM-like responses.
+*   `examples/test.js` - Basic flow and node usage.
+*   `examples/test2.js` - Demonstrates async flows, conditional transitions, retries, and batch processing.
+*   `examples/test3.js` - Advanced workflow integrating with a public API.
+*   `examples/hackernews_test.js` - Demonstrates the Hacker News integration.
+*   `examples/github_test.js` - Demonstrates the GitHub integration.
+*   `examples/stripe_test.js` - Demonstrates the Stripe integration.
+
+### Running the Examples
+
+To run the examples, you can use `bun run`:
+
+```bash
+bun run examples/test.js
+```
+
+**Note:** Some examples require API keys or other credentials. These can be set as environment variables or by replacing the placeholder values in the example files.
 
 ## Installation
 
-Since qflow is a single file, you can simply import it into your project.
+Install `qflow` using your favorite package manager:
+
+**NPM**
+```bash
+npm install qflow
+```
+
+**Yarn**
+```bash
+yarn add qflow
+```
+
+**Bun**
+```bash
+bun add qflow
+```
+
+## Usage
+
+### Core Concepts
+
+Import the core `qflow` classes from the main entry point:
 
 ```javascript
-import { Node, Flow } from './qflow.js';
+import { Node, Flow, AsyncNode, AsyncFlow } from 'qflow';
 ```
+
+### Integrated Nodes
+
+`qflow` also includes a variety of pre-built nodes for common integrations, such as LLMs. You can import these nodes from the `qflow/nodes` entry point:
+
+```javascript
+import { OpenAILLMNode, GeminiLLMNode, DeepSeekLLMNode } from 'qflow/nodes';
+```
+
+### Runtime Compatibility
+
+`qflow` is designed to be compatible with modern JavaScript runtimes.
+
+**Node.js**
+
+When using `qflow` in a Node.js environment, you may need to use the `--experimental-modules` flag if you are using ES modules.
+
+**Deno**
+
+`qflow` can be used in Deno by importing it from a CDN that serves NPM packages, such as esm.sh:
+
+```javascript
+import { Node, Flow } from 'https://esm.sh/qflow';
+import { OpenAILLMNode } from 'https://esm.sh/qflow/nodes';
+```
+
 
 ## Contributing
 

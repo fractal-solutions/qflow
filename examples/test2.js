@@ -5,7 +5,7 @@ import {
   AsyncFlow,
   BatchFlow,
   AsyncParallelBatchFlow
-} from './qflow.js';
+} from '../src/qflow.js';
 
 // Test 1: Async Flow
 console.log('--- Running Test 1: Async Flow ---');

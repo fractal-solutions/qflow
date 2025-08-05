@@ -1,0 +1,50 @@
+{
+  "name": "@fractal-solutions/qflow",
+  "version": "1.0.0",
+  "description": "A lightweight and flexible JavaScript library for creating and managing workflows and agents.",
+  "main": "dist/qflow.js",
+  "types": "dist/qflow.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/qflow.d.ts",
+      "default": "./dist/qflow.js"
+    },
+    "./nodes": {
+      "types": "./dist/nodes/index.d.ts",
+      "default": "./dist/nodes/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "build": "tsc --project tsconfig.build.json"
+  },
+  "keywords": [
+    "workflow",
+    "agents",
+    "pipeline",
+    "automation",
+    "flow",
+    "async",
+    "batch"
+  ],
+  "author": "Fractal Solutions",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fractal-solutions/qflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fractal-solutions/qflow/issues"
+  },
+  "homepage": "https://github.com/fractal-solutions/qflow#readme",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
