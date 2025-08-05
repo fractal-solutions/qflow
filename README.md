@@ -100,26 +100,36 @@ Chaining multiple nodes together to form a basic workflow.
 ```javascript
 import { Node, Flow } from '@fractal-solutions/qflow';
 
-class AddNode extends Node {
-  exec(input) { return input + 5; }
+let count = 0;
+
+class MessageNode extends Node {
+    exec() {
+        count++;
+        console.log(`New Message ${count}`);
+        return `default`;
+    }
 }
 
-class MultiplyNode extends Node {
-  exec(input) { return input * 2; }
+class TimeNode extends Node {
+    exec() {
+        console.log(`Time ${Date.now()}`);
+        return `default`;
+    }
 }
 
-const add = new AddNode();
-const multiply = new MultiplyNode();
+const m1 = new MessageNode();
+const t1 = new TimeNode();
+const m2 = new MessageNode();
 
-// Chain the nodes
-add.next(multiply);
+m1.next(t1);
+t1.next(m2);
 
-// Create the flow, starting with the 'add' node
-const flow = new Flow(add);
-
-// Run the flow. Initial parameters can be passed via the second argument to _orch.
-const result = flow._orch(null, { params: 10 });
-console.log('Flow result:', result); // Expected: 30 ((10 + 5) * 2)
+const flow = new Flow(m1);
+flow.run({});
+// Expected output (approximate):
+// New Message 1
+// Time <timestamp>
+// New Message 2
 ```
 
 ### 3. Conditional Flow
@@ -129,40 +139,54 @@ Using `transition()` for dynamic branching based on an action.
 ```javascript
 import { Node, Flow } from '@fractal-solutions/qflow';
 
-class CheckValueNode extends Node {
-  exec(value) {
-    if (value > 10) {
-      return 'greater';
+class ConditionalNode extends Node {
+  constructor(shouldGoLeft) {
+    super();
+    this.shouldGoLeft = shouldGoLeft;
+  }
+
+  exec() {
+    if (this.shouldGoLeft) {
+      console.log('ConditionalNode: Going left');
+      return 'left';
     } else {
-      return 'lessOrEqual';
+      console.log('ConditionalNode: Going right');
+      return 'right';
     }
   }
 }
 
-class GreaterNode extends Node {
-  exec() { return 'Value is greater than 10'; }
+// Helper node for conditional transition test
+function MessageNode(message) {
+  return new (class extends Node {
+    exec() {
+      console.log(message);
+      return 'default';
+    }
+  })();
 }
 
-class LessOrEqualNode extends Node {
-  exec() { return 'Value is less than or equal to 10'; }
-}
+const conditionalNode = new ConditionalNode(true);
+const leftNode = MessageNode('Went Left');
+const rightNode = MessageNode('Went Right');
 
-const check = new CheckValueNode();
-const greater = new GreaterNode();
-const lessOrEqual = new LessOrEqualNode();
+conditionalNode.next(leftNode, 'left');
+conditionalNode.next(rightNode, 'right');
 
-// Chain the nodes with conditional transitions
-check.transition('greater').to(greater);
-check.transition('lessOrEqual').to(lessOrEqual);
+const conditionalFlow = new Flow(conditionalNode);
+conditionalFlow.run({});
+// Expected output:
+// ConditionalNode: Going left
+// Went Left
 
-// Create the flow, starting with the 'check' node
-const flow = new Flow(check);
-
-let result1 = flow._orch(null, { params: 15 }); // Pass params directly to _orch
-console.log(result1); // Expected: Value is greater than 10
-
-let result2 = flow._orch(null, { params: 7 });
-console.log(result2); // Expected: Value is less than or equal to 10
+const conditionalNode2 = new ConditionalNode(false);
+conditionalNode2.next(leftNode, 'left');
+conditionalNode2.next(rightNode, 'right');
+const conditionalFlow2 = new Flow(conditionalNode2);
+conditionalFlow2.run({});
+// Expected output:
+// ConditionalNode: Going right
+// Went Right
 ```
 
 ### 4. Asynchronous Flow
@@ -172,41 +196,26 @@ Handling asynchronous operations within a flow.
 ```javascript
 import { AsyncNode, AsyncFlow } from '@fractal-solutions/qflow';
 
-class FetchDataNode extends AsyncNode {
-  async execAsync(url) {
-    console.log(`Fetching data from: ${url}`);
-    // Simulate an API call
-    return new Promise(resolve => setTimeout(() => resolve(`Data from ${url}`), 100));
+class MyAsyncNode extends AsyncNode {
+  async execAsync() {
+    console.log('AsyncNode: Starting...');
+    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log('AsyncNode: Finished!');
+    return 'default';
   }
 }
 
-class ProcessDataNode extends AsyncNode {
-  async execAsync(data) {
-    console.log(`Processing: ${data}`);
-    return data.toUpperCase();
-  }
-}
+const asyncNode1 = new MyAsyncNode();
+const asyncNode2 = new MyAsyncNode();
+asyncNode1.next(asyncNode2);
 
-const fetchNode = new FetchDataNode();
-const processNode = new ProcessDataNode();
-
-// Chain the nodes
-fetchNode.next(processNode);
-
-// Create the async flow, starting with the 'fetchNode'
-const asyncFlow = new AsyncFlow(fetchNode);
-
-async function runAsyncFlow() {
-  // Run the flow, passing the URL as an initial parameter to the first node
-  const result = await asyncFlow._orchAsync(null, { params: 'https://api.example.com/data' });
-  console.log('Async Flow Result:', result);
-}
-
-runAsyncFlow();
+const asyncFlow = new AsyncFlow(asyncNode1);
+await asyncFlow.runAsync({});
 // Expected output:
-// Fetching data from: https://api.example.com/data
-// Processing: Data from https://api.example.com/data
-// Async Flow Result: DATA FROM HTTPS://API.EXAMPLE.COM/DATA
+// AsyncNode: Starting...
+// AsyncNode: Finished!
+// AsyncNode: Starting...
+// AsyncNode: Finished!
 ```
 
 ### 5. Batch Processing
@@ -214,26 +223,50 @@ runAsyncFlow();
 Processing multiple items through a flow.
 
 ```javascript
-import { Node, BatchFlow } from '@fractal-solutions/qflow';
+import { Node, BatchFlow, AsyncParallelBatchFlow, AsyncNode } from '@fractal-solutions/qflow';
 
-class ProcessItemNode extends Node {
-  exec(item) {
-    return `Processed: ${item}`;
+// Synchronous Batch Flow
+console.log('\n--- Running Synchronous Batch Flow ---');
+
+class MyBatchNode extends Node {
+  exec() {
+    console.log(`BatchNode: Processing item ${this.params.item}`);
+    return 'default';
   }
 }
 
-const processItem = new ProcessItemNode();
-
-// Create the batch flow, starting with the 'processItem' node
-const batchFlow = new BatchFlow(processItem);
-
-// Define the items to process. For BatchFlow, the prep method should return an array.
-batchFlow.prep = () => ['itemA', 'itemB', 'itemC'];
-
-const results = batchFlow.run({}); // Run the batch flow
-console.log('Batch Flow Results:', results);
+const batchNode = new MyBatchNode();
+const batchFlow = new BatchFlow(batchNode);
+batchFlow.prep = () => [ { item: 1 }, { item: 2 }, { item: 3 } ];
+batchFlow.run({});
 // Expected output:
-// Batch Flow Results: [ 'Processed: itemA', 'Processed: itemB', 'Processed: itemC' ]
+// BatchNode: Processing item 1
+// BatchNode: Processing item 2
+// BatchNode: Processing item 3
+
+// Asynchronous Parallel Batch Flow
+console.log('\n--- Running Asynchronous Parallel Batch Flow ---');
+
+class MyAsyncParallelBatchNode extends AsyncNode {
+  async execAsync() {
+    console.log(`AsyncParallelBatchNode: Starting item ${this.params.item}`);
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+    console.log(`AsyncParallelBatchNode: Finished item ${this.params.item}`);
+    return 'default';
+  }
+}
+
+const asyncParallelBatchNode = new MyAsyncParallelBatchNode();
+const asyncParallelBatchFlow = new AsyncParallelBatchFlow(asyncParallelBatchNode);
+asyncParallelBatchFlow.prepAsync = async () => [ { item: 1 }, { item: 2 }, { item: 3 }, { item: 4 }, { item: 5 } ];
+await asyncParallelBatchFlow.runAsync({});
+// Expected output (order may vary due to parallel execution):
+// AsyncParallelBatchNode: Starting item 1
+// AsyncParallelBatchNode: Starting item 2
+// ...
+// AsyncParallelBatchNode: Finished item 1
+// AsyncParallelBatchNode: Finished item 2
+// ...
 ```
 
 ### 6. Retry Mechanism
@@ -241,37 +274,37 @@ console.log('Batch Flow Results:', results);
 Configuring a node to retry on failure.
 
 ```javascript
-import { Node } from '@fractal-solutions/qflow';
+import { Node, Flow } from '@fractal-solutions/qflow';
 
-let attempt = 0;
-class FlakyNode extends Node {
+let retryCount = 0;
+class RetryNode extends Node {
   constructor() {
-    super(3, 0.1); // maxRetries = 3, wait = 0.1 seconds
+    super(3, 0.1); // 3 retries, 0.1s wait
   }
 
-  exec(input) {
-    attempt++;
-    console.log(`FlakyNode attempt ${attempt} for input: ${input}`);
-    if (attempt < 3) {
-      throw new Error('Simulated failure');
+  exec() {
+    retryCount++;
+    if (retryCount < 3) {
+      console.log(`RetryNode: Failing, attempt ${retryCount}`);
+      throw new Error('Failed!');
+    } else {
+      console.log('RetryNode: Succeeded!');
+      return 'default';
     }
-    return `Success on attempt ${attempt}`;
   }
 
   execFallback(prepRes, error) {
-    console.error('FlakyNode failed after retries:', error.message);
-    return 'Fallback result due to persistent failure';
+    console.log('RetryNode: Fallback executed');
   }
 }
 
-const flakyNode = new FlakyNode();
-const result = flakyNode.run('test');
-console.log('Flaky Node Result:', result);
-// Expected output (may vary slightly due to timing):
-// FlakyNode attempt 1 for input: test
-// FlakyNode attempt 2 for input: test
-// FlakyNode attempt 3 for input: test
-// Flaky Node Result: Success on attempt 3
+const retryNode = new RetryNode();
+const retryFlow = new Flow(retryNode);
+retryFlow.run({});
+// Expected output:
+// RetryNode: Failing, attempt 1
+// RetryNode: Failing, attempt 2
+// RetryNode: Succeeded!
 ```
 
 ## Built-in Nodes
