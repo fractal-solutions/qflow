@@ -421,6 +421,7 @@ console.log('Final Results (character counts):', results);
 
 For more detailed usage examples and advanced workflows, refer to the `examples/` directory.
 
+<<<<<<< HEAD
 *   `examples/test.js` - Basic flow and node usage.
 *   `examples/test2.js` - Demonstrates async flows, conditional transitions, retries, and batch processing.
 *   `examples/test3.js` - Advanced workflow integrating with a public API.
@@ -437,6 +438,12 @@ bun run examples/test.js
 ```
 
 **Note:** Some examples require API keys or other credentials. These can be set as environment variables or by replacing the placeholder values in the example files.
+=======
+*   [test.js](./test.js) - Basic flow and node usage.
+*   [test2.js](./test2.js) - Demonstrates async flows, conditional transitions, retries, and batch processing.
+*   [test3.js](./test3.js) - Advanced workflow integrating with a public API and chaining LLM-like responses.
+*   [test4.js](./test4.js) - Automated  Topic-specific article writing workflow pipeline.
+>>>>>>> e5910cf35b9a2c74b0ef13d46f9d58a189aed6ad
 
 ## Installation
 
