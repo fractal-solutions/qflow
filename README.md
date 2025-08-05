@@ -59,6 +59,8 @@ A helper class used with `Node.transition()` to define conditional branching in 
 
 ## Basic Usage & Examples
 
+More detailed implementations available in the [examples](examples/) directory.
+
 ### 1. Simple Node
 
 A basic example of defining and running a single node.
