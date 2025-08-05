@@ -1,505 +1,333 @@
-# qflow
+# qflow: A Lightweight and Flexible JavaScript Workflow and Agent Library
 
-A lightweight and flexible JavaScript library for creating and managing workflows. Adopted Pocket Flow design.
+`qflow` is a lightweight and flexible JavaScript library designed for creating and managing complex workflows and autonomous agents. Inspired by the simplicity and power of flow-based programming, `qflow` provides a minimalist yet expressive API to define sequences of operations, handle data flow, and manage execution, both synchronously and asynchronously.
 
-## Core Concepts
-
-qflow allows you to define complex workflows as a series of connected nodes. Each node represents a step in the process, and you can control the flow of execution based on the outcome of each step.
-
-*   **`Node`**: The fundamental building block of a qflow. A `Node` is a single step in your workflow. It has three main lifecycle methods:
-    *   `prep(shared)`: Prepare data for the `exec` method. The `shared` object is passed through the entire flow.
-    *   `exec(prepRes)`: The main logic of the node. It receives the result from the `prep` method.
-    *   `post(shared, prepRes, execRes)`:  Clean up or process the results after the `exec` method. **The return value of this method determines the next action in the flow.**
-
-*   **`Flow`**: A `Flow` manages the execution of a series of connected `Node`s. You define the starting node and the transitions between nodes.
+With zero external dependencies for its core functionality, `qflow` is built for performance and ease of integration into any JavaScript environment, from Node.js backends to browser-based applications.
 
 ## Features
 
-*   **Synchronous and Asynchronous Execution**: qflow provides both synchronous and asynchronous versions of `Node`s and `Flow`s, allowing you to handle both CPU-bound and I/O-bound tasks efficiently.
-*   **Batch Processing**: The `BatchFlow` and `AsyncBatchFlow` classes allow you to process arrays of items in a single workflow.
-*   **Parallel Execution**: The `AsyncParallelBatchNode` and `AsyncParallelBatchFlow` classes enable you to execute asynchronous operations in parallel for maximum efficiency.
-*   **Retries and Error Handling**: The `Node` class has built-in support for retries with a configurable delay. You can also define a `execFallback` method to handle cases where all retries fail.
-*   **Conditional Transitions**: You can define multiple successors for a node and choose which one to transition to based on the return value of the `exec` or `post` method.
-
-## Understanding Nodes, Flows, and Data Management
-
-### Nodes: The Building Blocks
-
-Each `Node` in qflow represents a distinct step in your workflow. Nodes are designed with a clear lifecycle to manage their execution:
-
-*   **`prep(shared)`**: This method is called before `exec`. It's ideal for preparing any data or resources needed for the node's main logic. The `shared` object, which is a mutable object passed throughout the entire flow, can be used here to access or store global state. The return value of `prep` is passed as `prepRes` to the `exec` method.
-*   **`exec(prepRes)`**: This is the core logic of your node. It receives the result from the `prep` method (`prepRes`). The `exec` method should perform the primary task of the node. **The return value of `exec` is crucial for controlling the flow's path.** It can be a string representing an "action" (e.g., "success", "failure", "long", "short") that the `Flow` uses to determine the next node.
-*   **`post(shared, prepRes, execRes)`**: This method is called after `exec` completes. It's suitable for cleanup, logging, or further processing of the `exec` result. It receives the `shared` object, the `prepRes`, and the `execRes`. **The return value of `post` also dictates the flow's path, similar to `exec`.** If both `exec` and `post` return a value, the `post` method's return value takes precedence for determining the next transition.
-
-### Flows: Orchestrating Execution
-
-A `Flow` acts as the orchestrator for your nodes. It defines the sequence of execution and manages transitions between nodes.
-
-*   **Starting a Flow**: You initialize a `Flow` with a `startNode`. This is the first node that will be executed when the flow runs.
-*   **Transitions**: Nodes are connected using the `node.next(nextNode, action)` method. When a node's `exec` or `post` method returns an `action` string, the `Flow` looks for a successor node registered with that specific action. If no action is specified (or the method returns `undefined`), the "default" action is used. This allows for powerful conditional branching in your workflows.
-
-### Data Transfer and State Management
-
-qflow provides two primary mechanisms for data management within a flow:
-
-1.  **Node-Specific Parameters (`this.params`)**: Each node instance has a `this.params` object. This object is populated by the `Flow` when it calls `node.setParams(params)`. This is the recommended way to pass data *into* a specific node for its execution. For `BatchFlow` and `AsyncBatchFlow`, the `prep` (or `prepAsync`) method should return an array of objects, where each object contains the `params` for a single batch item.
-    ```javascript
-    // Example of setting params for a node
-    class MyNode extends Node {
-      exec() {
-        console.log(this.params.myValue);
-      }
-    }
-    const myNode = new MyNode();
-    // When running a flow, the flow will call myNode.setParams({ myValue: 'hello' });
-    ```
-
-2.  **Shared State (`shared` object)**: The `shared` object is a mutable object that is passed to the `prep`, `exec`, and `post` methods of every node in the flow. This object is ideal for maintaining global state or data that needs to be accessible and modifiable across multiple nodes in the workflow. Any changes made to the `shared` object by one node will be visible to subsequent nodes.
-
-### Nuances
-
-*   **Return Values for Transitions**: The string returned by a node's `exec` or `post` method is critical for defining the flow's path. If a node returns "success", the flow will look for a successor registered with the "success" action. If no action is returned, the "default" action is assumed.
-*   **Error Handling**: Nodes can throw errors. The `Node` class provides `maxRetries` and `wait` parameters for automatic retries. If all retries fail, the `execFallback` method is called.
-*   **Asynchronous Operations**: For asynchronous operations, use `AsyncNode` and `AsyncFlow`. Their lifecycle methods (`prepAsync`, `execAsync`, `postAsync`) are `async` functions, allowing you to use `await` for non-blocking operations.
-
-## API Reference
-
-### `BaseNode`
-
-The base class for all nodes.
-
-*   `constructor()`
-*   `setParams(params)`: Sets the parameters for the node.
-*   `next(node, action = "default")`: Defines the next node in the flow.
-*   `prep(shared)`: Pre-execution logic.
-*   `exec(prepRes)`: Execution logic.
-*   `post(shared, prepRes, execRes)`: Post-execution logic. The return value of this method is used to determine the next node in the flow.
-*   `run(shared)`: Runs the node.
-
-### `Node`
-
-Extends `BaseNode` with retry logic.
-
-*   `constructor(maxRetries = 1, wait = 0)`: `maxRetries` is the number of times to retry on failure, and `wait` is the delay in seconds between retries.
-*   `execFallback(prepRes, error)`:  Logic to execute if all retries fail.
-
-### `Flow`
-
-Manages a workflow of nodes.
-
-*   `constructor(start = null)`: `start` is the starting node of the flow.
-*   `start(startNode)`: Sets the starting node.
-*   `run(shared)`: Runs the entire flow.
-
-### `BatchFlow`
-
-Extends `Flow` for batch processing. The `prep` method should return an array of objects, where each object contains the parameters for a single execution of the flow.
-
-### Asynchronous Classes
-
-qflow provides asynchronous versions of the core classes:
-
-*   `AsyncNode`
-*   `AsyncFlow`
-*   `AsyncBatchFlow`
-*   `AsyncParallelBatchFlow`
-
-These classes have `...Async` versions of the lifecycle methods (e.g., `prepAsync`, `execAsync`, `postAsync`) and support `async/await`. The `AsyncFlow` class has a `runAsync` method to execute the flow.
-
-## Usage Examples
-
-### Basic Flow
-
-```javascript
-import { Node, Flow } from './qflow.js';
-
-// A node that prints a message
-class MessageNode extends Node {
-    exec() {
-        console.log("Hello from MessageNode!");
-        return 'default'; // Transition to the default successor
-    }
-}
-
-// A node that prints the current time
-class TimeNode extends Node {
-    exec() {
-        console.log(`Current time: ${Date.now()}`);
-        return 'default';
-    }
-}
-
-// Create the nodes
-const messageNode = new MessageNode();
-const timeNode = new TimeNode();
-
-// Define the workflow
-messageNode.next(timeNode); // After messageNode, go to timeNode
-
-// Create and run the flow
-const flow = new Flow(messageNode);
-flow.run({});
-```
-
-### Batch Flow
-
-```javascript
-import { Node, BatchFlow } from './qflow.js';
-
-class MyBatchNode extends Node {
-  exec() {
-    console.log(`BatchNode: Processing item ${this.params.item}`);
-    return 'default';
-  }
-}
-
-const batchNode = new MyBatchNode();
-const batchFlow = new BatchFlow(batchNode);
-
-// The prep method returns an array of parameter objects for the batch.
-batchFlow.prep = () => [ { item: 1 }, { item: 2 }, { item: 3 } ];
-
-batchFlow.run({});
-```
-
-### Async Parallel Batch Flow
-
-```javascript
-import { AsyncNode, AsyncParallelBatchFlow } from './qflow.js';
-
-class MyAsyncParallelBatchNode extends AsyncNode {
-  async execAsync() {
-    console.log(`AsyncParallelBatchNode: Starting item ${this.params.item}`);
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
-    console.log(`AsyncParallelBatchNode: Finished item ${this.params.item}`);
-    return 'default';
-  }
-}
-
-const asyncParallelBatchNode = new MyAsyncParallelBatchNode();
-const asyncParallelBatchFlow = new AsyncParallelBatchFlow(asyncParallelBatchNode);
-
-// The prepAsync method returns an array of parameter objects for the batch.
-asyncParallelBatchFlow.prepAsync = async () => [ { item: 1 }, { item: 2 }, { item: 3 }, { item: 4 }, { item: 5 } ];
-
-await asyncParallelBatchFlow.runAsync({});
-```
-
-## Extending qflow with LLM Nodes
-
-qflow's flexible node structure makes it straightforward to integrate with external APIs, including Large Language Models (LLMs). By creating custom `AsyncNode` implementations, you can easily add capabilities like text generation, summarization, and more to your workflows.
-
-Below are examples of how you might create nodes for popular LLM providers. Remember to handle API keys securely (e.g., using environment variables) and to include necessary `fetch` polyfills or libraries if running in environments that don't natively support `fetch` (like Node.js without a recent version or a polyfill).
-
-### OpenAI GPT-3.5 Turbo Node
-
-This example demonstrates an `AsyncNode` that interacts with the OpenAI Chat Completions API.
-
-```javascript
-import { AsyncNode } from './qflow.js';
-
-class OpenAILLMNode extends AsyncNode {
-  async execAsync() {
-    const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
-
-    if (!prompt) {
-      throw new Error('Prompt is required for OpenAILLMNode.');
-    }
-    if (!apiKey) {
-      throw new Error('OpenAI API Key is required.');
-    }
-
-    console.log(`OpenAILLMNode: Sending prompt to OpenAI: "${prompt.substring(0, 50)}..."`);
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 150
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error.message}`);
-      }
-
-      const data = await response.json();
-      const llmResponse = data.choices[0].message.content.trim();
-      console.log(`OpenAILLMNode: Received response: "${llmResponse.substring(0, 50)}..."`);
-      return llmResponse; // Return the LLM's response
-    } catch (error) {
-      console.error('OpenAILLMNode: Error during API call:', error);
-      throw error; // Re-throw to trigger qflow's retry/fallback
-    }
-  }
-}
-
-// Example Usage in a Flow:
-import { AsyncFlow } from './qflow.js';
-
-const openAILLMNode = new OpenAILLMNode();
-// Pass prompt and API key via params
-openAILLMNode.setParams({
-  prompt: 'Write a short, creative slogan for a new coffee shop.',
-  apiKey: process.env.OPENAI_API_KEY // Load from environment variable
-});
-
-const llmFlow = new AsyncFlow(openAILLMNode);
-const llmResult = await llmFlow.runAsync({});
-console.log('LLM Flow Result:', llmResult);
-
-```
-
-### Google Gemini Node
-
-This example demonstrates an `AsyncNode` that interacts with the Google Gemini API.
-
-```javascript
-import { AsyncNode } from './qflow.js';
-
-class GeminiLLMNode extends AsyncNode {
-  async execAsync() {
-    const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
-
-    if (!prompt) {
-      throw new Error('Prompt is required for GeminiLLMNode.');
-    }
-    if (!apiKey) {
-      throw new Error('Google Gemini API Key is required.');
-    }
-
-    console.log(`GeminiLLMNode: Sending prompt to Gemini: "${prompt.substring(0, 50)}..."`);
-
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Gemini API error: ${response.status} - ${errorData.error.message}`);
-      }
-
-      const data = await response.json();
-      const llmResponse = data.candidates[0].content.parts[0].text.trim();
-      console.log(`GeminiLLMNode: Received response: "${llmResponse.substring(0, 50)}..."`);
-      return llmResponse; // Return the LLM's response
-    } catch (error) {
-      console.error('GeminiLLMNode: Error during API call:', error);
-      throw error; // Re-throw to trigger qflow's retry/fallback
-    }
-  }
-}
-
-// Example Usage in a Flow:
-import { AsyncFlow } from './qflow.js';
-
-const geminiLLMNode = new GeminiLLMNode();
-// Pass prompt and API key via params
-geminiLLMNode.setParams({
-  prompt: 'Generate a short, catchy headline for a tech blog post about AI in healthcare.',
-  apiKey: process.env.GEMINI_API_KEY // Load from environment variable
-});
-
-const llmFlow = new AsyncFlow(geminiLLMNode);
-const llmResult = await llmFlow.runAsync({});
-console.log('LLM Flow Result:', llmResult);
-
-```
-
-### Chaining Nodes and Passing Data
-
-One of the powerful features of qflow is the ability to chain nodes, allowing the output of one node to become the input for the next. This is particularly useful for multi-step workflows where the output of one operation is required for the next.
-
-The recommended way to pass data between asynchronous nodes is to use the `shared` object. The first node should place its result into the `shared` object in its `postAsync` method, and the second node can then access that data in its `prepAsync` method.
-
-This example demonstrates a flow where a GitHub issue is created, and then the created issue is retrieved:
-
-```javascript
-import { AsyncFlow } from 'qflow';
-import { CreateIssueNode, GetIssueNode } from 'qflow/nodes';
-
-// 1. Create instances of the nodes
-const createIssue = new CreateIssueNode();
-createIssue.setParams({
-  token: process.env.GITHUB_TOKEN,
-  owner: 'your-username',
-  repo: 'your-repo',
-  title: '[qflow] Test Issue'
-});
-
-const getIssue = new GetIssueNode();
-getIssue.setParams({
-  token: process.env.GITHUB_TOKEN,
-  owner: 'your-username',
-  repo: 'your-repo'
-});
-
-// 2. Define the workflow
-createIssue.next(getIssue);
-
-// 3. Create and run the flow
-const githubFlow = new AsyncFlow(createIssue);
-const result = await githubFlow.runAsync({});
-```
-
-### Web Scraping Example
-
-This example demonstrates how to use the `ScrapeURLNode` to fetch content from multiple URLs in parallel and then process them with another node.
-
-```javascript
-import { AsyncFlow, AsyncNode, AsyncParallelBatchFlow } from 'qflow';
-import { ScrapeURLNode } from 'qflow/nodes';
-
-/**
- * A node to display the scraped content.
- */
-class DisplayScrapedContentNode extends AsyncNode {
-  async prepAsync(shared) {
-    this.params.html = shared.scrapedHTML;
-    this.params.url = shared.scrapedURL;
-  }
-
-  async execAsync() {
-    const { html, url } = this.params;
-    if (!html) {
-      console.log(`[DisplayContent] No HTML content found for ${url || 'unknown URL'}.`);
-      return 'error';
-    }
-
-    console.log(`\n--- Scraped Content for: ${url} ---\n`);
-    console.log(html.substring(0, 500) + '...'); // Log first 500 characters
-    console.log(`\n--- End Content for: ${url} ---\n`);
-    return html.length; // Return character count as the result
-  }
-}
-
-// 1. Create instances of the nodes
-const scrapeNode = new ScrapeURLNode();
-// Override postAsync to pass data to the shared object for the next node
-scrapeNode.postAsync = async (shared, prepRes, execRes) => {
-  shared.scrapedHTML = execRes; // execRes is the returned HTML
-  // We also need to store the URL that was just scraped for context in the next node
-  shared.scrapedURL = scrapeNode.params.url; 
-  return 'default'; // Return a static action for the flow to transition
-};
-
-const displayNode = new DisplayScrapedContentNode();
-
-// 2. Define the workflow
-scrapeNode.next(displayNode);
-
-// 3. Create the batch flow
-const scraperBatchFlow = new AsyncParallelBatchFlow(scrapeNode);
-
-// Define the URLs to scrape in the prepAsync of the flow
-scraperBatchFlow.prepAsync = async () => [
-  { url: 'https://example.com' },
-  { url: 'https://www.iana.org/domains/example' },
-  { url: 'https://www.w3.org/' }
-];
-
-// 4. Run the flow
-const results = await scraperBatchFlow.runAsync({});
-console.log('Final Results (character counts):', results);
-```
-
-## More Examples
-
-For more detailed usage examples and advanced workflows, refer to the `examples/` directory.
-
-<<<<<<< HEAD
-*   `examples/test.js` - Basic flow and node usage.
-*   `examples/test2.js` - Demonstrates async flows, conditional transitions, retries, and batch processing.
-*   `examples/test3.js` - Advanced workflow integrating with a public API.
-*   `examples/hackernews_test.js` - Demonstrates the Hacker News integration.
-*   `examples/github_test.js` - Demonstrates the GitHub integration.
-*   `examples/stripe_test.js` - Demonstrates the Stripe integration.
-
-### Running the Examples
-
-To run the examples, you can use `bun run`:
-
-```bash
-bun run examples/test.js
-```
-
-**Note:** Some examples require API keys or other credentials. These can be set as environment variables or by replacing the placeholder values in the example files.
-=======
-*   [test.js](./test.js) - Basic flow and node usage.
-*   [test2.js](./test2.js) - Demonstrates async flows, conditional transitions, retries, and batch processing.
-*   [test3.js](./test3.js) - Advanced workflow integrating with a public API and chaining LLM-like responses.
-*   [test4.js](./test4.js) - Automated  Topic-specific article writing workflow pipeline.
->>>>>>> e5910cf35b9a2c74b0ef13d46f9d58a189aed6ad
+*   **Modular & Extensible:** Easily define custom nodes and compose them into complex flows.
+*   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution patterns.
+*   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows.
+*   **Retry Mechanisms:** Built-in support for retrying failed operations with configurable delays.
+*   **Conditional Transitions:** Define dynamic flow paths based on execution outcomes.
+*   **Built-in Nodes:** Comes with pre-built nodes for common tasks like LLM interactions, web scraping, and API integrations (GitHub, HackerNews, Stripe).
 
 ## Installation
 
-Install `qflow` using your favorite package manager:
+You can install `qflow` via npm or Bun:
 
-**NPM**
 ```bash
-npm install qflow
+npm install @fractal-solutions/qflow
+# or
+bun add @fractal-solutions/qflow
 ```
 
-**Yarn**
-```bash
-yarn add qflow
-```
+## Core Abstractions
 
-**Bun**
-```bash
-bun add qflow
-```
+`qflow` is built around a few core abstractions that allow you to define powerful and flexible workflows.
 
-## Usage
+### Node
 
-### Core Concepts
+The fundamental building block of any `qflow` workflow. A `Node` represents a single operation or step in your flow.
 
-Import the core `qflow` classes from the main entry point:
+*   `prep(shared)`: Prepares data for execution.
+*   `exec(prepRes)`: Executes the node's primary logic.
+*   `post(shared, prepRes, execRes)`: Processes the result of `exec`.
+*   `setParams(params)`: Sets parameters for the node.
+*   `next(node, action = "default")`: Chains this node to another, defining the next step in the flow.
+*   `transition(action)`: Initiates a conditional transition to another node.
+
+**Asynchronous Nodes (`AsyncNode`, `AsyncBatchNode`, `AsyncParallelBatchNode`)**
+For operations that involve I/O or are inherently asynchronous, `qflow` provides `AsyncNode` and its variants. These nodes use `async`/`await` for non-blocking execution.
+
+### Flow
+
+A `Flow` orchestrates the execution of a sequence of `Node`s. It defines the overall path and manages the transitions between nodes.
+
+*   `start(startNode)`: Sets the initial node for the flow. (Note: In practice, you often pass the start node directly to the `Flow` constructor).
+*   `_orch(shared, params)` / `_orchAsync(shared, params)`: Internal methods used to run the flow, especially when passing initial parameters to the starting node.
+
+**Batch Flows (`BatchFlow`, `AsyncBatchFlow`, `AsyncParallelBatchFlow`)**
+These flows are designed to process collections of items, running a sub-flow for each item in the batch. `AsyncParallelBatchFlow` executes batch items concurrently.
+
+### ConditionalTransition
+
+A helper class used with `Node.transition()` to define conditional branching in your flows.
+
+*   `to(targetNode)`: Specifies the target node for the transition.
+
+## Basic Usage & Examples
+
+### 1. Simple Node
+
+A basic example of defining and running a single node.
 
 ```javascript
-import { Node, Flow, AsyncNode, AsyncFlow } from 'qflow';
+import { Node } from '@fractal-solutions/qflow';
+
+class MySimpleNode extends Node {
+  prep(shared) {
+    console.log('Preparing data...');
+    return shared.inputData * 2;
+  }
+
+  exec(prepRes) {
+    console.log('Executing with prepared data:', prepRes);
+    return prepRes + 10;
+  }
+
+  post(shared, prepRes, execRes) {
+    console.log('Post-processing result:', execRes);
+    return { finalResult: execRes, originalInput: shared.inputData };
+  }
+}
+
+const node = new MySimpleNode();
+const result = node.run({ inputData: 5 });
+console.log('Node run result:', result);
+// Expected output:
+// Preparing data...
+// Executing with prepared data: 10
+// Post-processing result: 20
+// Node run result: { finalResult: 20, originalInput: 5 }
 ```
 
-### Integrated Nodes
+### 2. Simple Flow
 
-`qflow` also includes a variety of pre-built nodes for common integrations, such as LLMs. You can import these nodes from the `qflow/nodes` entry point:
+Chaining multiple nodes together to form a basic workflow.
 
 ```javascript
-import { OpenAILLMNode, GeminiLLMNode, DeepSeekLLMNode } from 'qflow/nodes';
+import { Node, Flow } from '@fractal-solutions/qflow';
+
+class AddNode extends Node {
+  exec(input) { return input + 5; }
+}
+
+class MultiplyNode extends Node {
+  exec(input) { return input * 2; }
+}
+
+const add = new AddNode();
+const multiply = new MultiplyNode();
+
+// Chain the nodes
+add.next(multiply);
+
+// Create the flow, starting with the 'add' node
+const flow = new Flow(add);
+
+// Run the flow. Initial parameters can be passed via the second argument to _orch.
+const result = flow._orch(null, { params: 10 });
+console.log('Flow result:', result); // Expected: 30 ((10 + 5) * 2)
 ```
 
-### Runtime Compatibility
+### 3. Conditional Flow
 
-`qflow` is designed to be compatible with modern JavaScript runtimes.
-
-**Node.js**
-
-When using `qflow` in a Node.js environment, you may need to use the `--experimental-modules` flag if you are using ES modules.
-
-**Deno**
-
-`qflow` can be used in Deno by importing it from a CDN that serves NPM packages, such as esm.sh:
+Using `transition()` for dynamic branching based on an action.
 
 ```javascript
-import { Node, Flow } from 'https://esm.sh/qflow';
-import { OpenAILLMNode } from 'https://esm.sh/qflow/nodes';
+import { Node, Flow } from '@fractal-solutions/qflow';
+
+class CheckValueNode extends Node {
+  exec(value) {
+    if (value > 10) {
+      return 'greater';
+    } else {
+      return 'lessOrEqual';
+    }
+  }
+}
+
+class GreaterNode extends Node {
+  exec() { return 'Value is greater than 10'; }
+}
+
+class LessOrEqualNode extends Node {
+  exec() { return 'Value is less than or equal to 10'; }
+}
+
+const check = new CheckValueNode();
+const greater = new GreaterNode();
+const lessOrEqual = new LessOrEqualNode();
+
+// Chain the nodes with conditional transitions
+check.transition('greater').to(greater);
+check.transition('lessOrEqual').to(lessOrEqual);
+
+// Create the flow, starting with the 'check' node
+const flow = new Flow(check);
+
+let result1 = flow._orch(null, { params: 15 }); // Pass params directly to _orch
+console.log(result1); // Expected: Value is greater than 10
+
+let result2 = flow._orch(null, { params: 7 });
+console.log(result2); // Expected: Value is less than or equal to 10
 ```
 
+### 4. Asynchronous Flow
+
+Handling asynchronous operations within a flow.
+
+```javascript
+import { AsyncNode, AsyncFlow } from '@fractal-solutions/qflow';
+
+class FetchDataNode extends AsyncNode {
+  async execAsync(url) {
+    console.log(`Fetching data from: ${url}`);
+    // Simulate an API call
+    return new Promise(resolve => setTimeout(() => resolve(`Data from ${url}`), 100));
+  }
+}
+
+class ProcessDataNode extends AsyncNode {
+  async execAsync(data) {
+    console.log(`Processing: ${data}`);
+    return data.toUpperCase();
+  }
+}
+
+const fetchNode = new FetchDataNode();
+const processNode = new ProcessDataNode();
+
+// Chain the nodes
+fetchNode.next(processNode);
+
+// Create the async flow, starting with the 'fetchNode'
+const asyncFlow = new AsyncFlow(fetchNode);
+
+async function runAsyncFlow() {
+  // Run the flow, passing the URL as an initial parameter to the first node
+  const result = await asyncFlow._orchAsync(null, { params: 'https://api.example.com/data' });
+  console.log('Async Flow Result:', result);
+}
+
+runAsyncFlow();
+// Expected output:
+// Fetching data from: https://api.example.com/data
+// Processing: Data from https://api.example.com/data
+// Async Flow Result: DATA FROM HTTPS://API.EXAMPLE.COM/DATA
+```
+
+### 5. Batch Processing
+
+Processing multiple items through a flow.
+
+```javascript
+import { Node, BatchFlow } from '@fractal-solutions/qflow';
+
+class ProcessItemNode extends Node {
+  exec(item) {
+    return `Processed: ${item}`;
+  }
+}
+
+const processItem = new ProcessItemNode();
+
+// Create the batch flow, starting with the 'processItem' node
+const batchFlow = new BatchFlow(processItem);
+
+// Define the items to process. For BatchFlow, the prep method should return an array.
+batchFlow.prep = () => ['itemA', 'itemB', 'itemC'];
+
+const results = batchFlow.run({}); // Run the batch flow
+console.log('Batch Flow Results:', results);
+// Expected output:
+// Batch Flow Results: [ 'Processed: itemA', 'Processed: itemB', 'Processed: itemC' ]
+```
+
+### 6. Retry Mechanism
+
+Configuring a node to retry on failure.
+
+```javascript
+import { Node } from '@fractal-solutions/qflow';
+
+let attempt = 0;
+class FlakyNode extends Node {
+  constructor() {
+    super(3, 0.1); // maxRetries = 3, wait = 0.1 seconds
+  }
+
+  exec(input) {
+    attempt++;
+    console.log(`FlakyNode attempt ${attempt} for input: ${input}`);
+    if (attempt < 3) {
+      throw new Error('Simulated failure');
+    }
+    return `Success on attempt ${attempt}`;
+  }
+
+  execFallback(prepRes, error) {
+    console.error('FlakyNode failed after retries:', error.message);
+    return 'Fallback result due to persistent failure';
+  }
+}
+
+const flakyNode = new FlakyNode();
+const result = flakyNode.run('test');
+console.log('Flaky Node Result:', result);
+// Expected output (may vary slightly due to timing):
+// FlakyNode attempt 1 for input: test
+// FlakyNode attempt 2 for input: test
+// FlakyNode attempt 3 for input: test
+// Flaky Node Result: Success on attempt 3
+```
+
+## Built-in Nodes
+
+`qflow` comes with a set of pre-built nodes to accelerate common development tasks. These are available via `@fractal-solutions/qflow/nodes`.
+
+*   **`LLMNode`**: Interact with Large Language Models (e.g., for text generation, summarization).
+*   **`HackerNewsNode`**: Fetch data from the Hacker News API.
+*   **`GitHubNode`**: Interact with the GitHub API (e.g., fetch repository details, user info).
+*   **`StripeNode`**: Integrate with the Stripe API for payment processing.
+*   **`WebScraperNode`**: Perform web scraping tasks to extract data from web pages.
+
+**Example: Using a Built-in Node (WebScraperNode)**
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { ScrapeURLNode } from '@fractal-solutions/qflow/nodes'; // Correct import for WebScraperNode
+
+// Define a flow to scrape a URL and display its title
+class ScrapeTitleFlow extends AsyncFlow {
+  constructor() {
+    super();
+    const scraper = new ScrapeURLNode(); // Use ScrapeURLNode as per examples
+    scraper.setParams({
+      url: 'https://example.com',
+      selectors: {
+        title: 'h1' // Select the h1 tag
+      }
+    });
+    this.start(scraper); // Set the starting node for the flow
+  }
+}
+
+async function runScrapeFlow() {
+  const flow = new ScrapeTitleFlow();
+  // Run the flow. The result will be the output of the last node in the flow.
+  const result = await flow.runAsync({});
+  console.log('Scraped Title:', result.title);
+}
+
+runScrapeFlow();
+// Expected output (will vary based on example.com content):
+// Scraped Title: Example Domain
+```
+
+## Integration
+
+`qflow` is designed to be highly flexible and can be integrated into various application architectures:
+
+*   **CLI Tools:** Build powerful command-line tools that automate complex tasks.
+*   **Web Servers (e.g., Express.js, Koa):** Implement API endpoints that trigger workflows for data processing, background jobs, or agent-driven responses.
+*   **Background Services:** Run long-running processes or scheduled tasks.
+*   **Browser Applications:** Create interactive, client-side workflows (ensure appropriate polyfills for `SharedArrayBuffer` if using synchronous `wait` in `Node`).
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a pull request.
+We welcome contributions! Please see our GitHub repository for more details on how to contribute.
+
+---
