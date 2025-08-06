@@ -432,6 +432,8 @@ The examples above cover the core functionalities of `qflow`. For more advanced 
 *   **Stripe:** Creating charges and retrieving account balances.
 *   **WebScraper:** Fetching and processing web content.
 *   **LLMs (DeepSeek, OpenAI, Gemini):** Building powerful AI-driven workflows.
+*   **Shell:** Executing shell commands.
+*   **FileSystem:** Reading, writing, and appending files, and listing directories.
 
 These examples are a great resource for understanding how to leverage `qflow` to its full potential.
 
