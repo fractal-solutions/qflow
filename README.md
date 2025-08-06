@@ -425,7 +425,7 @@ class HereticNode extends DeepSeekLLMNode {
 
 ## Exploring More Examples
 
-The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the `examples/` folder in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
+The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
