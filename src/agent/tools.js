@@ -1,0 +1,226 @@
+
+export function getToolDefinitions() {
+  return [
+    {
+      name: "llm_reasoning",
+      description: "A powerful language model for general reasoning, problem-solving, and generating text. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          }
+        },
+        required: ["prompt"]
+      }
+    },
+    {
+      name: "duckduckgo_search",
+      description: "Performs a web search using DuckDuckGo's HTML-only interface. Use this to find information on the internet when you don't have a specific URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The search query."
+          }
+        },
+        required: ["query"]
+      }
+    },
+    {
+      name: "google_search",
+      description: "Performs a web search using the Google Custom Search JSON API. Requires an API key and CSE ID. Use this for more robust and reliable web searches.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The search query."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your Google API Key."
+          },
+          cseId: {
+            type: "string",
+            description: "Your Custom Search Engine ID."
+          }
+        },
+        required: ["query", "apiKey", "cseId"]
+      }
+    },
+    {
+      name: "shell_command",
+      description: "Executes a shell command on the local system. Use this for system interactions, running scripts, or installing packages. Be cautious with commands that modify the system.",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "The full shell command to execute (e.g., 'ls -l', 'npm install cheerio')."
+          }
+        },
+        required: ["command"]
+      }
+    },
+    {
+      name: "read_file",
+      description: "Reads the content of a specified file from the local filesystem.",
+      parameters: {
+        type: "object",
+        properties: {
+          filePath: {
+            type: "string",
+            description: "The absolute path to the file to read."
+          }
+        },
+        required: ["filePath"]
+      }
+    },
+    {
+      name: "write_file",
+      description: "Writes content to a specified file in the local filesystem. Creates the file if it doesn't exist, overwrites if it does.",
+      parameters: {
+        type: "object",
+        properties: {
+          filePath: {
+            type: "string",
+            description: "The absolute path to the file to write to."
+          },
+          content: {
+            type: "string",
+            description: "The content to write to the file."
+          }
+        },
+        required: ["filePath", "content"]
+      }
+    },
+    {
+      name: "append_file",
+      description: "Appends content to an existing file in the local filesystem. Creates the file if it doesn't exist.",
+      parameters: {
+        type: "object",
+        properties: {
+          filePath: {
+            type: "string",
+            description: "The absolute path to the file to append to."
+          },
+          content: {
+            type: "string",
+            description: "The content to append to the file."
+          }
+        },
+        required: ["filePath", "content"]
+      }
+    },
+    {
+      name: "list_directory",
+      description: "Lists the files and subdirectories within a specified directory.",
+      parameters: {
+        type: "object",
+        properties: {
+          directoryPath: {
+            type: "string",
+            description: "The absolute path to the directory to list."
+          }
+        },
+        required: ["directoryPath"]
+      }
+    },
+    {
+      name: "http_request",
+      description: "Makes a generic HTTP request (GET, POST, PUT, DELETE) to any URL. Can be used to interact with REST APIs.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The full URL of the API endpoint."
+          },
+          method: {
+            type: "string",
+            enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+            default: "GET",
+            description: "The HTTP method to use."
+          },
+          headers: {
+            type: "object",
+            description: "Custom headers for the request (key-value pairs)."
+          },
+          body: {
+            type: "object", // Can be any type, but object is common for JSON
+            description: "The request payload. If an object, it will be stringified as JSON."
+          },
+          auth: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["bearer", "basic"],
+                description: "The type of authentication."
+              },
+              token: {
+                type: "string",
+                description: "The bearer token."
+              },
+              username: {
+                type: "string",
+                description: "The username for basic auth."
+              },
+              password: {
+                type: "string",
+                description: "The password for basic auth."
+              }
+            },
+            description: "Authentication configuration."
+          }
+        },
+        required: ["url"]
+      }
+    },
+    {
+      name: "web_scraper",
+      description: "Fetches the HTML content of a given URL. Use this to get the raw content of a webpage.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The URL to scrape."
+          }
+        },
+        required: ["url"]
+      }
+    },
+    {
+      name: "user_input",
+      description: "Prompts the user for input and waits for their response. Use this to ask the human user for clarification or approval.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The message to display to the user."
+          }
+        },
+        required: ["prompt"]
+      }
+    },
+    {
+      name: "finish",
+      description: "Call this tool when you have successfully achieved the goal or if you are unable to proceed further. This will end the agent's execution.",
+      parameters: {
+        type: "object",
+        properties: {
+          output: {
+            type: "string",
+            description: "A summary of the final result or the reason for stopping."
+          }
+        },
+        required: ["output"]
+      }
+    }
+  ];
+}
