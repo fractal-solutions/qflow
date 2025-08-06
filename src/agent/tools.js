@@ -16,6 +16,28 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "ollama_llm_reasoning",
+      description: "A powerful local language model for general reasoning, problem-solving, and generating text, running via Ollama. Use this when you need to think, plan, or generate human-like responses locally. Do NOT use this for external actions like searching the web or interacting with files.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the local Ollama language model."
+          },
+          model: {
+            type: "string",
+            description: "The Ollama model name to use (e.g., 'llama2', 'gemma:2b'). Defaults to 'llama2'."
+          },
+          baseUrl: {
+            type: "string",
+            description: "The base URL of the Ollama API (e.g., 'http://localhost:11434'). Defaults to 'http://localhost:11434'."
+          }
+        },
+        required: ["prompt"]
+      }
+    },
+    {
       name: "duckduckgo_search",
       description: "Performs a web search using DuckDuckGo's HTML-only interface. Use this to find information on the internet when you don't have a specific URL.",
       parameters: {

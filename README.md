@@ -658,8 +658,8 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
 The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
-*   **LLMs (DeepSeek, OpenAI, Gemini):** The core of agentic behavior.
-    *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode` or `AgentOpenAILLMNode`.
+*   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
+    *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
 *   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
 *   **Shell:** For system-level interaction and execution.

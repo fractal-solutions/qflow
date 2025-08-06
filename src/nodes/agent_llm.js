@@ -1,4 +1,4 @@
-import { DeepSeekLLMNode, OpenAILLMNode } from './llm.js';
+import { DeepSeekLLMNode, OpenAILLMNode, GeminiLLMNode, OllamaLLMNode } from './llm.js';
 
 /**
  * A specialized DeepSeekLLMNode for use within the AgentNode.
@@ -136,4 +136,116 @@ export class AgentOpenAILLMNode extends OpenAILLMNode {
   }
 
   // preparePrompt is not needed as execAsync handles the prompt directly
+}
+
+export class AgentGeminiLLMNode extends GeminiLLMNode {
+  async execAsync() {
+    const messages = JSON.parse(this.params.prompt);
+    const { apiKey } = this.params;
+
+    if (!messages || messages.length === 0) {
+      throw new Error('Messages are required for AgentGeminiLLMNode.');
+    }
+    if (!apiKey) {
+      throw new Error('Google Gemini API Key is required.');
+    }
+
+    console.log(`[AgentGemini] Sending prompt to Gemini...`);
+
+    try {
+      const contents = messages.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }));
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: contents,
+          safetySettings: [
+            {
+              "category": "HARM_CATEGORY_HARASSMENT",
+              "threshold": "BLOCK_NONE"
+            },
+            {
+              "category": "HARM_CATEGORY_HATE_SPEECH",
+              "threshold": "BLOCK_NONE"
+            },
+            {
+              "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              "threshold": "BLOCK_NONE"
+            },
+            {
+              "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+              "threshold": "BLOCK_NONE"
+            },
+          ],
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Gemini API error: ${response.status} - ${errorData.error.message}`);
+      }
+
+      const data = await response.json();
+      const llmResponse = data.candidates[0].content.parts[0].text.trim();
+      console.log(`[AgentGemini] Received response from Gemini.`);
+      return llmResponse;
+    } catch (error) {
+      console.error('AgentGeminiLLMNode: Error during API call:', error);
+      throw error;
+    }
+  }
+}
+
+export class AgentOllamaLLMNode extends OllamaLLMNode {
+  preparePrompt(shared) {
+    const messages = JSON.parse(this.params.prompt);
+    // Ollama's /api/generate endpoint expects a single prompt string,
+    // so we'll concatenate the conversation history into a single prompt.
+    // A more sophisticated approach might use a chat-specific endpoint if available.
+    this.params.prompt = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n') + '\nassistant:';
+  }
+
+  async execAsync(prepRes, shared) {
+    this.preparePrompt(shared);
+    const { prompt, model = 'llama2', baseUrl = 'http://localhost:11434' } = this.params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required for AgentOllamaLLMNode.');
+    }
+
+    console.log(`[AgentOllama] Sending prompt to ${model} at ${baseUrl}...`);
+
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Ollama API error: ${response.status} - ${errorData.error}`);
+      }
+
+      const data = await response.json();
+      const llmResponse = data.response.trim();
+      console.log(`[AgentOllama] Received response from ${model}.`);
+      return llmResponse;
+    } catch (error) {
+      console.error('AgentOllamaLLMNode: Error during API call:', error);
+      throw error;
+    }
+  }
 }

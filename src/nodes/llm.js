@@ -109,7 +109,7 @@ export class GeminiLLMNode extends AsyncNode {
       throw new Error('Google Gemini API Key is required.');
     }
 
-    console.log(`GeminiLLMNode: Sending prompt to Gemini: \"${prompt.substring(0, 50)}\"...`);
+    console.log(`GeminiLLMNode: Sending prompt to Gemini: "${prompt.substring(0, 50)}"...`);
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
@@ -129,11 +129,60 @@ export class GeminiLLMNode extends AsyncNode {
 
       const data = await response.json();
       const llmResponse = data.candidates[0].content.parts[0].text.trim();
-      console.log(`GeminiLLMNode: Received response: \"${llmResponse.substring(0, 50)}\"...`);
+      console.log(`GeminiLLMNode: Received response: "${llmResponse.substring(0, 50)}"...`);
       return llmResponse; // Return the LLM's response
     } catch (error) {
       console.error('GeminiLLMNode: Error during API call:', error);
       throw error; // Re-throw to trigger qflow's retry/fallback
+    }
+  }
+}
+
+export class OllamaLLMNode extends AsyncNode {
+  constructor(maxRetries = 3, wait = 2) {
+    super(maxRetries, wait);
+  }
+
+  preparePrompt(shared) {
+    // Default implementation, can be overridden by subclasses
+    // For direct LLM calls, prompt is usually set directly via setParams
+  }
+
+  async execAsync(prepRes, shared) {
+    this.preparePrompt(shared); // Allow subclasses to prepare prompt
+    const { prompt, model = 'llama2', baseUrl = 'http://localhost:11434' } = this.params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required for OllamaLLMNode.');
+    }
+
+    console.log(`[Ollama] Sending prompt to ${model} at ${baseUrl}: "${prompt.substring(0, 50)}"...`);
+
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Ollama API error: ${response.status} - ${errorData.error}`);
+      }
+
+      const data = await response.json();
+      const llmResponse = data.response.trim();
+      console.log(`[Ollama] Received response from ${model}: "${llmResponse.substring(0, 50)}"...`);
+      return llmResponse;
+    } catch (error) {
+      console.error('OllamaLLMNode: Error during API call:', error);
+      throw error;
     }
   }
 }
