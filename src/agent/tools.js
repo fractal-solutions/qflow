@@ -38,6 +38,41 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "data_extractor",
+      description: "Extracts structured data from input content (HTML, JSON, or plain text) using selectors, JSON paths, or regular expressions.",
+      parameters: {
+        type: "object",
+        properties: {
+          input: {
+            type: "string",
+            description: "The content string from which to extract data."
+          },
+          type: {
+            type: "string",
+            enum: ["html", "json", "text"],
+            description: "The type of content to extract from (html, json, or text)."
+          },
+          selector: {
+            type: "string",
+            description: "Required for 'html' type. A CSS selector to target elements."
+          },
+          jsonPath: {
+            type: "string",
+            description: "Required for 'json' type. A dot-notation path to extract data (e.g., 'data.items[0].name')."
+          },
+          regex: {
+            type: "string",
+            description: "Required for 'text' type. A regular expression to match and extract data."
+          },
+          group: {
+            type: "number",
+            description: "Optional for 'text' type. The capturing group index to return from the regex match."
+          }
+        },
+        required: ["input", "type"]
+      }
+    },
+    {
       name: "duckduckgo_search",
       description: "Performs a web search using DuckDuckGo's HTML-only interface. Use this to find information on the internet when you don't have a specific URL.",
       parameters: {

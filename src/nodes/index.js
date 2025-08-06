@@ -1,5 +1,6 @@
 export * from './llm.js';
 export * from './agent_llm.js';
+export * from './data_extractor.js';
 export * from './hackernews.js';
 export * from './github.js';
 export * from './stripe.js';
