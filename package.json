@@ -41,6 +41,9 @@
     "url": "https://github.com/fractal-solutions/qflow/issues"
   },
   "homepage": "https://github.com/fractal-solutions/qflow#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

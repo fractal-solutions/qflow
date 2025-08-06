@@ -495,6 +495,42 @@ const flow = new AsyncFlow(getPost);
 await flow.runAsync({});
 ```
 
+### 11. Web Search Example
+
+Performing web searches using both a free metasearch engine and a commercial API.
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { SearxNGSearchNode, GoogleSearchNode } from '@fractal-solutions/qflow/nodes';
+
+// Example 1: Using SearxNG (no API key needed)
+const searxSearch = new SearxNGSearchNode();
+searxSearch.setParams({ query: 'qflow library github' });
+searxSearch.postAsync = async (shared, prepRes, execRes) => {
+  console.log('--- SearxNG Search Results (Top 3) ---');
+  execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
+  return 'default';
+};
+
+// Example 2: Using Google Custom Search (requires API key and CSE ID)
+// const googleSearch = new GoogleSearchNode();
+// googleSearch.setParams({
+//   query: 'qflow framework benefits',
+//   apiKey: process.env.GOOGLE_API_KEY, // Set this env var
+//   cseId: process.env.GOOGLE_CSE_ID   // Set this env var
+// });
+// googleSearch.postAsync = async (shared, prepRes, execRes) => {
+//   console.log('--- Google Search Results (Top 3) ---');
+//   execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
+//   return 'default';
+// };
+
+// Chain them or run independently
+const flow = new AsyncFlow(searxSearch);
+await flow.runAsync({});
+// await new AsyncFlow(googleSearch).runAsync({}); // Uncomment to run Google Search
+```
+
 
 ## Exploring More Examples
 
@@ -505,6 +541,9 @@ The examples above cover the core functionalities of `qflow`. For more advanced 
 *   **HTTP:** For universal API access.
 *   **FileSystem:** For reading and writing local data.
 *   **User Input:** For human-in-the-loop control.
+*   **Web Search:** Discovering information on the web using either:
+    *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
+    *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
 *   **WebScraper:** For targeted data extraction.
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
