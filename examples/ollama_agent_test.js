@@ -1,4 +1,4 @@
-import { AsyncFlow } from '@fractal-solutions/qflow';
+import { AsyncFlow } from '../src/qflow.js';
 import {
   AgentOllamaLLMNode,
   DuckDuckGoSearchNode,
@@ -9,11 +9,11 @@ import {
   ScrapeURLNode,
   UserInputNode,
   AgentNode
-} from '@fractal-solutions/qflow/nodes';
+} from '../src/nodes';
 
 // Configuration for Ollama
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma:2b'; // Use gemma:2b as a common small model
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b'; 
 
 (async () => {
   console.log('--- Running AgentNode with AgentOllamaLLMNode Test Workflow ---');
