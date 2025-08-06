@@ -501,34 +501,36 @@ Performing web searches using both a free metasearch engine and a commercial API
 
 ```javascript
 import { AsyncFlow } from '@fractal-solutions/qflow';
-import { SearxNGSearchNode, GoogleSearchNode } from '@fractal-solutions/qflow/nodes';
+import { DuckDuckGoSearchNode, GoogleSearchNode } from '@fractal-solutions/qflow/nodes';
 
-// Example 1: Using SearxNG (no API key needed)
-const searxSearch = new SearxNGSearchNode();
-searxSearch.setParams({ query: 'qflow library github' });
-searxSearch.postAsync = async (shared, prepRes, execRes) => {
-  console.log('--- SearxNG Search Results (Top 3) ---');
+// Example 1: Using DuckDuckGo (no API key needed)
+const ddgSearch = new DuckDuckGoSearchNode();
+ddgSearch.setParams({ query: 'qflow library github' });
+ddgSearch.postAsync = async (shared, prepRes, execRes) => {
+  console.log('--- DuckDuckGo Search Results (Top 3) ---');
   execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
   return 'default';
 };
 
 // Example 2: Using Google Custom Search (requires API key and CSE ID)
-// const googleSearch = new GoogleSearchNode();
-// googleSearch.setParams({
-//   query: 'qflow framework benefits',
-//   apiKey: process.env.GOOGLE_API_KEY, // Set this env var
-//   cseId: process.env.GOOGLE_CSE_ID   // Set this env var
-// });
-// googleSearch.postAsync = async (shared, prepRes, execRes) => {
-//   console.log('--- Google Search Results (Top 3) ---');
-//   execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
-//   return 'default';
-// };
+const googleSearch = new GoogleSearchNode();
+googleSearch.setParams({
+  query: 'qflow framework benefits',
+  apiKey: process.env.GOOGLE_API_KEY, // Set this env var
+  cseId: process.env.GOOGLE_CSE_ID   // Set this env var
+});
+googleSearch.postAsync = async (shared, prepRes, execRes) => {
+  console.log('--- Google Search Results (Top 3) ---');
+  execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
+  return 'default';
+};
 
 // Chain them or run independently
-const flow = new AsyncFlow(searxSearch);
-await flow.runAsync({});
-// await new AsyncFlow(googleSearch).runAsync({}); // Uncomment to run Google Search
+const flow1 = new AsyncFlow(ddgSearch);
+await flow1.runAsync({});
+
+const flow2 = new AsyncFlow(googleSearch);
+await flow2.runAsync({});
 ```
 
 
