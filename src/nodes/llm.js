@@ -8,12 +8,12 @@ export class DeepSeekLLMNode extends AsyncNode {
   }
 
   // This will be implemented by subclasses
-  preparePrompt() {
+  preparePrompt(shared) {
     throw new Error("preparePrompt must be implemented by subclasses");
   }
 
-  async execAsync() {
-    this.preparePrompt(); // Set the prompt
+  async execAsync(prepRes, shared) {
+    this.preparePrompt(shared); // Set the prompt, passing shared state
     const { prompt, keyword, apiKey } = this.params;
 
     if (!prompt) {

@@ -1,7 +1,7 @@
 import { AsyncNode, AsyncFlow } from '../src/qflow.js';
 import { DeepSeekLLMNode } from '../src/nodes/llm.js';
 
-
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 // --- Workflow Step Nodes (Simplified for single pipeline instance) ---
 
 // 1. Generate an article outline
@@ -61,11 +61,14 @@ class SaveArticleNode extends AsyncNode {
 
 // --- Pipeline Factory ---
 
-function createSeoArticlePipeline() {
+function createSeoArticlePipeline(apiKey) {
   // Create fresh instances for each pipeline
   const outlineNode = new GenerateOutlineNode();
+  outlineNode.setParams({ apiKey });
   const contentNode = new GenerateContentNode();
+  contentNode.setParams({ apiKey });
   const reviewNode = new FinalReviewNode();
+  reviewNode.setParams({ apiKey });
   const saveNode = new SaveArticleNode();
 
   // Define the sequence of the workflow
@@ -90,7 +93,7 @@ function createSeoArticlePipeline() {
   
   let keywords = [];
   try {
-    const keywordsText = await file('keywords.txt').text();
+    const keywordsText = await Bun.file('./keywords.txt').text();
     keywords = keywordsText.split('\n').filter(k => k.trim() !== '');
     console.log(`[Pipeline] Found ${keywords.length} keywords.`);
   } catch (error) {
@@ -100,9 +103,10 @@ function createSeoArticlePipeline() {
 
   const pipelinePromises = keywords.map(keyword => {
     console.log(`[Pipeline] Creating and starting pipeline for: \"${keyword}\"`);
-    const pipeline = createSeoArticlePipeline();
+    const pipeline = createSeoArticlePipeline(DEEPSEEK_API_KEY);
     // The `_orchAsync` method is used to pass initial parameters to the flow.
     // It's an internal method, but necessary for this pattern.
+    // return pipeline.runAsync({}, { keyword });
     return pipeline._orchAsync({}, { keyword });
   });
 

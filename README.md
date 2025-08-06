@@ -1,17 +1,18 @@
 # qflow: A Lightweight and Flexible JavaScript Workflow and Agent Library
 
-`qflow` is a lightweight and flexible JavaScript library designed for creating and managing complex workflows and autonomous agents. Inspired by the simplicity and power of flow-based programming, `qflow` provides a minimalist yet expressive API to define sequences of operations, handle data flow, and manage execution, both synchronously and asynchronously.
+`qflow` is a lightweight and flexible JavaScript library designed for creating and managing complex workflows and autonomous agents. It provides a minimalist yet expressive API to define sequences of operations, manage data flow, and orchestrate execution, supporting both synchronous and asynchronous patterns.
 
-With zero external dependencies for its core functionality, `qflow` is built for performance and ease of integration into any JavaScript environment, from Node.js backends to browser-based applications.
+With zero external dependencies for its core functionality, `qflow` is built for performance and seamless integration into any JavaScript environment, from Node.js backends to browser-based applications.
 
 ## Features
 
-*   **Modular & Extensible:** Easily define custom nodes and compose them into complex flows.
-*   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution patterns.
-*   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows.
+*   **Modular & Extensible:** Easily define custom nodes and compose them into complex, reusable flows.
+*   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution models.
+*   **Shared State Management:** Pass and manipulate data across nodes using a central, mutable `shared` object.
+*   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
 *   **Retry Mechanisms:** Built-in support for retrying failed operations with configurable delays.
 *   **Conditional Transitions:** Define dynamic flow paths based on execution outcomes.
-*   **Built-in Nodes:** Comes with pre-built nodes for common tasks like LLM interactions, web scraping, and API integrations (GitHub, HackerNews, Stripe).
+*   **Built-in Integrations:** Comes with pre-built nodes for common tasks like LLM interactions, web scraping, and popular API integrations (GitHub, HackerNews, Stripe).
 
 ## Installation
 
@@ -25,41 +26,49 @@ bun add @fractal-solutions/qflow
 
 ## Core Abstractions
 
-`qflow` is built around a few core abstractions that allow you to define powerful and flexible workflows.
+`qflow` is built around a few core abstractions that enable powerful and flexible workflow definitions.
+
+### Shared State (`shared` object)
+
+A central, mutable JavaScript object that is passed through the entire flow. Nodes can read from and write to this `shared` object, making it the primary mechanism for passing data and context between different nodes in a workflow. This is particularly useful for accumulating results or maintaining state across multiple steps.
 
 ### Node
 
-The fundamental building block of any `qflow` workflow. A `Node` represents a single operation or step in your flow.
+The fundamental building block of any `qflow` workflow. A `Node` represents a single, atomic operation or step in your flow.
 
-*   `prep(shared)`: Prepares data for execution.
+*   `prep(shared)`: Prepares data for execution. Receives the `shared` object.
 *   `exec(prepRes)`: Executes the node's primary logic.
-*   `post(shared, prepRes, execRes)`: Processes the result of `exec`.
-*   `setParams(params)`: Sets parameters for the node.
+*   `post(shared, prepRes, execRes)`: Processes the result of `exec`. Receives the `shared` object.
+*   `setParams(params)`: Configures the node with specific parameters. Parameters are accessible via `this.params`.
 *   `next(node, action = "default")`: Chains this node to another, defining the next step in the flow.
-*   `transition(action)`: Initiates a conditional transition to another node.
+*   `transition(action)`: Initiates a conditional transition to another node, allowing for dynamic branching.
 
 **Asynchronous Nodes (`AsyncNode`, `AsyncBatchNode`, `AsyncParallelBatchNode`)**
-For operations that involve I/O or are inherently asynchronous, `qflow` provides `AsyncNode` and its variants. These nodes use `async`/`await` for non-blocking execution.
+For operations that involve I/O or are inherently asynchronous, `qflow` provides `AsyncNode` and its variants. These nodes leverage `async`/`await` for non-blocking execution. When working within `AsyncFlow`s, it's crucial to implement the `async` versions of the lifecycle methods:
+*   `prepAsync(shared)`
+*   `execAsync(prepRes, shared)`
+*   `postAsync(shared, prepRes, execRes)`
+*   `preparePrompt(shared)` (specifically for LLM nodes, allowing prompt construction based on `shared` state)
+
+These `async` methods ensure proper awaiting and data propagation within asynchronous workflows.
 
 ### Flow
 
 A `Flow` orchestrates the execution of a sequence of `Node`s. It defines the overall path and manages the transitions between nodes.
 
-*   `start(startNode)`: Sets the initial node for the flow. (Note: In practice, you often pass the start node directly to the `Flow` constructor).
-*   `_orch(shared, params)` / `_orchAsync(shared, params)`: Internal methods used to run the flow, especially when passing initial parameters to the starting node.
+*   `start(startNode)`: Sets the initial node for the flow. (Note: In practice, you often pass the start node directly to the `Flow` constructor for conciseness).
+*   `_orch(shared, params)` / `_orchAsync(shared, params)`: Internal methods used to run the flow, especially when passing initial parameters to the starting node. For most use cases, `flow.run(sharedState)` or `await flow.runAsync(sharedState)` is sufficient.
 
 **Batch Flows (`BatchFlow`, `AsyncBatchFlow`, `AsyncParallelBatchFlow`)**
-These flows are designed to process collections of items, running a sub-flow for each item in the batch. `AsyncParallelBatchFlow` executes batch items concurrently.
+These specialized flows are designed to process collections of items. They run a sub-flow for each item in the batch. `AsyncParallelBatchFlow` is particularly useful for concurrently processing batch items, significantly speeding up operations.
 
 ### ConditionalTransition
 
-A helper class used with `Node.transition()` to define conditional branching in your flows.
+A helper class used in conjunction with `Node.transition()` to define conditional branching within your workflows.
 
-*   `to(targetNode)`: Specifies the target node for the transition.
+*   `to(targetNode)`: Specifies the target node for the transition based on the action returned by the preceding node.
 
 ## Basic Usage & Examples
-
-More detailed implementations available in the [examples](examples/) directory.
 
 ### 1. Simple Node
 
@@ -136,19 +145,15 @@ flow.run({});
 
 ### 3. Conditional Flow
 
-Using `transition()` for dynamic branching based on an action.
+Using `transition()` for dynamic branching based on an action. This example demonstrates configuring a node using `setParams` for a cleaner API.
 
 ```javascript
 import { Node, Flow } from '@fractal-solutions/qflow';
 
 class ConditionalNode extends Node {
-  constructor(shouldGoLeft) {
-    super();
-    this.shouldGoLeft = shouldGoLeft;
-  }
-
   exec() {
-    if (this.shouldGoLeft) {
+    // Access shouldGoLeft from this.params, which is set via setParams
+    if (this.params.shouldGoLeft) {
       console.log('ConditionalNode: Going left');
       return 'left';
     } else {
@@ -168,7 +173,9 @@ function MessageNode(message) {
   })();
 }
 
-const conditionalNode = new ConditionalNode(true);
+const conditionalNode = new ConditionalNode();
+conditionalNode.setParams({ shouldGoLeft: true }); // Configure via setParams
+
 const leftNode = MessageNode('Went Left');
 const rightNode = MessageNode('Went Right');
 
@@ -181,7 +188,9 @@ conditionalFlow.run({});
 // ConditionalNode: Going left
 // Went Left
 
-const conditionalNode2 = new ConditionalNode(false);
+const conditionalNode2 = new ConditionalNode();
+conditionalNode2.setParams({ shouldGoLeft: false }); // Configure via setParams
+
 conditionalNode2.next(leftNode, 'left');
 conditionalNode2.next(rightNode, 'right');
 const conditionalFlow2 = new Flow(conditionalNode2);
@@ -309,47 +318,187 @@ retryFlow.run({});
 // RetryNode: Succeeded!
 ```
 
-## Built-in Nodes
+### 7. Inter-Node Communication with Shared State (Advanced Example)
 
-`qflow` comes with a set of pre-built nodes to accelerate common development tasks. These are available via `@fractal-solutions/qflow/nodes`.
-
-*   **`LLMNode`**: Interact with Large Language Models (e.g., for text generation, summarization).
-*   **`HackerNewsNode`**: Fetch data from the Hacker News API.
-*   **`GitHubNode`**: Interact with the GitHub API (e.g., fetch repository details, user info).
-*   **`StripeNode`**: Integrate with the Stripe API for payment processing.
-*   **`WebScraperNode`**: Perform web scraping tasks to extract data from web pages.
-
-**Example: Using a Built-in Node (WebScraperNode)**
+Demonstrates how to pass data between nodes using the `shared` object, particularly important in asynchronous workflows. This example showcases two LLM nodes interacting, where the output of the first influences the input of the second.
 
 ```javascript
 import { AsyncFlow } from '@fractal-solutions/qflow';
-import { ScrapeURLNode } from '@fractal-solutions/qflow/nodes'; // Correct import for WebScraperNode
+import { DeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
 
-// Define a flow to scrape a URL and display its title
-class ScrapeTitleFlow extends AsyncFlow {
-  constructor() {
-    super();
-    const scraper = new ScrapeURLNode(); // Use ScrapeURLNode as per examples
-    scraper.setParams({
-      url: 'https://example.com',
-      selectors: {
-        title: 'h1' // Select the h1 tag
-      }
-    });
-    this.start(scraper); // Set the starting node for the flow
+// Node representing the "Apologist" personality
+class ApologistNode extends DeepSeekLLMNode {
+  // preparePrompt now receives the shared object
+  preparePrompt(shared) {
+    const { topic } = this.params;
+    this.params.prompt = `You are an eloquent apologist. Your task is to defend the following topic with a concise, positive, and persuasive argument, no more than 3 sentences: "${topic}"`;
+  }
+
+  // postAsync is used to ensure shared state is updated after async execution
+  async postAsync(shared, prepRes, execRes) {
+    shared.apologistArgument = execRes; // Store the argument in shared state
+    return 'default'; // Signal default transition
   }
 }
 
-async function runScrapeFlow() {
-  const flow = new ScrapeTitleFlow();
-  // Run the flow. The result will be the output of the last node in the flow.
-  const result = await flow.runAsync({});
-  console.log('Scraped Title:', result.title);
+// Node representing the "Heretic" personality
+class HereticNode extends DeepSeekLLMNode {
+  // preparePrompt now receives the shared object
+  preparePrompt(shared) {
+    const { apologistArgument } = shared; // Access the argument from shared state
+
+    if (!apologistArgument) {
+      throw new Error("Apologist's argument is missing from shared state. Cannot critique.");
+    }
+
+    this.params.prompt = `You are a skeptical heretic. Your task is to critically analyze and briefly refute or find a flaw in the following argument, no more than 3 sentences: "${apologistArgument}"`;
+  }
+
+  // postAsync is used to ensure shared state is updated after async execution
+  async postAsync(shared, prepRes, execRes) {
+    shared.hereticCritique = execRes; // Store the critique in shared state
+    return execRes; // Return the critique as the node's result
+  }
 }
 
-runScrapeFlow();
-// Expected output (will vary based on example.com content):
-// Scraped Title: Example Domain
+(async () => {
+  const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY; // Ensure this is set in .env or env vars
+
+  if (!DEEPSEEK_API_KEY) {
+    console.warn("WARNING: DeepSeek API key is not set. Please configure it to run this example.");
+    return;
+  }
+
+  console.log('--- Starting Apologist vs. Heretic LLM Workflow ---');
+
+  const topicInput = prompt("Enter a topic for the Apologist to defend (e.g., 'The benefits of remote work'):\nYour topic: ");
+
+  if (!topicInput) {
+    console.log("No topic provided. Exiting.");
+    return;
+  }
+
+  const apologist = new ApologistNode();
+  apologist.setParams({ apiKey: DEEPSEEK_API_KEY, topic: topicInput });
+
+  const heretic = new HereticNode();
+  heretic.setParams({ apiKey: DEEPSEEK_API_KEY });
+
+  apologist.next(heretic);
+
+  const debateFlow = new AsyncFlow(apologist);
+
+  try {
+    const sharedState = {}; // Initialize an empty shared state object
+    await debateFlow.runAsync(sharedState); // Run the flow, passing the shared state
+
+    console.log('\n--- The Debate Unfolds ---');
+    console.log('Topic:', topicInput);
+    console.log('\nApologist\'s Argument:');
+    console.log(sharedState.apologistArgument);
+    console.log('\nHeretic\'s Critique:');
+    console.log(sharedState.hereticCritique);
+    console.log('\n--- Workflow Finished ---');
+
+  } catch (error) {
+    console.error('--- Workflow Failed ---', error);
+  }
+})();
+
+```
+
+## Error Handling
+
+`qflow` provides mechanisms to handle errors gracefully within your workflows.
+
+*   **Node-level Error Handling:**
+    *   Synchronous `Node`s: If an error occurs in `prep` or `exec`, it will be caught by the flow and propagate up. You can implement `execFallback(prepRes, error)` in your `Node` subclass to provide a fallback mechanism when `exec` fails after all retries.
+    *   Asynchronous `AsyncNode`s: Similarly, `prepAsync` or `execAsync` can throw errors. Implement `execFallbackAsync(prepRes, error)` for asynchronous fallbacks.
+*   **Flow-level Error Handling:**
+    *   When you run a flow using `flow.run(sharedState)` or `await flow.runAsync(sharedState)`, any unhandled errors from within the nodes will propagate up and can be caught using standard JavaScript `try...catch` blocks around the `run` or `runAsync` call. This allows you to manage errors at the workflow level.
+
+```javascript
+import { Node, Flow } from '@fractal-solutions/qflow';
+
+class FailingNode extends Node {
+  exec() {
+    throw new Error("Something went wrong in FailingNode!");
+  }
+  execFallback(prepRes, error) {
+    console.error("FailingNode fallback triggered:", error.message);
+    return "Fallback successful!";
+  }
+}
+
+const failingNode = new FailingNode();
+const errorFlow = new Flow(failingNode);
+
+try {
+  const result = errorFlow.run({});
+  console.log("Flow completed with result:", result);
+} catch (error) {
+  console.error("Flow failed with unhandled error:", error.message);
+}
+// Expected output:
+// FailingNode fallback triggered: Something went wrong in FailingNode!
+// Flow completed with result: Fallback successful!
+```
+
+## Debugging
+
+Debugging `qflow` workflows can be done using standard JavaScript debugging tools and techniques.
+
+*   **`console.log`:** The simplest way to inspect data and execution flow. Strategically place `console.log` statements within `prep`, `exec`, `post`, and their `Async` counterparts to trace the `shared` object, `prepRes`, and `execRes` values.
+*   **Debugger:** Use your IDE's built-in debugger (e.g., VS Code's debugger) or Node.js/Bun's inspector (`node --inspect` or `bun --inspect`). Set breakpoints within your node's lifecycle methods to step through the execution and examine the state.
+*   **Error Messages:** Pay close attention to the error messages and stack traces. `qflow` aims to provide clear error messages that point to the source of the problem within your nodes.
+
+## Testing
+
+Testing `qflow` workflows involves unit testing individual nodes and integration testing entire flows.
+
+*   **Unit Testing Nodes:**
+    *   Test each `Node` or `AsyncNode` subclass in isolation.
+    *   Mock external dependencies (e.g., API calls for `LLMNode`, `GitHubNode`) to ensure tests are fast and reliable.
+    *   Verify the behavior of `prep`, `exec`, `post`, and their `Async` counterparts, as well as `setParams` and `execFallback`.
+*   **Integration Testing Flows:**
+    *   Test entire `Flow`s or `AsyncFlow`s to ensure nodes are chained correctly and data flows as expected.
+    *   Provide controlled `shared` state inputs and assert on the final `shared` state or the flow's return value.
+    *   Use your preferred testing framework (e.g., Jest, Mocha, Bun's built-in test runner).
+
+```javascript
+// Example (using Bun's test runner syntax)
+import { test, expect } from "bun:test";
+import { Node, Flow } from '@fractal-solutions/qflow';
+
+class TestNodeA extends Node {
+  exec(input) { return input + 1; }
+}
+
+class TestNodeB extends Node {
+  exec(input) { return input * 2; }
+}
+
+test("Simple Flow should process data correctly", () => {
+  const nodeA = new TestNodeA();
+  const nodeB = new TestNodeB();
+  nodeA.next(nodeB);
+
+  const flow = new Flow(nodeA);
+  const sharedState = { initialValue: 5 };
+  const result = flow.run(sharedState); // Assuming run returns the final execRes of the last node
+
+  expect(result).toBe(12); // (5 + 1) * 2 = 12
+});
+
+test("Node should handle parameters via setParams", () => {
+  class ParamNode extends Node {
+    exec() { return this.params.value; }
+  }
+  const node = new ParamNode();
+  node.setParams({ value: "hello" });
+  const result = node.run({});
+  expect(result).toBe("hello");
+});
 ```
 
 ## Integration

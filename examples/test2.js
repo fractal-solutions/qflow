@@ -30,13 +30,8 @@ await asyncFlow.runAsync({});
 console.log('\n--- Running Test 2: Conditional Transitions ---');
 
 class ConditionalNode extends Node {
-  constructor(shouldGoLeft) {
-    super();
-    this.shouldGoLeft = shouldGoLeft;
-  }
-
   exec() {
-    if (this.shouldGoLeft) {
+    if (this.params.shouldGoLeft) {
       console.log('ConditionalNode: Going left');
       return 'left';
     } else {
@@ -46,7 +41,18 @@ class ConditionalNode extends Node {
   }
 }
 
-const conditionalNode = new ConditionalNode(true);
+// Helper node for conditional transition test
+function MessageNode(message) {
+  return new (class extends Node {
+    exec() {
+      console.log(message);
+      return 'default';
+    }
+  })();
+}
+
+const conditionalNode = new ConditionalNode();
+conditionalNode.setParams({ shouldGoLeft: true });
 const leftNode = new MessageNode('Went Left');
 const rightNode = new MessageNode('Went Right');
 
@@ -56,7 +62,8 @@ conditionalNode.next(rightNode, 'right');
 const conditionalFlow = new Flow(conditionalNode);
 conditionalFlow.run({});
 
-const conditionalNode2 = new ConditionalNode(false);
+const conditionalNode2 = new ConditionalNode();
+conditionalNode2.setParams({ shouldGoLeft: false });
 conditionalNode2.next(leftNode, 'left');
 conditionalNode2.next(rightNode, 'right');
 const conditionalFlow2 = new Flow(conditionalNode2);
@@ -124,12 +131,4 @@ const asyncParallelBatchFlow = new AsyncParallelBatchFlow(asyncParallelBatchNode
 asyncParallelBatchFlow.prepAsync = async () => [ { item: 1 }, { item: 2 }, { item: 3 }, { item: 4 }, { item: 5 } ];
 await asyncParallelBatchFlow.runAsync({});
 
-// Helper node for conditional transition test
-function MessageNode(message) {
-  return new (class extends Node {
-    exec() {
-      console.log(message);
-      return 'default';
-    }
-  })();
-}
+

@@ -5,7 +5,7 @@ class BaseNode {
   }
 
   setParams(params) {
-    this.params = params;
+    this.params = { ...this.params, ...params };
   }
 
   next(node, action = "default") {
