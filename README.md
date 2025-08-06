@@ -423,6 +423,55 @@ class HereticNode extends DeepSeekLLMNode {
 
 ```
 
+### 8. Shell Command Example
+
+Executing a shell command and printing the output.
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { ShellCommandNode } from '@fractal-solutions/qflow/nodes';
+
+const listFiles = new ShellCommandNode();
+listFiles.setParams({ command: 'ls -l' });
+
+listFiles.postAsync = async (shared, prepRes, execRes) => {
+  console.log('--- File Listing ---');
+  console.log(execRes.stdout);
+  return 'default';
+};
+
+const flow = new AsyncFlow(listFiles);
+await flow.runAsync({});
+```
+
+### 9. File System Example
+
+Writing to a file and then reading it back.
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { WriteFileNode, ReadFileNode } from '@fractal-solutions/qflow/nodes';
+
+const writeFile = new WriteFileNode();
+writeFile.setParams({ filePath: './hello.txt', content: 'Hello, qflow!\n' });
+
+const readFile = new ReadFileNode();
+readFile.setParams({ filePath: './hello.txt' });
+
+readFile.postAsync = async (shared, prepRes, execRes) => {
+  console.log('--- File Content ---');
+  console.log(execRes);
+  return 'default';
+};
+
+writeFile.next(readFile);
+
+const flow = new AsyncFlow(writeFile);
+await flow.runAsync({});
+```
+
+```
+
 ## Exploring More Examples
 
 The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
@@ -434,6 +483,7 @@ The examples above cover the core functionalities of `qflow`. For more advanced 
 *   **LLMs (DeepSeek, OpenAI, Gemini):** Building powerful AI-driven workflows.
 *   **Shell:** Executing shell commands.
 *   **FileSystem:** Reading, writing, and appending files, and listing directories.
+*   **User Input:** Pausing a flow to request user feedback or approval.
 
 These examples are a great resource for understanding how to leverage `qflow` to its full potential.
 

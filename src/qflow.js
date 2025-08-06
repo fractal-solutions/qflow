@@ -203,21 +203,13 @@ class AsyncFlow extends Flow {
     let lastAction = null;
     let lastExecRes = null;
     let p = { ...this.params, ...params };
-    let currentPrepRes = undefined; // This will hold the prepRes for the current node
 
     while (curr) {
       curr.setParams(p);
 
-      // If there was a previous execution result, that becomes the prepRes for the current node.
-      // Otherwise, use the current node's own prepAsync/prep method.
-      if (lastExecRes !== null) {
-        currentPrepRes = lastExecRes;
-      } else {
-        currentPrepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
-      }
-
-      const execRes = curr instanceof AsyncNode ? await curr._exec(currentPrepRes, shared) : curr._exec(currentPrepRes, shared);
-      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, currentPrepRes, execRes) : curr.post(shared, currentPrepRes, execRes);
+      const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
+      const execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared) : curr._exec(prepRes, shared);
+      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes) : curr.post(shared, prepRes, execRes);
       lastExecRes = execRes; // Store execRes for the next iteration
       curr = this.getNextNode(curr, lastAction);
     }

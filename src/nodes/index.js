@@ -5,3 +5,4 @@ export * from './stripe.js';
 export * from './webscraper.js';
 export * from './shell.js';
 export * from './filesystem.js';
+export * from './user.js';

@@ -16,16 +16,12 @@ export class ShellCommandNode extends AsyncNode {
       throw new Error('Missing required parameter: command');
     }
 
-    console.log(`[Shell] Executing: ${command}`);
-
     return new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error(`[Shell] Command failed: ${error.message}`);
           reject(error);
           return;
         }
-        console.log(`[Shell] Command executed successfully.`);
         resolve({ stdout, stderr });
       });
     });

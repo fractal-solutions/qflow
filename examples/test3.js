@@ -10,24 +10,28 @@ class FetchCatFactNode extends AsyncNode {
     const response = await fetch('https://catfact.ninja/fact');
     const data = await response.json();
     console.log(`Fetched fact: ${data.fact}`);
-    this.params.fact = data.fact;
+    return data.fact;
+  }
+
+  async postAsync(shared, prepRes, execRes) {
+    shared.fact = execRes;
     return 'default';
   }
 }
 
 // 2. Node to process the fact and check its length
 class ProcessFactNode extends Node {
-  exec() {
-    const fact = this.params.fact;
+  prep(shared) {
+    return shared.fact;
+  }
+
+  exec(fact) {
     console.log(`Processing fact: "${fact}"`);
     if (fact.length > 100) {
       return 'long';
     } else {
       return 'short';
     }
-  }
-
-  prep(shared) {
   }
 
   post(shared, prepRes, execRes) {
