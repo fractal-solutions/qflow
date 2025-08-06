@@ -507,9 +507,10 @@ import { DuckDuckGoSearchNode, GoogleSearchNode } from '@fractal-solutions/qflow
 const ddgSearch = new DuckDuckGoSearchNode();
 ddgSearch.setParams({ query: 'qflow library github' });
 ddgSearch.postAsync = async (shared, prepRes, execRes) => {
-  console.log('--- DuckDuckGo Search Results (Top 3) ---');
-  execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
-  return 'default';
+    console.log('\n--- DuckDuckGo Search Results ---');
+    console.log(execRes.slice(0, 5)); // Log top 5 results
+    console.log('----------------------------\n');
+    return 'default';
 };
 
 // Example 2: Using Google Custom Search (requires API key and CSE ID)
@@ -520,10 +521,11 @@ googleSearch.setParams({
   cseId: process.env.GOOGLE_CSE_ID   // Set this env var
 });
 googleSearch.postAsync = async (shared, prepRes, execRes) => {
-  console.log('--- Google Search Results (Top 3) ---');
-  execRes.slice(0, 3).forEach(r => console.log(`- ${r.title}: ${r.link}`));
-  return 'default';
-};
+    console.log('\n--- Google Search Results ---');
+    console.log(execRes.slice(0, 5)); // Log top 5 results
+    console.log('---------------------------\n');
+    return 'default';
+  };
 
 // Chain them or run independently
 const flow1 = new AsyncFlow(ddgSearch);
