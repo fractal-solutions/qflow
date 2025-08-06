@@ -11,6 +11,7 @@ import {
   AgentNode
 } from '../src/nodes';
 
+// You have the option of AgentOpenAILLMNode that can be used instead of Deepseek
 // Ensure your DeepSeek API Key is set as an environment variable
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
