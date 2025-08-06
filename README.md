@@ -24,6 +24,22 @@ npm install @fractal-solutions/qflow
 bun add @fractal-solutions/qflow
 ```
 
+## Module Imports
+
+`qflow` provides different entry points for its core functionalities and built-in nodes to keep your imports clean and specific.
+
+*   **Core Classes (`Node`, `Flow`, `AsyncNode`, `AsyncFlow`, etc.):**
+    These are imported directly from the main package:
+    ```javascript
+    import { Node, Flow, AsyncNode, AsyncFlow } from '@fractal-solutions/qflow';
+    ```
+
+*   **Built-in Integration Nodes (`LLMNode`, `DeepSeekLLMNode`, `GitHubNode`, `WebScraperNode`, etc.):**
+    These are imported from the `/nodes` subpath:
+    ```javascript
+    import { DeepSeekLLMNode, GitHubNode, WebScraperNode } from '@fractal-solutions/qflow/nodes';
+    ```
+
 ## Core Abstractions
 
 `qflow` is built around a few core abstractions that enable powerful and flexible workflow definitions.
