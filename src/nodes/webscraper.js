@@ -28,8 +28,12 @@ export class ScrapeURLNode extends AsyncNode {
   }
 
   async postAsync(shared, prepRes, execRes) {
-    // The scraped HTML (execRes) will be passed as prepRes to the next node.
-    // We don't need to store it in shared for this specific flow.
-    return 'default';
+    // Truncate the scraped HTML to avoid exceeding LLM context windows
+    const MAX_HTML_LENGTH = 4000; 
+    shared.webScrapedContent = execRes.substring(0, MAX_HTML_LENGTH);
+    if (execRes.length > MAX_HTML_LENGTH) {
+      console.warn(`[WebScraper] Truncated HTML content from ${execRes.length} to ${MAX_HTML_LENGTH} characters.`);
+    }
+    return shared.webScrapedContent;
   }
 }

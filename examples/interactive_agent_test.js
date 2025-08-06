@@ -8,7 +8,8 @@ import {
   HttpRequestNode,
   ScrapeURLNode,
   UserInputNode,
-  AgentNode
+  AgentNode,
+  SummarizeNode 
 } from '../src/nodes';
 
 // You have the option of AgentOpenAILLMNode that can be used instead of Deepseek
@@ -31,6 +32,10 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   const agentLLM = new AgentDeepSeekLLMNode();
   agentLLM.setParams({ apiKey: DEEPSEEK_API_KEY });
 
+  // 2.1 Instantiate an LLM for summarization (can be the same as agentLLM or different)
+  const summarizeLLM = new SummarizeNode();
+  summarizeLLM.setParams({ apiKey: DEEPSEEK_API_KEY });
+
   // 3. Instantiate the tools the agent can use
   const duckduckgoSearch = new DuckDuckGoSearchNode();
   const shellCommand = new ShellCommandNode();
@@ -52,8 +57,8 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     // Add other tools as needed
   };
 
-  // 4. Instantiate the AgentNode
-  const agent = new AgentNode(agentLLM, availableTools);
+  // 4. Instantiate the AgentNode, passing the summarizeLLM
+  const agent = new AgentNode(agentLLM, availableTools, summarizeLLM);
   // The goal will be set dynamically from the UserInputNode\'s output
   agent.prepAsync = async (shared) => {
     agent.setParams({ goal: shared.userInput });

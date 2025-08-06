@@ -1,14 +1,16 @@
 import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
 import { getToolDefinitions } from './tools.js';
+import { SummarizeNode } from '../nodes/summarize.js'; // Import SummarizeNode
 
 export class AgentNode extends AsyncNode {
-  constructor(llmNode, availableTools) {
+  constructor(llmNode, availableTools, summarizeLLM) {
     super();
     if (!llmNode) {
       throw new Error("AgentNode requires an LLMNode instance for reasoning.");
     }
     this.llmNode = llmNode;
     this.availableTools = availableTools; // Map of tool_name -> qflow_node_instance
+    this.summarizeLLM = summarizeLLM; // LLM for summarization
     this.conversationHistory = [];
     this.maxSteps = 10; // Limit to prevent infinite loops
   }
@@ -73,18 +75,26 @@ export class AgentNode extends AsyncNode {
       let toolOutput;
       try {
         toolInstance.setParams(toolCall.parameters);
-        // Run the tool as a sub-flow to ensure its postAsync is called
-        // Check if the toolInstance is an AsyncNode to determine which Flow type to use
         const ToolFlowClass = toolInstance instanceof AsyncNode ? AsyncFlow : Flow;
         const toolFlow = new ToolFlowClass(toolInstance);
         
-        // If the tool is an AsyncNode, call runAsync; otherwise, call run
         if (toolInstance instanceof AsyncNode) {
           toolOutput = await toolFlow.runAsync({});
         } else {
           toolOutput = toolFlow.run({});
         }
         console.log(`Tool '${toolCall.tool}' executed successfully.`);
+
+        // Summarize large outputs before adding to history
+        if (this.summarizeLLM && typeof toolOutput === 'string' && toolOutput.length > 1000) { // Summarize if output is string and > 1000 chars
+          console.log(`Summarizing large tool output (${toolOutput.length} chars)...`);
+          const summarizeNode = new SummarizeNode();
+          summarizeNode.setParams({ text: toolOutput, llmNode: this.summarizeLLM });
+          const summarizeFlow = new AsyncFlow(summarizeNode);
+          toolOutput = await summarizeFlow.runAsync({});
+          console.log(`Summarized to ${toolOutput.length} chars.`);
+        }
+
       } catch (e) {
         toolOutput = `Error executing tool '${toolCall.tool}': ${e.message}`;
         console.error(toolOutput);
@@ -106,12 +116,10 @@ export class AgentNode extends AsyncNode {
     const toolDefinitions = getToolDefinitions();
     const toolDescriptions = toolDefinitions.map(tool => {
       const params = JSON.stringify(tool.parameters);
-      return `### Tool: ${tool.name}\nDescription: ${tool.description}\nParameters: ${params}`; 
+      return `### Tool: ${tool.name}\nDescription: ${tool.description}\nParameters: ${params}`;
     }).join('\n\n');
 
-    return `You are an autonomous agent designed to achieve a goal by selecting and using tools. Your responses must be in a specific JSON format.\n\nAvailable Tools:\n${toolDescriptions}\n\nYour response must be a single JSON object with two keys: 'thought' and 'tool'.\n'thought': A string explaining your reasoning process and plan.\n'tool': An object with two keys: 'tool' (the name of the tool to call) and 'parameters' (an object containing the parameters for that tool).\n\nExample response:\n{\n  "thought": "I need to find information about X, so I will use the duckduckgo_search tool.",\n  "tool": {\n    "tool": "duckduckgo_search",\n    "parameters": {\n      "query": "X information"
-    }\n  }\n}\n\nWhen you have achieved the goal or cannot proceed, use the 'finish' tool.\nExample finish response:\n{\n  "thought": "I have successfully achieved the goal.",\n  "tool": {\n    "tool": "finish",\n    "parameters": {\n      "output": "The final result of the goal."
-    }\n}\n\nBegin!`;
+    return `You are an autonomous agent designed to achieve a goal by selecting and using tools. Your responses must be in a specific JSON format.\n\nAvailable Tools:\n${toolDescriptions}\n\nYour response must be a single JSON object with two keys: 'thought' and 'tool'.\n'thought': A string explaining your reasoning process and plan.\n'tool': An object with two keys: 'tool' (the name of the tool to call) and 'parameters' (an object containing the parameters for that tool).\n\nExample response:\n{\n  "thought": "I need to find information about X, so I will use the duckduckgo_search tool.",\n  "tool": {\n    "tool": "duckduckgo_search",\n    "parameters": {\n      "query": "X information"\n    }\n  }\n}\n\nWhen you have achieved the goal or cannot proceed, use the 'finish' tool.\nExample finish response:\n{\n  "thought": "I have successfully achieved the goal.",\n  "tool": {\n    "tool": "finish",\n    "parameters": {\n      "output": "The final result of the goal."\n    }\n}\n\nBegin!`;
   }
 
   async getLLMAction() {
