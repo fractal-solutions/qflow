@@ -423,7 +423,20 @@ class HereticNode extends DeepSeekLLMNode {
 
 ```
 
+## Exploring More Examples
+
+The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the `examples/` folder in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
+
+*   **GitHub:** Creating and managing issues.
+*   **HackerNews:** Fetching top stories and item details.
+*   **Stripe:** Creating charges and retrieving account balances.
+*   **WebScraper:** Fetching and processing web content.
+*   **LLMs (DeepSeek, OpenAI, Gemini):** Building powerful AI-driven workflows.
+
+These examples are a great resource for understanding how to leverage `qflow` to its full potential.
+
 ## Error Handling
+
 
 `qflow` provides mechanisms to handle errors gracefully within your workflows.
 
