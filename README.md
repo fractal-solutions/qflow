@@ -129,10 +129,10 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
 *   **Embedding:** For generating vector embeddings from text.
-*   **Semantic Memory:** For storing and retrieving memories based on semantic similarity (RAG).
+*   **Semantic Memory:** For storing and retrieving memories based on semantic similarity (RAG) using Ollama.
+*   **Memory:** For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
 *   **Transform:** For dynamic data manipulation and reformatting.
-*   **Memory:** For lightweight, keyword-based long-term memory and RAG.
-*   **CodeInterpreter:** For executing dynamic code (e.g., Python) within the workflow.
+*   **CodeInterpreter:** For executing dynamic code (in Python) within the workflow. [](#14-code-interpreter-example)
 *   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
 *   **Shell:** For system-level interaction and execution.
 *   **HTTP:** For universal API access.
