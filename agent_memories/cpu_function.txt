@@ -1,0 +1,1 @@
+The primary function of a CPU is to execute instructions that make up a computer program.

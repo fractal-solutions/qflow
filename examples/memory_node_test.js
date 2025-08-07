@@ -1,5 +1,15 @@
-import { AsyncFlow } from '../src/qflow.js';
-import { MemoryNode, AgentDeepSeekLLMNode } from '../src/nodes';
+import { AsyncFlow, AsyncNode } from '../src/qflow.js';
+import { MemoryNode, DeepSeekLLMNode } from '../src/nodes';
+
+// Intermediate node to build the prompt for the LLM
+class PromptBuilderNode extends AsyncNode {
+  async execAsync(prepRes) {
+    const retrievedContent = prepRes.map(mem => mem.content).join('\n\n');
+    const question = this.params.question; // Question passed from test
+    const prompt = `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: ${question}`;
+    return prompt;
+  }
+}
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
@@ -74,17 +84,19 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   });
 
   // Step 2: Use an LLM to answer a question based on retrieved memories
-  const ragLLMNode = new AgentDeepSeekLLMNode();
+  const ragLLMNode = new DeepSeekLLMNode();
   ragLLMNode.setParams({ apiKey: DEEPSEEK_API_KEY });
-
-  ragRetrieveNode.next(ragLLMNode);
-
   ragLLMNode.preparePrompt = (shared) => {
     const retrievedContent = shared.memoryResult.map(mem => mem.content).join('\n\n');
     ragLLMNode.setParams({
-      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`
+      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`,
+      keyword: 'rag_llm'
     });
   };
+
+  ragRetrieveNode.next(ragLLMNode);
+
+  
 
   const ragFlow = new AsyncFlow(ragRetrieveNode);
   try {
@@ -92,10 +104,12 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     console.log('RAG Example LLM Response:', ragResult);
     if (ragResult.toLowerCase().includes('execute instructions') && ragResult.toLowerCase().includes('cpu')) {
       console.log('Test 3 Passed: RAG example produced relevant answer.');
-    } else {
+    }
+    else {
       console.error('Test 3 Failed: RAG example did not produce relevant answer.');
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Test 3 Failed: RAG Flow Failed:', error);
   }
 
