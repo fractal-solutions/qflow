@@ -11,7 +11,7 @@ if (!process.versions.bun) {
 
 export class CodeInterpreterNode extends AsyncNode {
   async execAsync() {
-    const { code, timeout = 30000, args = [], requireConfirmation = true } = this.params;
+    const { code, timeout = 30000, args = [], requireConfirmation = true, interpreterPath } = this.params;
 
     if (!code) {
       throw new Error('CodeInterpreterNode requires a `code` parameter.');
@@ -20,7 +20,7 @@ export class CodeInterpreterNode extends AsyncNode {
     const tempDir = os.tmpdir();
     const tempFileName = `qflow_python_code_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.py`;
     const tempFilePath = path.join(tempDir, tempFileName);
-    const interpreterCommand = 'python';
+    const interpreterCommand = interpreterPath || 'python';
 
     console.log(`[CodeInterpreter] Proposed execution: ${interpreterCommand} ${tempFilePath}`);
     console.log(`[CodeInterpreter] Code to execute:\n${code}`);
