@@ -129,7 +129,7 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   [**Agent:**](#12-interactive-agent-example) Orchestrating tools and LLM reasoning to achieve complex goals.
 *   [**Embedding:**](#18-embedding-node) For generating vector embeddings from text using Ollama.
-*   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama. A slightly more advanced RAG is implemented as [RAG user input]()
+*   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama. A slightly more advanced RAG is implemented as [RAG with user query input](https://github.com/fractal-solutions/qflow/blob/main/examples/rag_user_input.js).
 *   [**Memory:**](#15-memory-node-lightweight-rag) For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
 *   [**Transform:**](#16-transform-node) For dynamic data manipulation and reformatting.
 *   [**CodeInterpreter:**](#14-code-interpreter-example) For executing dynamic code (in Python) within the workflow. Specific instructions on library use in [matplotlib example](#17-plotting-data-with-python-code-interpreter).
