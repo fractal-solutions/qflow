@@ -806,7 +806,7 @@ Storing and retrieving text-based memories for lightweight Retrieval-Augmented G
 
 ```javascript
 import { AsyncFlow } from '@fractal-solutions/qflow';
-import { MemoryNode, AgentDeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
+import { MemoryNode, DeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
@@ -846,17 +846,17 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   });
 
   // 4. Use an LLM to answer a question based on retrieved memories
-  const ragLLM = new AgentDeepSeekLLMNode();
-  ragLLM.setParams({ apiKey: DEEPSEEK_API_KEY });
-
-  ragRetrieve.next(ragLLM);
-
+  const ragLLM = new DeepSeekLLMNode();
   ragLLM.preparePrompt = (shared) => {
     const retrievedContent = shared.memoryResult.map(mem => mem.content).join('\n\n');
     ragLLM.setParams({
-      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`
+      apiKey: DEEPSEEK_API_KEY,
+      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`,
+      keyword: 'rag_llm'
     });
   };
+
+  ragRetrieve.next(ragLLM);
 
   const ragFlow = new AsyncFlow(ragRetrieve);
   try {
@@ -869,7 +869,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
   console.log('\n--- MemoryNode RAG Example Finished ---');
 })();
-```
+`````
 
 ## Exploring More Examples
 
