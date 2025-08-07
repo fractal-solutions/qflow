@@ -1009,17 +1009,6 @@ Follow these steps in *your project folder* where you are using `qflow`:
     ```
     *Note: If you are not using Bun (which loads `.env` files by default), you might need a library like `dotenv` (e.g., `require('dotenv').config();`) in your application to load environment variables from the `.env` file.*
 
-If you use a Python virtual environment, you can specify its Python executable via an environment variable.
-
-```bash
-# Example for installing matplotlib (preferably in a virtual environment)
-pip install matplotlib
-
-# Example for setting the environment variable (if using a virtual environment)
-export QFLOW_PYTHON_INTERPRETER=/path/to/your/venv/bin/python
-# Or for Windows PowerShell
-# $env:QFLOW_PYTHON_INTERPRETER="C:\path\to\your\venv\Scripts\python.exe"
-```
 
 ```javascript
 import { AsyncFlow } from '@fractal-solutions/qflow';
