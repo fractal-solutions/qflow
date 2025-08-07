@@ -14,4 +14,7 @@ export * from './search.js';
 export * from './summarize.js';
 export * from './memory.js';
 export * from './transform.js';
+export * from './embedding.js';
+export * from './semantic_memory.js';
+export * from './semantic_memory.js';
 export * from '../agent/agent.js';

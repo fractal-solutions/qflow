@@ -2,6 +2,75 @@
 export function getToolDefinitions() {
   return [
     {
+      name: "semantic_memory_node",
+      description: "Stores and retrieves text-based memories using vector embeddings for semantic search. Requires a local Ollama server running an embedding model (e.g., 'nomic-embed-text').",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["store", "retrieve"],
+            description: "The action to perform: 'store' a new memory or 'retrieve' existing ones."
+          },
+          content: {
+            type: "string",
+            description: "Required for 'store' action. The text content of the memory to store."
+          },
+          query: {
+            type: "string",
+            description: "Required for 'retrieve' action. The text query for semantic search."
+          },
+          id: {
+            type: "string",
+            description: "Optional for 'store' action. A unique identifier for the memory. If not provided, one will be generated."
+          },
+          metadata: {
+            type: "object",
+            description: "Optional for 'store' action. Key-value pairs to store alongside the memory."
+          },
+          memoryPath: {
+            type: "string",
+            description: "Optional. The directory path where memories and the index are stored. Defaults to './semantic_memories'."
+          },
+          embeddingModel: {
+            type: "string",
+            description: "Optional. The Ollama embedding model name to use (e.g., 'nomic-embed-text'). Defaults to 'nomic-embed-text'."
+          },
+          embeddingBaseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Ollama API for embeddings. Defaults to 'http://localhost:11434'."
+          },
+          topK: {
+            type: "number",
+            description: "Optional for 'retrieve' action. The number of top similar results to retrieve. Defaults to 5."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
+      name: "generate_embedding",
+      description: "Generates a vector embedding for a given text using a local Ollama embedding model. Requires Ollama to be running.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The text string to generate an embedding for."
+          },
+          model: {
+            type: "string",
+            description: "Optional. The Ollama embedding model name to use (e.g., 'nomic-embed-text'). Defaults to 'nomic-embed-text'."
+          },
+          baseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Ollama API (e.g., 'http://localhost:11434'). Defaults to 'http://localhost:11434'."
+          }
+        },
+        required: ["text"]
+      }
+    },
+    {
       name: "transform_node",
       description: "Transforms input data using a provided JavaScript function. Useful for filtering, reformatting, or combining data from other tools.",
       parameters: {

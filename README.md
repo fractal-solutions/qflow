@@ -120,7 +120,34 @@ A helper class used in conjunction with `Node.transition()` to define conditiona
       and synthesize information into comprehensive answers or documents, acting as automated
       research assistants.
 
+## How to use the Docs and Examples
 
+
+The examples in [Basic Usage & Examples](#basic-usage--examples) below will cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
+
+*   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
+    *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
+*   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
+*   **Embedding:** For generating vector embeddings from text.
+*   **Semantic Memory:** For storing and retrieving memories based on semantic similarity (RAG).
+*   **Transform:** For dynamic data manipulation and reformatting.
+*   **Memory:** For lightweight, keyword-based long-term memory and RAG.
+*   **CodeInterpreter:** For executing dynamic code (e.g., Python) within the workflow.
+*   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
+*   **Shell:** For system-level interaction and execution.
+*   **HTTP:** For universal API access.
+*   **FileSystem:** For reading and writing local data.
+*   **User Input:** For human-in-the-loop control.
+*   **Web Search:** Discovering information on the web using either:
+    *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
+    *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
+*   **WebScraper:** For targeted web scraping.
+*   **DataExtractor:** For targeted data extraction.
+*   **GitHub:** Creating and managing issues.
+*   **HackerNews:** Fetching top stories and item details.
+*   **Stripe:** Creating charges and retrieving account balances.
+
+These examples are a great resource for understanding how to leverage `qflow` to its full potential.
 
 ## Basic Usage & Examples
 
@@ -1077,33 +1104,122 @@ print(f"Plot saved to {output_plot_path}")
 })();
 ```
 
-## Exploring More Examples
+### 18. Embedding Node
+
+Generates vector embeddings for text using a local Ollama server. Essential for semantic search and RAG.
+
+**Prerequisites:** Ensure you have [Ollama](https://ollama.ai/) installed and an embedding model pulled (e.g., `ollama pull nomic-embed-text`).
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { EmbeddingNode } from '@fractal-solutions/qflow/nodes';
+
+(async () => {
+  console.log('--- Running EmbeddingNode Example ---');
+
+  const textToEmbed = "Hello, world! This is a test sentence.";
+  const embedNode = new EmbeddingNode();
+  embedNode.setParams({
+    text: textToEmbed,
+    model: 'nomic-embed-text', // Ensure this model is pulled in Ollama
+    baseUrl: 'http://localhost:11434' // Default Ollama URL
+  });
+
+  embedNode.postAsync = async (shared, prepRes, execRes) => {
+    console.log('Embedding Result (first 5 dimensions):', execRes.embedding.slice(0, 5));
+    console.log('Embedding Length:', execRes.embedding.length);
+    return 'default';
+  };
+
+  const flow = new AsyncFlow(embedNode);
+  try {
+    await flow.runAsync({});
+  } catch (error) {
+    console.error('Embedding Flow Failed:', error);
+  }
+
+  console.log('\n--- EmbeddingNode Example Finished ---');
+})();
+```
+
+### 19. Semantic Memory Node
+
+Stores and retrieves text-based memories using vector embeddings for semantic search. This enables agents to have a more advanced, meaning-based long-term memory.
+
+**Prerequisites:** Requires [Ollama](https://ollama.ai/) and an embedding model (e.g., `ollama pull nomic-embed-text`).
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { SemanticMemoryNode, DeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
+
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+(async () => {
+  if (!DEEPSEEK_API_KEY) {
+    console.warn("WARNING: DEEPSEEK_API_KEY is not set. Please set it to run the SemanticMemoryNode RAG example.");
+    return;
+  }
+
+  console.log('--- Running SemanticMemoryNode RAG Example ---');
+
+  // 1. Store a semantic memory
+  const storeSemanticMemory = new SemanticMemoryNode();
+  storeSemanticMemory.setParams({
+    action: 'store',
+    content: 'The capital of France is Paris. It is known for the Eiffel Tower and its romantic atmosphere.',
+    id: 'france_capital_sem',
+    metadata: { source: 'wikipedia', topic: 'geography' }
+  });
+  await new AsyncFlow(storeSemanticMemory).runAsync({});
+  console.log('Semantic memory stored.');
+
+  // 2. Store another memory for RAG
+  const storeRagSemanticMemory = new SemanticMemoryNode();
+  storeRagSemanticMemory.setParams({
+    action: 'store',
+    content: 'Quantum computing uses quantum-mechanical phenomena like superposition and entanglement to perform computations.',
+    id: 'quantum_comp_intro',
+    metadata: { topic: 'physics' }
+  });
+  await new AsyncFlow(storeRagSemanticMemory).runAsync({});
+  console.log('Another semantic memory stored.');
+
+  // 3. Retrieve relevant semantic memories based on a query
+  const ragRetrieveSemantic = new SemanticMemoryNode();
+  ragRetrieveSemantic.setParams({
+    action: 'retrieve',
+    query: 'city of love',
+    topK: 1
+  });
+
+  // 4. Use an LLM to answer a question based on retrieved memories
+  const ragLLM = new DeepSeekLLMNode();
+  ragLLM.setParams({ apiKey: DEEPSEEK_API_KEY });
+
+  ragRetrieveSemantic.next(ragLLM);
+
+  ragLLM.preparePrompt = (shared) => {
+    const retrievedContent = shared.semanticMemoryResult.map(mem => mem.content).join('\n\n');
+    ragLLM.setParams({
+      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: Explain quantum computing in simple terms.`,
+      keyword: 'semantic_rag_llm'
+    });
+  };
+
+  const ragFlow = new AsyncFlow(ragRetrieveSemantic);
+  try {
+    const ragResult = await ragFlow.runAsync({});
+    console.log('\n--- Semantic RAG Example LLM Response ---');
+    console.log(ragResult);
+  } catch (error) {
+    console.error('RAG Flow Failed:', error);
+  }
+
+  console.log('\n--- SemanticMemoryNode RAG Example Finished ---');
+})();
+```
 
 
-
-The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
-
-*   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
-    *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
-*   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
-*   **Transform:** For dynamic data manipulation and reformatting.
-*   **Memory:** For lightweight, keyword-based long-term memory and RAG.
-*   **CodeInterpreter:** For executing dynamic code (e.g., Python) within the workflow.
-*   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
-*   **Shell:** For system-level interaction and execution.
-*   **HTTP:** For universal API access.
-*   **FileSystem:** For reading and writing local data.
-*   **User Input:** For human-in-the-loop control.
-*   **Web Search:** Discovering information on the web using either:
-    *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
-    *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
-*   **WebScraper:** For targeted web scraping.
-*   **DataExtractor:** For targeted data extraction.
-*   **GitHub:** Creating and managing issues.
-*   **HackerNews:** Fetching top stories and item details.
-*   **Stripe:** Creating charges and retrieving account balances.
-
-These examples are a great resource for understanding how to leverage `qflow` to its full potential.
 
 
 ## Error Handling
