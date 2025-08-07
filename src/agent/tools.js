@@ -2,6 +2,37 @@
 export function getToolDefinitions() {
   return [
     {
+      name: "memory_node",
+      description: "Stores and retrieves text-based memories or knowledge from the agent's local file system. Useful for long-term memory and keyword-based retrieval.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["store", "retrieve"],
+            description: "The action to perform: 'store' a new memory or 'retrieve' existing ones."
+          },
+          content: {
+            type: "string",
+            description: "Required for 'store' action. The text content of the memory to store."
+          },
+          query: {
+            type: "string",
+            description: "Required for 'retrieve' action. Keywords to search for within stored memories."
+          },
+          id: {
+            type: "string",
+            description: "Optional for 'store' action. A unique identifier for the memory. If not provided, one will be generated."
+          },
+          memoryPath: {
+            type: "string",
+            description: "Optional. The directory path where memories are stored. Defaults to './agent_memories'."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
       name: "llm_reasoning",
       description: "A powerful language model for general reasoning, problem-solving, and generating text. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
       parameters: {

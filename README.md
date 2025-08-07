@@ -589,6 +589,7 @@ import {
   UserInputNode,
   AgentNode,
   CodeInterpreterNode,
+  MemoryNode
 } from '@fractal-solutions/qflow/nodes';
 
 // Ensure your DeepSeek API Key is set as an environment variable
@@ -619,6 +620,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   const webScraper = new ScrapeURLNode();
   const userInput = new UserInputNode(); // Agent can also ask for user input
   const codeInterpreter = new CodeInterpreterNode(); // Agent can execute code
+  const memoryNode = new MemoryNode(); // Agent can store and retrieve memories
 
   // Map tool names to their instances
   const availableTools = {
@@ -630,6 +632,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     web_scraper: webScraper,
     user_input: userInput,
     code_interpreter: codeInterpreter,
+    memory_node: memoryNode,
     // Add other tools as needed
   };
 
@@ -797,13 +800,86 @@ print(f"The sum is: {result}")
 })();
 ```
 
+### 15. Memory Node (Lightweight RAG)
+
+Storing and retrieving text-based memories for lightweight Retrieval-Augmented Generation (RAG).
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { MemoryNode, AgentDeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
+
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+(async () => {
+  if (!DEEPSEEK_API_KEY) {
+    console.warn("WARNING: DEEPSEEK_API_KEY is not set. Please set it to run the MemoryNode RAG example.");
+    return;
+  }
+
+  console.log('--- Running MemoryNode RAG Example ---');
+
+  // 1. Store a memory
+  const storeMemory = new MemoryNode();
+  storeMemory.setParams({
+    action: 'store',
+    content: 'The capital of France is Paris. It is known for the Eiffel Tower.',
+    id: 'france_capital'
+  });
+  await new AsyncFlow(storeMemory).runAsync({});
+  console.log('Memory stored.');
+
+  // 2. Store another memory for RAG
+  const storeRagMemory = new MemoryNode();
+  storeRagMemory.setParams({
+    action: 'store',
+    content: 'The primary function of a CPU is to execute instructions that make up a computer program.',
+    id: 'cpu_function'
+  });
+  await new AsyncFlow(storeRagMemory).runAsync({});
+  console.log('Another memory stored.');
+
+  // 3. Retrieve relevant memories based on a query
+  const ragRetrieve = new MemoryNode();
+  ragRetrieve.setParams({
+    action: 'retrieve',
+    query: 'computer program'
+  });
+
+  // 4. Use an LLM to answer a question based on retrieved memories
+  const ragLLM = new AgentDeepSeekLLMNode();
+  ragLLM.setParams({ apiKey: DEEPSEEK_API_KEY });
+
+  ragRetrieve.next(ragLLM);
+
+  ragLLM.preparePrompt = (shared) => {
+    const retrievedContent = shared.memoryResult.map(mem => mem.content).join('\n\n');
+    ragLLM.setParams({
+      prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`
+    });
+  };
+
+  const ragFlow = new AsyncFlow(ragRetrieve);
+  try {
+    const ragResult = await ragFlow.runAsync({});
+    console.log('\n--- RAG Example LLM Response ---');
+    console.log(ragResult);
+  } catch (error) {
+    console.error('RAG Flow Failed:', error);
+  }
+
+  console.log('\n--- MemoryNode RAG Example Finished ---');
+})();
+```
+
 ## Exploring More Examples
+
 
 The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
 *   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
+*   **Memory:** For lightweight, keyword-based long-term memory and RAG.
 *   **CodeInterpreter:** For executing dynamic code (e.g., Python) within the workflow.
 *   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
 *   **Shell:** For system-level interaction and execution.
