@@ -1,5 +1,6 @@
 import { AsyncNode, AsyncFlow } from '../src/qflow.js';
 import { DeepSeekLLMNode } from '../src/nodes/llm.js';
+import { promises as fs } from 'fs'; // For Node.js file operations
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 // --- Workflow Step Nodes (Simplified for single pipeline instance) ---
@@ -52,9 +53,16 @@ class SaveArticleNode extends AsyncNode {
     const filePath = `./articles/${fileName}`;
     
     console.log(`[SaveArticle] Saving final article to: ${filePath}`);
-    await Bun.spawn(["mkdir", "-p", "./articles"]).exited;
-    await file(filePath).writer().write(finalArticle);
-    console.log(`[SaveArticle] Successfully saved article for keyword: \"${keyword}\"`);
+
+    // Bun-specific file writing
+    if (process.versions.bun) {
+      await Bun.spawn(["mkdir", "-p", "./articles"]).exited;
+      await Bun.file(filePath).writer().write(finalArticle);
+    } else { // Node.js alternative
+      await fs.mkdir('./articles', { recursive: true });
+      await fs.writeFile(filePath, finalArticle);
+    }
+    console.log(`[SaveArticle] Successfully saved article for keyword: "${keyword}"`);
     return 'default';
   }
 }
@@ -93,7 +101,13 @@ function createSeoArticlePipeline(apiKey) {
   
   let keywords = [];
   try {
-    const keywordsText = await Bun.file('./keywords.txt').text();
+    let keywordsText;
+    // Bun-specific file reading
+    if (process.versions.bun) {
+      keywordsText = await Bun.file('./keywords.txt').text();
+    } else { // Node.js alternative
+      keywordsText = await fs.readFile('./keywords.txt', 'utf-8');
+    }
     keywords = keywordsText.split('\n').filter(k => k.trim() !== '');
     console.log(`[Pipeline] Found ${keywords.length} keywords.`);
   } catch (error) {
