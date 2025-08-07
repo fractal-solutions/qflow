@@ -125,9 +125,9 @@ A helper class used in conjunction with `Node.transition()` to define conditiona
 
 The examples in [Basic Usage & Examples](#basic-usage--examples) below will cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
-*   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
+*   [**LLMs (DeepSeek, OpenAI, Gemini, Ollama):**](#7-inter-node-communication-with-shared-state-advanced-example) The core of agentic behavior.
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
-*   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
+*   [**Agent:**](#12-interactive-agent-example) Orchestrating tools and LLM reasoning to achieve complex goals.
 *   [**Embedding:**](#18-embedding-node) For generating vector embeddings from text using Ollama.
 *   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama.
 *   [**Memory:**](#15-memory-node-lightweight-rag) For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
