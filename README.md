@@ -587,7 +587,8 @@ import {
   HttpRequestNode,
   ScrapeURLNode, 
   UserInputNode,
-  AgentNode
+  AgentNode,
+  CodeInterpreterNode,
 } from '@fractal-solutions/qflow/nodes';
 
 // Ensure your DeepSeek API Key is set as an environment variable
@@ -617,6 +618,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   const httpRequest = new HttpRequestNode();
   const webScraper = new ScrapeURLNode();
   const userInput = new UserInputNode(); // Agent can also ask for user input
+  const codeInterpreter = new CodeInterpreterNode(); // Agent can execute code
 
   // Map tool names to their instances
   const availableTools = {
@@ -627,6 +629,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     http_request: httpRequest,
     web_scraper: webScraper,
     user_input: userInput,
+    code_interpreter: codeInterpreter,
     // Add other tools as needed
   };
 
@@ -755,6 +758,45 @@ import { DataExtractorNode, WebScraperNode } from '@fractal-solutions/qflow/node
 
 ```
 
+### 14. Code Interpreter Example
+
+Executing Python code within the workflow.
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { CodeInterpreterNode } from '@fractal-solutions/qflow/nodes';
+
+(async () => {
+  const pythonCode = `
+print("Hello from the Code Interpreter!")
+result = 10 + 20
+print(f"The sum is: {result}")
+`;
+
+  const codeInterpreter = new CodeInterpreterNode();
+  codeInterpreter.setParams({
+    code: pythonCode,
+    timeout: 5000, // Max 5 seconds for execution
+    requireConfirmation: false // Set to false to bypass user confirmation
+  });
+
+  codeInterpreter.postAsync = async (shared, prepRes, execRes) => {
+    console.log('--- Code Interpreter Output ---');
+    console.log('Stdout:', execRes.stdout);
+    console.log('Stderr:', execRes.stderr);
+    console.log('Exit Code:', execRes.exitCode);
+    return 'default';
+  };
+
+  const flow = new AsyncFlow(codeInterpreter);
+  try {
+    await flow.runAsync({});
+  } catch (error) {
+    console.error('Code Interpreter Flow Failed:', error);
+  }
+})();
+```
+
 ## Exploring More Examples
 
 The examples above cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
@@ -762,6 +804,7 @@ The examples above cover the core functionalities of `qflow`. For more advanced 
 *   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
+*   **CodeInterpreter:** For executing dynamic code (e.g., Python) within the workflow.
 *   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
 *   **Shell:** For system-level interaction and execution.
 *   **HTTP:** For universal API access.

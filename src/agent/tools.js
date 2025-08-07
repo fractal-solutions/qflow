@@ -15,6 +15,7 @@ export function getToolDefinitions() {
         required: ["prompt"]
       }
     },
+    
     {
       name: "ollama_llm_reasoning",
       description: "A powerful local language model for general reasoning, problem-solving, and generating text, running via Ollama. Use this when you need to think, plan, or generate human-like responses locally. Do NOT use this for external actions like searching the web or interacting with files.",
@@ -70,6 +71,33 @@ export function getToolDefinitions() {
           }
         },
         required: ["input", "type"]
+      }
+    },
+    {
+      name: "code_interpreter",
+      description: "Executes Python code snippets in a sandboxed environment. Requires user confirmation for execution.",
+      parameters: {
+        type: "object",
+        properties: {
+          code: {
+            type: "string",
+            description: "The Python code snippet to execute."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Maximum execution time in milliseconds. Defaults to 30000 (30 seconds)."
+          },
+          args: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional. Command-line arguments to pass to the script."
+          },
+          requireConfirmation: {
+            type: "boolean",
+            description: "Optional. If true, the user will be prompted for confirmation before executing the code. Defaults to true."
+          }
+        },
+        required: ["code"]
       }
     },
     {

@@ -9,7 +9,8 @@ import {
   ScrapeURLNode,
   UserInputNode,
   AgentNode,
-  SummarizeNode 
+  SummarizeNode,
+  CodeInterpreterNode
 } from '../src/nodes';
 
 // You have the option of AgentOpenAILLMNode that can be used instead of Deepseek
@@ -44,6 +45,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   const httpRequest = new HttpRequestNode();
   const webScraper = new ScrapeURLNode();
   const userInput = new UserInputNode(); // Agent can also ask for user input
+  const codeInterpreter = new CodeInterpreterNode(); // Agent can execute code
 
   // Map tool names to their instances
   const availableTools = {
@@ -54,6 +56,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     http_request: httpRequest,
     web_scraper: webScraper,
     user_input: userInput,
+    code_interpreter: codeInterpreter,
     // Add other tools as needed
   };
 

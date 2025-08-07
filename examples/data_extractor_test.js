@@ -24,7 +24,22 @@ import { DataExtractorNode, ReadFileNode, ScrapeURLNode } from '../src/nodes';
 
   const htmlFlow = new AsyncFlow(scrapeNode);
   try {
-    await htmlFlow.runAsync({});
+    const scrapedHtml = await htmlFlow.runAsync({});
+
+    extractHtmlNode.setParams({
+      input: scrapedHtml,
+      type: 'html',
+      selector: 'h1' // Extract the text from the first h1 tag
+    });
+
+    const extractedResult = await new AsyncFlow(extractHtmlNode).runAsync({});
+
+    console.log('Extracted HTML (h1 content):', extractedResult);
+    if (extractedResult && extractedResult[0] === 'Example Domain') {
+      console.log('HTML Extraction Test Passed: h1 content extracted as expected.');
+    } else {
+      console.error('HTML Extraction Test Failed: Unexpected h1 content.', extractedResult);
+    }
   } catch (error) {
     console.error('HTML Extraction Flow Failed:', error);
   }
