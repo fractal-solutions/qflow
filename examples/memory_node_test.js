@@ -85,10 +85,10 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
   // Step 2: Use an LLM to answer a question based on retrieved memories
   const ragLLMNode = new DeepSeekLLMNode();
-  ragLLMNode.setParams({ apiKey: DEEPSEEK_API_KEY });
   ragLLMNode.preparePrompt = (shared) => {
     const retrievedContent = shared.memoryResult.map(mem => mem.content).join('\n\n');
     ragLLMNode.setParams({
+      apiKey: DEEPSEEK_API_KEY,
       prompt: `Based on the following context, answer the question:\n\nContext:\n${retrievedContent}\n\nQuestion: What is the main role of a CPU?`,
       keyword: 'rag_llm'
     });
