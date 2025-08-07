@@ -13,4 +13,5 @@ export * from './http.js';
 export * from './search.js';
 export * from './summarize.js';
 export * from './memory.js';
+export * from './transform.js';
 export * from '../agent/agent.js';

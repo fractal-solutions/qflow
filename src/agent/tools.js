@@ -2,6 +2,24 @@
 export function getToolDefinitions() {
   return [
     {
+      name: "transform_node",
+      description: "Transforms input data using a provided JavaScript function. Useful for filtering, reformatting, or combining data from other tools.",
+      parameters: {
+        type: "object",
+        properties: {
+          input: {
+            type: "object", // Can be any type of data
+            description: "The data to be transformed."
+          },
+          transformFunction: {
+            type: "string",
+            description: "A JavaScript function string (e.g., '(data) => data.map(item => item.name)') that takes 'data' as an argument and returns the transformed result."
+          }
+        },
+        required: ["input", "transformFunction"]
+      }
+    },
+    {
       name: "memory_node",
       description: "Stores and retrieves text-based memories or knowledge from the agent's local file system. Useful for long-term memory and keyword-based retrieval.",
       parameters: {
