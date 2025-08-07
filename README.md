@@ -132,7 +132,7 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama.
 *   [**Memory:**](#15-memory-node-lightweight-rag) For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
 *   [**Transform:**](#16-transform-node) For dynamic data manipulation and reformatting.
-*   [**CodeInterpreter:**](#14-code-interpreter-example) For executing dynamic code (in Python) within the workflow.
+*   [**CodeInterpreter:**](#14-code-interpreter-example) For executing dynamic code (in Python) within the workflow. Specific instructions on library use in [matplotlib example](#17-plotting-data-with-python-code-interpreter).
 *   [**Interactive Agent:**](#12-interactive-agent-example) An agent that takes a goal from user input and uses its tools to achieve it.
 *   [**Shell:**](#8-shell-command-example) For system-level interaction and execution.
 *   [**HTTP:**](#10-generic-http-request-example) For universal API access.
