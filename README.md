@@ -975,7 +975,7 @@ Follow these steps in *your project folder* where you are using `qflow`:
 
 4.  **Configure the Python Interpreter Path:**
     Create or update a `.env` file in your project's root directory (where your `qflow` application runs) and add the following line, pointing to the Python executable within your virtual environment:
-    ```
+    ```bash
     QFLOW_PYTHON_INTERPRETER=/path/to/your/project/.venv/bin/python
     # Example for Windows:
     # QFLOW_PYTHON_INTERPRETER=C:\path\to\your\project\.venv\Scripts\python.exe
