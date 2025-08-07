@@ -128,21 +128,21 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   **LLMs (DeepSeek, OpenAI, Gemini, Ollama):** The core of agentic behavior.
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
 *   **Agent:** Orchestrating tools and LLM reasoning to achieve complex goals.
-*   **Embedding:** For generating vector embeddings from text.
-*   **Semantic Memory:** For storing and retrieving memories based on semantic similarity (RAG) using Ollama.
-*   **Memory:** For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
-*   **Transform:** For dynamic data manipulation and reformatting.
-*   **CodeInterpreter:** For executing dynamic code (in Python) within the workflow. [](#14-code-interpreter-example)
-*   **Interactive Agent:** An agent that takes a goal from user input and uses its tools to achieve it.
-*   **Shell:** For system-level interaction and execution.
-*   **HTTP:** For universal API access.
-*   **FileSystem:** For reading and writing local data.
+*   [**Embedding:**](#18-embedding-node) For generating vector embeddings from text using Ollama.
+*   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama.
+*   [**Memory:**](#15-memory-node-lightweight-rag) For lightweight, keyword-based long-term memory and 'RAG' (lightweight, dependency free option).
+*   [**Transform:**](#16-transform-node) For dynamic data manipulation and reformatting.
+*   [**CodeInterpreter:**](#14-code-interpreter-example) For executing dynamic code (in Python) within the workflow.
+*   [**Interactive Agent:**](#12-interactive-agent-example) An agent that takes a goal from user input and uses its tools to achieve it.
+*   [**Shell:**](#8-shell-command-example) For system-level interaction and execution.
+*   [**HTTP:**](#10-generic-http-request-example) For universal API access.
+*   [**FileSystem:**](#9-file-system-example) For reading and writing local data.
 *   **User Input:** For human-in-the-loop control.
-*   **Web Search:** Discovering information on the web using either:
+*   [**Web Search:**](#11-web-search-example) Discovering information on the web using either:
     *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
 *   **WebScraper:** For targeted web scraping.
-*   **DataExtractor:** For targeted data extraction.
+*   [**DataExtractor:**](#13-data-extraction-example) For targeted data extraction.
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
 *   **Stripe:** Creating charges and retrieving account balances.
