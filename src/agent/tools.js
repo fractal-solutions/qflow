@@ -2,6 +2,40 @@
 export function getToolDefinitions() {
   return [
     {
+      name: "huggingface_llm_reasoning",
+      description: "A powerful language model for general reasoning, problem-solving, and generating text, using Hugging Face's OpenAI-compatible router. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          model: {
+            type: "string",
+            description: "The Hugging Face model ID (e.g., 'HuggingFaceH4/zephyr-7b-beta', 'openai/gpt-oss-20b:novita')."
+          },
+          hfToken: {
+            type: "string",
+            description: "Your Hugging Face API token."
+          },
+          temperature: {
+            type: "number",
+            description: "Optional. Controls randomness. Defaults to 0.7."
+          },
+          max_new_tokens: {
+            type: "number",
+            description: "Optional. Maximum number of tokens to generate. Defaults to 500."
+          },
+          baseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Hugging Face router API. Defaults to 'https://router.huggingface.co/v1'."
+          }
+        },
+        required: ["prompt", "model", "hfToken"]
+      }
+    },
+    {
       name: "semantic_memory_node",
       description: "Stores and retrieves text-based memories using vector embeddings for semantic search. Requires a local Ollama server running an embedding model (e.g., 'nomic-embed-text').",
       parameters: {

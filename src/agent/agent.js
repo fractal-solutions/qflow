@@ -37,7 +37,8 @@ export class AgentNode extends AsyncNode {
       let llmResponse;
       try {
         llmResponse = await this.getLLMAction();
-        console.log(`LLM Raw Response: ${llmResponse}`);
+        //console.log(`LLM Raw Response (before parsing):`, llmResponse); // Added logging
+        //console.log(`LLM Raw Response Type (before parsing):`, typeof llmResponse); // Added logging
       } catch (e) {
         console.error("Error getting LLM action:", e.message);
         this.conversationHistory.push({ role: "user", content: `Error: Failed to get LLM response: ${e.message}` });
@@ -130,17 +131,53 @@ export class AgentNode extends AsyncNode {
   }
 
   parseLLMResponse(llmResponse) {
-    // Remove markdown code block wrapper if present
-    const cleanedResponse = llmResponse.replace(/^```json\n|\n```$/g, '').trim();
-    try {
-      const parsed = JSON.parse(cleanedResponse);
-      if (parsed.thought && parsed.tool && parsed.tool.tool && parsed.tool.parameters !== undefined) {
-        return parsed;
+    let parsed;
+    let thought = '';
+    let toolCall = {};
+
+    // Check if llmResponse is already a parsed object (e.g., from AgentHuggingFaceLLMNode's raw data)
+    // This is a temporary measure for debugging, ideally llmResponse should always be a string
+    let rawData = llmResponse;
+    if (typeof llmResponse === 'string') {
+      try {
+        rawData = JSON.parse(llmResponse);
+      } catch (e) {
+        // If it's not JSON, assume it's a direct text response from LLM
+        // This path should ideally not be taken if LLM is tool-calling capable
+        return { thought: "Direct LLM response", tool: { tool: "finish", parameters: { output: llmResponse } } };
       }
-      throw new Error("Missing required keys in LLM response (thought, tool.tool, tool.parameters).");
-    } catch (e) {
-      throw new Error(`Invalid JSON or unexpected format: ${e.message}. Cleaned Response: ${cleanedResponse}`);
     }
+
+    // Prioritize tool_calls if present (OpenAI function calling format)
+    if (rawData.choices && rawData.choices.length > 0 && rawData.choices[0].message) {
+      const message = rawData.choices[0].message;
+
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        const firstToolCall = message.tool_calls[0];
+        toolCall = {
+          tool: firstToolCall.function.name,
+          parameters: JSON.parse(firstToolCall.function.arguments)
+        };
+        thought = message.reasoning_content || `Calling tool: ${toolCall.tool}`; // Use reasoning_content if available
+        return { thought, tool: toolCall };
+      } else if (typeof message.content === 'string' && message.content.trim().startsWith('{')) {
+        // If no tool_calls, but content is JSON (for thought/tool/finish)
+        try {
+          parsed = JSON.parse(message.content);
+          if (parsed.thought && parsed.tool && parsed.tool.tool && parsed.tool.parameters !== undefined) {
+            return parsed;
+          }
+          throw new Error("Missing required keys in LLM response (thought, tool.tool, tool.parameters).");
+        } catch (e) {
+          throw new Error(`Invalid JSON or unexpected format in message.content: ${e.message}. Content: ${message.content}`);
+        }
+      } else if (typeof message.content === 'string') {
+        // If content is plain text, assume it's a direct answer
+        return { thought: "Direct LLM response", tool: { tool: "finish", parameters: { output: message.content } } };
+      }
+    }
+
+    throw new Error(`Invalid LLM response structure. Raw Data: ${JSON.stringify(rawData)}`);
   }
 
   async postAsync(shared, prepRes, execRes) {

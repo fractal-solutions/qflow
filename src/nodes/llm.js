@@ -186,3 +186,64 @@ export class OllamaLLMNode extends AsyncNode {
     }
   }
 }
+
+export class HuggingFaceLLMNode extends AsyncNode {
+  constructor(maxRetries = 3, wait = 2) {
+    super(maxRetries, wait);
+  }
+
+  async execAsync() {
+    const { prompt, model, hfToken, temperature = 0.7, max_new_tokens = 500, baseUrl = 'https://router.huggingface.co/v1' } = this.params;
+
+    if (!prompt) {
+      throw new Error('HuggingFaceLLMNode requires a `prompt`.');
+    }
+    if (!model) {
+      throw new Error('HuggingFaceLLMNode requires a `model` (e.g., "openai/gpt-oss-20b:novita").');
+    }
+    if (!hfToken) {
+      throw new Error('HuggingFaceLLMNode requires a `hfToken` (Hugging Face API token).');
+    }
+
+    // Hugging Face router uses OpenAI-compatible API
+    const url = `${baseUrl}/chat/completions`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${hfToken}`,
+    };
+    const body = JSON.stringify({
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: temperature,
+      max_tokens: max_new_tokens,
+      // Add other OpenAI-compatible parameters as needed
+    });
+
+    console.log(`[HuggingFace] Sending prompt to ${model} at ${baseUrl}...`);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Hugging Face API error: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      if (!data.choices || data.choices.length === 0 || !data.choices[0].message || typeof data.choices[0].message.content !== 'string') {
+        throw new Error('Invalid response structure from Hugging Face API.');
+      }
+
+      const llmResponse = data.choices[0].message.content.trim();
+      console.log(`[HuggingFace] Received response from ${model}.`);
+      return llmResponse;
+    } catch (error) {
+      console.error('HuggingFaceLLMNode: Error during API call:', error);
+      throw error;
+    }
+  }
+}

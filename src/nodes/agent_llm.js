@@ -1,4 +1,4 @@
-import { DeepSeekLLMNode, OpenAILLMNode, GeminiLLMNode, OllamaLLMNode } from './llm.js';
+import { DeepSeekLLMNode, OpenAILLMNode, GeminiLLMNode, OllamaLLMNode, HuggingFaceLLMNode } from './llm.js';
 
 /**
  * A specialized DeepSeekLLMNode for use within the AgentNode.
@@ -247,5 +247,85 @@ export class AgentOllamaLLMNode extends OllamaLLMNode {
       console.error('AgentOllamaLLMNode: Error during API call:', error);
       throw error;
     }
+  }
+}
+
+export class AgentHuggingFaceLLMNode extends HuggingFaceLLMNode {
+  preparePrompt(shared) {
+    const messages = JSON.parse(this.params.prompt);
+    // Hugging Face router (OpenAI-compatible) expects a messages array.
+    // We'll pass the parsed messages directly.
+    this.params.messages = messages;
+  }
+
+  async execAsync(prepRes, shared) {
+    this.preparePrompt(shared); // Prepare the prompt from shared state
+    const { messages, model, hfToken, temperature, max_new_tokens, baseUrl } = this.params;
+
+    if (!messages || messages.length === 0) {
+      throw new Error('AgentHuggingFaceLLMNode requires `messages`.');
+    }
+    if (!model) {
+      throw new Error('AgentHuggingFaceLLMNode requires a `model`.');
+    }
+    if (!hfToken) {
+      throw new Error('AgentHuggingFaceLLMNode requires a `hfToken`.');
+    }
+
+    const url = `${baseUrl || 'https://router.huggingface.co/v1'}/chat/completions`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${hfToken}`,
+    };
+    const body = JSON.stringify({
+      model: model,
+      messages: messages,
+      temperature: temperature || 0.7,
+      max_tokens: max_new_tokens || 500,
+    });
+
+    console.log(`[AgentHuggingFace] Sending prompt to ${model} at ${url}...`);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = await response.text(); // Get raw text if not JSON
+        }
+        throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      //console.log("HuggingFace Agent Raw Data:", JSON.stringify(data, null, 2)); // Added logging
+
+      let llmResponse = '';
+      if (data && data.choices && data.choices.length > 0 && data.choices[0].message && typeof data.choices[0].message.content === 'string') {
+        llmResponse = data.choices[0].message.content.trim();
+      } else if (data && Array.isArray(data) && data[0] && typeof data[0].generated_text === 'string') {
+        // Fallback for models that return directly generated_text (e.g., older HF inference API)
+        llmResponse = data[0].generated_text.trim();
+      } else {
+        throw new Error('Invalid or unexpected response structure from Hugging Face API.');
+      }
+
+      console.log(`[AgentHuggingFace] Received response from ${model}.`);
+      return data; // Return the full data object for AgentNode to parse
+    } catch (error) {
+      console.error('AgentHuggingFaceLLMNode: Error during API call:', error);
+      throw error;
+    }
+  }
+
+  async postAsync(shared, prepRes, execRes) {
+    shared.llmResponse = execRes; // Store the full LLM response object
+    return execRes; // Return the full LLM response object
   }
 }
