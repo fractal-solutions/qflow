@@ -11,7 +11,11 @@ import {
   AgentNode,
   SemanticMemoryNode,
   TransformNode,
-  CodeInterpreterNode
+  CodeInterpreterNode,
+  SubFlowNode,
+  IteratorNode,
+  AppendFileNode,
+  MemoryNode
 } from '../src/nodes';
 import path from 'path';
 import os from 'os';
@@ -114,7 +118,31 @@ async function setupAndLoadKnowledgeBase() {
     embeddingBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
   });
   const transformNode = new TransformNode();
-  const codeInterpreter = new CodeInterpreterNode(); 
+  const codeInterpreter = new CodeInterpreterNode();
+  const subFlow = new SubFlowNode();
+  const iterator = new IteratorNode(); 
+
+  class StatefulAppendFileNode extends AppendFileNode {
+    async execAsync(prepRes, shared) {
+      this.setParams(shared.item);
+      return super.execAsync();
+    }
+  }
+
+  class StatefulMemoryNode extends MemoryNode {
+    async execAsync(prepRes, shared) {
+      this.setParams(shared.item);
+      return super.execAsync();
+    }
+  }
+
+  const appendToFileFlow = new AsyncFlow(new StatefulAppendFileNode());
+  const memoryNodeFlow = new AsyncFlow(new StatefulMemoryNode());
+
+  const flowRegistry = {
+    append_to_file_flow: appendToFileFlow,
+    memory_node_flow: memoryNodeFlow,
+  };
 
   // Map tool names to their instances
   const availableTools = {
@@ -128,11 +156,13 @@ async function setupAndLoadKnowledgeBase() {
     semantic_memory_node: semanticMemoryNode,
     transform_node: transformNode,
     code_interpreter: codeInterpreter,
+    sub_flow: subFlow,
+    iterator: iterator,
     // Add other tools as needed
   };
 
   // 4. Instantiate the AgentNode
-  const agent = new AgentNode(agentLLM, availableTools);
+  const agent = new AgentNode(agentLLM, availableTools, null, flowRegistry);
   // The goal will be set dynamically from the UserInputNode's output
   agent.prepAsync = async (shared) => {
     agent.setParams({ goal: shared.userInput });

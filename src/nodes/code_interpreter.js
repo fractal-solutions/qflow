@@ -3,10 +3,23 @@ import { UserInputNode } from './user.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import chalk from 'chalk';
 
 let nodeChildProcess = null;
 if (!process.versions.bun) {
   nodeChildProcess = require('child_process');
+}
+
+function syntaxHighlight(code) {
+  return code
+    .replace(/\b(def|class|import|from|return|if|else|elif|for|while|with|try|except|finally|raise|assert|yield|lambda|pass|continue|break)\b/g, chalk.blue.bold('$1'))
+    .replace(/("""[\s\S]*?""")/g, chalk.hex('#6272a4').italic('$1')) 
+    .replace(/('''[\s\S]*?''')/g, chalk.hex('#6272a4').italic('$1')) 
+    .replace(/(".*?")/g, chalk.hex('#f1fa8c')('$1')) 
+    .replace(/('.*?')/g, chalk.hex('#f1fa8c')('$1')) 
+    .replace(/#.*/g, chalk.hex('#6272a4').italic('$&'))
+    .replace(/\b(True|False|None)\b/g, chalk.hex('#bd93f9').bold('$1'))
+    .replace(/\b(self|cls)\b/g, chalk.hex('#ffb86c').italic('$1'));
 }
 
 export class CodeInterpreterNode extends AsyncNode {
@@ -23,14 +36,12 @@ export class CodeInterpreterNode extends AsyncNode {
     const interpreterCommand = interpreterPath || 'python';
 
     console.log(`[CodeInterpreter] Proposed execution: ${interpreterCommand} ${tempFilePath}`);
-    console.log(`[CodeInterpreter] Code to execute:\n${code}`);
+    if (!requireConfirmation) console.log(`[CodeInterpreter] Code to execute:\n${syntaxHighlight(code)}`);
 
-    // --- User Confirmation ---
-    // --- User Confirmation ---
     if (requireConfirmation) {
       const confirmNode = new UserInputNode();
       confirmNode.setParams({
-        prompt: `The agent wants to execute the following Python code:\n${code}\nDo you approve? (yes/no): `
+        prompt: `The agent wants to execute the following Python code:\n${syntaxHighlight(code)}\nDo you approve? (yes/no): `
       });
       const confirmFlow = new AsyncFlow(confirmNode);
       const confirmation = await confirmFlow.runAsync({});
@@ -39,15 +50,13 @@ export class CodeInterpreterNode extends AsyncNode {
         throw new Error('Code execution denied by user.');
       }
     }
-    // --- End User Confirmation ---
-    // --- End User Confirmation ---
 
     try {
       await fs.writeFile(tempFilePath, code, 'utf-8');
 
       let stdout = '';
       let stderr = '';
-      let exitCode = 1; // Default to failure
+      let exitCode = 1;
 
       const abortController = new AbortController();
       const timeoutId = setTimeout(() => abortController.abort(), timeout);
@@ -61,7 +70,6 @@ export class CodeInterpreterNode extends AsyncNode {
             signal: abortController.signal,
           });
 
-          // Await stdout and stderr first
           stdout = await new Response(childProcess.stdout).text();
           stderr = await new Response(childProcess.stderr).text();
 
@@ -69,9 +77,9 @@ export class CodeInterpreterNode extends AsyncNode {
 
           if (abortController.signal.aborted) {
             stderr += `\nExecution timed out after ${timeout}ms.`;
-            exitCode = 1; // Indicate failure due to timeout
+            exitCode = 1;
           } else {
-            exitCode = Number(bunExitResult !== null ? bunExitResult : 1); // Ensure exitCode is a number
+            exitCode = Number(bunExitResult !== null ? bunExitResult : 1);
           }
 
         } else if (nodeChildProcess) {
@@ -93,35 +101,30 @@ export class CodeInterpreterNode extends AsyncNode {
 
           stdout = Buffer.concat(stdoutChunks).toString('utf-8');
           stderr = Buffer.concat(stderrChunks).toString('utf-8');
-          exitCode = exitCodeFromClose !== null ? exitCodeFromClose : (signalFromClose ? 1 : 1); // If signal, treat as failure
+          exitCode = exitCodeFromClose !== null ? exitCodeFromClose : (signalFromClose ? 1 : 1);
 
         } else {
           throw new Error('Unsupported runtime environment.');
         }
 
       } catch (error) {
-        if (error.name === "AbortError" || error.code === "ABORT_ERR") { // Handle AbortError for both Bun and Node
-          stderr += `
-Execution timed out after ${timeout}ms.`;
-          exitCode = 1; // Indicate failure due to timeout
+        if (error.name === "AbortError" || error.code === "ABORT_ERR") {
+          stderr += `\nExecution timed out after ${timeout}ms.`;
+          exitCode = 1;
         } else if (error.code === 'ENOENT') {
           stderr += `\nError: Command '${interpreterCommand}' not found. Please ensure it is installed and in your system's PATH.`;
           exitCode = 1;
         } else {
-          stderr += `
-Error during execution: ${error.message}`;
+          stderr += `\nError during execution: ${error.message}`;
           exitCode = 1;
         }
       } finally {
         clearTimeout(timeoutId);
       }
 
-      
-
       return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode };
 
     } finally {
-      // Clean up temporary file
       await fs.unlink(tempFilePath).catch(e => console.error(`Failed to delete temp file ${tempFilePath}:`, e));
     }
   }

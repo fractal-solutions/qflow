@@ -446,6 +446,42 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "sub_flow",
+      description: "Executes a sub-flow.",
+      parameters: {
+        type: "object",
+        properties: {
+          flow: {
+            type: "string",
+            description: "The name of the flow to execute, as registered in the flow registry."
+          },
+          shared: {
+            type: "object",
+            description: "The shared object to pass to the sub-flow."
+          }
+        },
+        required: ["flow"]
+      }
+    },
+    {
+      name: "iterator",
+      description: "Iterates over a list of items and executes a sub-flow for each item.",
+      parameters: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            description: "The list of items to iterate over."
+          },
+          flow: {
+            type: "string",
+            description: "The name of the flow to execute for each item, as registered in the flow registry."
+          }
+        },
+        required: ["items", "flow"]
+      }
+    },
+    {
       name: "finish",
       description: "Call this tool when you have successfully achieved the goal or if you are unable to proceed further. This will end the agent's execution.",
       parameters: {

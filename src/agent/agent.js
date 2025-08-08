@@ -4,7 +4,7 @@ import { SummarizeNode } from '../nodes/summarize.js';
 import { logger } from './logger.js';
 
 export class AgentNode extends AsyncNode {
-  constructor(llmNode, availableTools, summarizeLLM) {
+  constructor(llmNode, availableTools, summarizeLLM, flowRegistry = {}) {
     super();
     if (!llmNode) {
       throw new Error("AgentNode requires an LLMNode instance for reasoning.");
@@ -12,6 +12,7 @@ export class AgentNode extends AsyncNode {
     this.llmNode = llmNode;
     this.availableTools = availableTools;
     this.summarizeLLM = summarizeLLM;
+    this.flowRegistry = flowRegistry;
     this.conversationHistory = [];
     this.maxSteps = 20;
   }
@@ -74,6 +75,16 @@ export class AgentNode extends AsyncNode {
       let toolOutput;
       try {
         logger.toolCall(toolCall.tool, toolCall.parameters);
+
+        // If the tool is a sub-flow or iterator, look up the flow in the registry
+        if (toolCall.tool === 'sub_flow' || toolCall.tool === 'iterator') {
+          const flowName = toolCall.parameters.flow;
+          if (!this.flowRegistry[flowName]) {
+            throw new Error(`Flow '${flowName}' not found in registry.`);
+          }
+          toolCall.parameters.flow = this.flowRegistry[flowName];
+        }
+
         toolInstance.setParams(toolCall.parameters);
         const ToolFlowClass = toolInstance instanceof AsyncNode ? AsyncFlow : Flow;
         const toolFlow = new ToolFlowClass(toolInstance);
@@ -118,7 +129,9 @@ export class AgentNode extends AsyncNode {
       return `### Tool: ${tool.name}\nDescription: ${tool.description}\nParameters: ${params}`;
     }).join('\n\n');
 
-    return `You are an autonomous agent designed to achieve a goal by selecting and using tools. Your responses must be in a specific JSON format.\n\nAvailable Tools:\n${toolDescriptions}\n\nYour response must be a single JSON object with two keys: 'thought' and 'tool'.\n'thought': A string explaining your reasoning process and plan.\n'tool': An object with two keys: 'tool' (the name of the tool to call) and 'parameters' (an object containing the parameters for that tool).\n\nExample response:\n{\n  "thought": "I need to find information about X, so I will use the duckduckgo_search tool.",\n  "tool": {\n    "tool": "duckduckgo_search",\n    "parameters": {\n      "query": "X information"\n    }\n  }\n}\n\nWhen you have achieved the goal or cannot proceed, use the 'finish' tool.\nExample finish response:\n{\n  "thought": "I have successfully achieved the goal.",\n  "tool": {\n    "tool": "finish",\n    "parameters": {\n      "output": "The final result of the goal."\n    }\n}\n\nBegin!`;
+    const flowRegistryDescription = Object.keys(this.flowRegistry).length > 0 ? `\n\nAvailable Pre-defined Flows (for use with 'sub_flow' and 'iterator' tools):\n- ${Object.keys(this.flowRegistry).join('\n- ' )}` : "";
+
+    return `You are an autonomous agent designed to achieve a goal by selecting and using tools. Your responses must be in a specific JSON format.\n\nAvailable Tools:\n${toolDescriptions}${flowRegistryDescription}\n\nYour response must be a single JSON object with two keys: 'thought' and 'tool'.\n'thought': A string explaining your reasoning process and plan.\n'tool': An object with two keys: 'tool' (the name of the tool to call) and 'parameters' (an object containing the parameters for that tool).\n\nWhen using 'sub_flow' or 'iterator', the 'flow' parameter must be a string matching one of the pre-defined flow names.\n\nExample response:\n{\n  "thought": "I need to find information about X, so I will use the duckduckgo_search tool.",\n  "tool": {\n    "tool": "duckduckgo_search",\n    "parameters": {\n      "query": "X information"\n    }\n  }\n}\n\nWhen you have achieved the goal or cannot proceed, use the 'finish' tool.\nExample finish response:\n{\n  "thought": "I have successfully achieved the goal.",\n  "tool": {\n    "tool": "finish",\n    "parameters": {\n      "output": "The final result of the goal."\n    }\n}\n\nBegin!`
   }
 
   async getLLMAction() {

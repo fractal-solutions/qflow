@@ -1406,6 +1406,15 @@ The `AgentNode` can be equipped with a variety of tools to perform a wide range 
     *   `model`: The Ollama embedding model name to use.
     *   `baseUrl`: The base URL of the Ollama API.
 
+### Flow Control
+
+*   **sub_flow**: Executes a sub-flow.
+    *   `flow`: The flow to execute.
+    *   `shared`: The shared object to pass to the sub-flow.
+*   **iterator**: Iterates over a list of items and executes a sub-flow for each item.
+    *   `items`: The list of items to iterate over.
+    *   `flow`: The flow to execute for each item.
+
 ### LLM Reasoning
 
 *   **huggingface_llm_reasoning**: A powerful language model for general reasoning, problem-solving, and generating text, using Hugging Face's OpenAI-compatible router.
