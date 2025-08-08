@@ -125,8 +125,9 @@ A helper class used in conjunction with `Node.transition()` to define conditiona
 
 The examples in [Basic Usage & Examples](#basic-usage--examples) below will cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
-*   [**LLMs (DeepSeek, OpenAI, Gemini, Ollama):**](#7-inter-node-communication-with-shared-state-advanced-example) The core of agentic behavior.
+*   [**LLMs (DeepSeek, OpenAI, Gemini, Ollama, Hugging Face):**](#7-inter-node-communication-with-shared-state-advanced-example) The core of agentic behavior.
     *   For agents, use specialized LLM nodes like `AgentDeepSeekLLMNode`, `AgentOpenAILLMNode`, `AgentOllamaLLMNode`.
+    *   **Hugging Face Models:** Leverage Hugging Face's free Inference API (OpenAI-compatible endpoint) by using `HuggingFaceLLMNode` and `AgentHuggingFaceLLMNode` with `baseUrl: 'https://router.huggingface.co/v1'` and your Hugging Face API token. Ensure you specify the correct `model` ID (e.g., `openai/gpt-oss-20b:novita`).
 *   [**Agent:**](#12-interactive-agent-example) Orchestrating tools and LLM reasoning to achieve complex goals.
 *   [**Embedding:**](#18-embedding-node) For generating vector embeddings from text using Ollama.
 *   [**Semantic Memory:**](#19-semantic-memory-node) For storing and retrieving memories based on semantic similarity (RAG) using Ollama. A slightly more advanced RAG is implemented as [RAG with user query input](https://github.com/fractal-solutions/qflow/blob/main/examples/rag_user_input.js).
