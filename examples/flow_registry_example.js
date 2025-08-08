@@ -1,6 +1,5 @@
 import { AsyncFlow, AsyncNode } from '../src/qflow.js';
 import {
-  AgentDeepSeekLLMNode,
   DuckDuckGoSearchNode,
   ShellCommandNode,
   ReadFileNode,
@@ -24,7 +23,6 @@ import os from 'os';
 import { promises as fs } from 'fs';
 
 // --- Configuration ---
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY; // Ensure this is set
 const HF_TOKEN = process.env.HF_TOKEN; // Your Hugging Face API token
 const HF_AGENT_MODEL = process.env.HF_MODEL || 'HuggingFaceH4/zephyr-7b-beta'; // Agent-capable model
 const OLLAMA_EMBEDDING_MODEL = process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text';
