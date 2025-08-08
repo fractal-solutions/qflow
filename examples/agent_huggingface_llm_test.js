@@ -87,7 +87,7 @@ async function setupAndLoadKnowledgeBase() {
 
   // 1. Node to get the goal from the user
   const getGoalNode = new UserInputNode();
-  getGoalNode.setParams({ prompt: 'Please enter the agent\'s goal (e.g., "What is qflow?"): ' });
+  getGoalNode.setParams({ prompt: 'Please enter the agent\'s goal: ' });
 
   // 2. Instantiate the LLM for the agent's reasoning
   const agentLLM = new AgentHuggingFaceLLMNode();

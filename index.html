@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qflow - Lightweight JavaScript Workflow Library</title>
+    <style>
+        body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4;}
+        header {background: #333; color: #fff; padding: 20px; text-align: center;}
+        section {padding: 20px; max-width: 800px; margin: auto; background: #fff; margin-top: 20px; border-radius: 8px;}
+        h1, h2 {color: #333;}
+        ul {list-style: none; padding: 0;}
+        li {margin-bottom: 10px;}
+    </style>
+</head>
+<body>
+<header>
+    <h1>qflow</h1>
+    <p>Build intelligent workflows and agents with JavaScript.</p>
+</header>
+<section>
+    <h2>What is qflow?</h2>
+    <p>qflow is a lightweight JavaScript library for building workflows and agents. It uses <strong>nodes</strong> for atomic operations and <strong>flows</strong> to chain them together. It supports asynchronous operations and shared state, making it ideal for complex tasks.</p>
+
+    <h2>Key Features</h2>
+    <ul>
+        <li><strong>Node-Based Architecture</strong>: Work with built-in nodes such as FileSystemNode, HttpRequestNode, CodeInterpreterNode, SemanticMemoryNode, and TransformNode.</li>
+        <li><strong>AgentNode</strong>: Integrates an LLM for reasoning and tool selection, following a Reason→Act→Observe loop.</li>
+        <li><strong>Asynchronous Support</strong>: Handle async operations seamlessly within flows.</li>
+        <li><strong>Shared State</strong>: Easily share data across nodes without complex plumbing.</li>
+    </ul>
+
+    <h2>Getting Started</h2>
+    <p>To begin using qflow, install the library via npm:</p>
+    <pre>npm install qflow</pre>
+    <p>Then, import and create a simple workflow:</p>
+    <pre>
+const { Flow, HttpRequestNode } = require('qflow');
+
+const flow = new Flow();
+flow.addNode(new HttpRequestNode('https://api.example.com/data'));
+flow.run();
+    </pre>
+</section>
+<footer style="text-align:center; margin-top:30px; color:#777;">© 2025 qflow. All rights reserved.</footer>
+</body>
+</html>

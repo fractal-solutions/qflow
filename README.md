@@ -150,6 +150,8 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 
 These examples are a great resource for understanding how to leverage `qflow` to its full potential.
 
+For a detailed list of all tools available to the `AgentNode` and their parameters, see the [Available Tools for Agents](#available-tools-for-agents) section.
+
 ## Basic Usage & Examples
 
 ### 1. Simple Node
@@ -1321,3 +1323,102 @@ test("Node should handle parameters via setParams", () => {
 We welcome contributions! Please see our GitHub repository for more details on how to contribute.
 
 ---
+
+## Available Tools for Agents
+
+The `AgentNode` can be equipped with a variety of tools to perform a wide range of tasks. Below is a list of the built-in tools and their functionalities.
+
+### Core Tools
+
+*   **finish**: Ends the agent's execution and returns a final output.
+    *   `output`: A summary of the final result or the reason for stopping.
+*   **user_input**: Prompts the user for input and waits for their response.
+    *   `prompt`: The message to display to the user.
+
+### File System
+
+*   **read_file**: Reads the content of a specified file.
+    *   `filePath`: The absolute path to the file to read.
+*   **write_file**: Writes content to a specified file.
+    *   `filePath`: The absolute path to the file to write to.
+    *   `content`: The content to write to the file.
+*   **append_file**: Appends content to an existing file.
+    *   `filePath`: The absolute path to the file to append to.
+    *   `content`: The content to append to the file.
+*   **list_directory**: Lists the files and subdirectories within a specified directory.
+    *   `directoryPath`: The absolute path to the directory to list.
+
+### Web
+
+*   **duckduckgo_search**: Performs a web search using DuckDuckGo.
+    *   `query`: The search query.
+*   **google_search**: Performs a web search using the Google Custom Search API.
+    *   `query`: The search query.
+    *   `apiKey`: Your Google API Key.
+    *   `cseId`: Your Custom Search Engine ID.
+*   **http_request**: Makes a generic HTTP request to any URL.
+    *   `url`: The full URL of the API endpoint.
+    *   `method`: The HTTP method to use (e.g., 'GET', 'POST').
+    *   `headers`: Custom headers for the request.
+    *   `body`: The request payload.
+    *   `auth`: Authentication configuration.
+*   **web_scraper**: Fetches the HTML content of a given URL.
+    *   `url`: The URL to scrape.
+
+### Data & Code
+
+*   **data_extractor**: Extracts structured data from HTML, JSON, or plain text.
+    *   `input`: The content string from which to extract data.
+    *   `type`: The type of content to extract from (html, json, or text).
+    *   `selector`: A CSS selector to target elements (for HTML).
+    *   `jsonPath`: A dot-notation path to extract data (for JSON).
+    *   `regex`: A regular expression to match and extract data (for text).
+    *   `group`: The capturing group index to return from the regex match.
+*   **code_interpreter**: Executes Python code snippets.
+    *   `code`: The Python code snippet to execute.
+    *   `timeout`: Maximum execution time in milliseconds.
+    *   `args`: Command-line arguments to pass to the script.
+    *   `requireConfirmation`: If true, the user will be prompted for confirmation before executing the code.
+*   **transform_node**: Transforms input data using a provided JavaScript function.
+    *   `input`: The data to be transformed.
+    *   `transformFunction`: A JavaScript function string that takes 'data' as an argument and returns the transformed result.
+
+### Memory & Embeddings
+
+*   **memory_node**: Stores and retrieves text-based memories from the agent's local file system.
+    *   `action`: The action to perform: 'store' or 'retrieve'.
+    *   `content`: The text content of the memory to store.
+    *   `query`: Keywords to search for within stored memories.
+    *   `id`: A unique identifier for the memory.
+    *   `memoryPath`: The directory path where memories are stored.
+*   **semantic_memory_node**: Stores and retrieves text-based memories using vector embeddings for semantic search.
+    *   `action`: The action to perform: 'store' or 'retrieve'.
+    *   `content`: The text content of the memory to store.
+    *   `query`: The text query for semantic search.
+    *   `id`: A unique identifier for the memory.
+    *   `metadata`: Key-value pairs to store alongside the memory.
+    *   `memoryPath`: The directory path where memories and the index are stored.
+    *   `embeddingModel`: The Ollama embedding model name to use.
+    *   `embeddingBaseUrl`: The base URL of the Ollama API for embeddings.
+    *   `topK`: The number of top similar results to retrieve.
+*   **generate_embedding**: Generates a vector embedding for a given text using a local Ollama embedding model.
+    *   `text`: The text string to generate an embedding for.
+    *   `model`: The Ollama embedding model name to use.
+    *   `baseUrl`: The base URL of the Ollama API.
+
+### LLM Reasoning
+
+*   **huggingface_llm_reasoning**: A powerful language model for general reasoning, problem-solving, and generating text, using Hugging Face's OpenAI-compatible router.
+    *   `prompt`: The prompt or question to send to the language model.
+    *   `model`: The Hugging Face model ID.
+    *   `hfToken`: Your Hugging Face API token.
+    *   `temperature`: Controls randomness.
+    *   `max_new_tokens`: Maximum number of tokens to generate.
+    *   `baseUrl`: The base URL of the Hugging Face router API.
+*   **llm_reasoning**: A powerful language model for general reasoning, problem-solving, and generating text.
+    *   `prompt`: The prompt or question to send to the language model.
+*   **ollama_llm_reasoning**: A powerful local language model for general reasoning, problem-solving, and generating text, running via Ollama.
+    *   `prompt`: The prompt or question to send to the local Ollama language model.
+    *   `model`: The Ollama model name to use.
+    *   `baseUrl`: The base URL of the Ollama API.
+
