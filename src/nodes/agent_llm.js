@@ -200,6 +200,11 @@ export class AgentGeminiLLMNode extends GeminiLLMNode {
       throw error;
     }
   }
+
+  async postAsync(shared, prepRes, execRes) {
+    shared.llmResponse = execRes; // Store the full LLM response object
+    return execRes; // Return the full LLM response object
+  }
 }
 
 export class AgentOllamaLLMNode extends OllamaLLMNode {
@@ -247,6 +252,11 @@ export class AgentOllamaLLMNode extends OllamaLLMNode {
       console.error('AgentOllamaLLMNode: Error during API call:', error);
       throw error;
     }
+  }
+
+  async postAsync(shared, prepRes, execRes) {
+    shared.llmResponse = execRes; // Store the full LLM response object
+    return execRes; // Return the full LLM response object
   }
 }
 

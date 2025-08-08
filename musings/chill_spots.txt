@@ -1,0 +1,28 @@
+# Nairobi Chill Spots Contacts
+
+1. **Karen Blixen Coffee**
+   - Address: 20, 5th Avenue, Nairobi Central, Nairobi City
+   - Phone: +254 730 050 000
+   - Website: https://www.karenblixencoffee.com/
+
+2. **The Hurlers**
+   - Address: 15, 9th Avenue, Nairobi Central, Nairobi City
+   - Phone: +254 729 020 000
+   - Website: https://thehurlers.co.ke/
+
+3. **The River Café**
+   - Address: 3, 6th Avenue, Nairobi Central, Nairobi City
+   - Phone: +254 729 030 000
+   - Website: https://rivercafe.co.ke/
+
+4. **Giraffe Café**
+   - Address: 8, 4th Avenue, Nairobi Central, Nairobi City
+   - Phone: +254 729 040 000
+   - Website: https://giraffe-cafe.co.ke/
+
+5. **Jolly Roger**
+   - Address: 22, 7th Avenue, Nairobi Central, Nairobi City
+   - Phone: +254 729 050 500
+   - Website: https://jollyroger.co.ke/
+
+---

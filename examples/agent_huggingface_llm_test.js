@@ -10,7 +10,8 @@ import {
   UserInputNode,
   AgentNode,
   SemanticMemoryNode,
-  TransformNode
+  TransformNode,
+  CodeInterpreterNode
 } from '../src/nodes';
 import path from 'path';
 import os from 'os';
@@ -94,7 +95,7 @@ async function setupAndLoadKnowledgeBase() {
     model: HF_AGENT_MODEL,
     hfToken: HF_TOKEN,
     temperature: 0.7,
-    max_new_tokens: 2000, // Increased for potentially longer JSON outputs
+    max_new_tokens: 4000, // Increased for potentially longer JSON outputs
     baseUrl: 'https://router.huggingface.co/v1' // Use OpenAI-compatible router
   });
 
@@ -113,6 +114,7 @@ async function setupAndLoadKnowledgeBase() {
     embeddingBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
   });
   const transformNode = new TransformNode();
+  const codeInterpreter = new CodeInterpreterNode(); 
 
   // Map tool names to their instances
   const availableTools = {
@@ -125,6 +127,7 @@ async function setupAndLoadKnowledgeBase() {
     user_input: userInput,
     semantic_memory_node: semanticMemoryNode,
     transform_node: transformNode,
+    code_interpreter: codeInterpreter,
     // Add other tools as needed
   };
 
