@@ -12,7 +12,7 @@ export class AgentNode extends AsyncNode {
     this.availableTools = availableTools; // Map of tool_name -> qflow_node_instance
     this.summarizeLLM = summarizeLLM; // LLM for summarization
     this.conversationHistory = [];
-    this.maxSteps = 10; // Limit to prevent infinite loops
+    this.maxSteps = 20; // Limit to prevent infinite loops
   }
 
   async execAsync() {
