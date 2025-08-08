@@ -20,3 +20,4 @@ export * from './semantic_memory.js';
 export * from '../agent/agent.js';
 export * from './subflow.js';
 export * from './iterator.js';
+export * from './openrouter_llm.js';

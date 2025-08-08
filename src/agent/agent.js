@@ -1,10 +1,11 @@
 import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
+import { UserInputNode } from '../nodes';
 import { getToolDefinitions } from './tools.js';
 import { SummarizeNode } from '../nodes/summarize.js';
 import { logger } from './logger.js';
 
 export class AgentNode extends AsyncNode {
-  constructor(llmNode, availableTools, summarizeLLM, flowRegistry = {}) {
+  constructor(llmNode, availableTools, summarizeLLM, flowRegistry = {}, requireFinishConfirmation = true) {
     super();
     if (!llmNode) {
       throw new Error("AgentNode requires an LLMNode instance for reasoning.");
@@ -15,6 +16,7 @@ export class AgentNode extends AsyncNode {
     this.flowRegistry = flowRegistry;
     this.conversationHistory = [];
     this.maxSteps = 20;
+    this.requireFinishConfirmation = requireFinishConfirmation;
   }
 
   async execAsync() {
@@ -60,6 +62,22 @@ export class AgentNode extends AsyncNode {
 
       if (toolCall.tool === "finish") {
         finalOutput = toolCall.parameters.output;
+
+        if (this.requireFinishConfirmation) {
+          const confirmNode = new UserInputNode();
+          confirmNode.setParams({
+            prompt: `Agent proposes to finish with output: "${finalOutput}". Do you approve? (yes/no): `
+          });
+          const confirmFlow = new AsyncFlow(confirmNode);
+          const confirmation = await confirmFlow.runAsync({});
+
+          if (confirmation.toLowerCase() !== 'yes') {
+            logger.info("Agent finish denied by user. Continuing...");
+            this.conversationHistory.push({ role: "user", content: "User denied finish. Continue working." });
+            continue; // Continue the loop
+          }
+        }
+
         logger.final(finalOutput);
         break;
       }
@@ -148,12 +166,19 @@ export class AgentNode extends AsyncNode {
     let rawData = llmResponse;
     if (typeof llmResponse === 'string') {
       try {
-        rawData = JSON.parse(llmResponse);
+        parsed = JSON.parse(llmResponse);
+        if (parsed.thought && parsed.tool && parsed.tool.tool && parsed.tool.parameters !== undefined) {
+          return parsed;
+        }
+        throw new Error("Missing required keys in LLM response (thought, tool.tool, tool.parameters).");
       } catch (e) {
+        // If it's not JSON, assume it's a direct text response from LLM
+        // This path should ideally not be taken if LLM is tool-calling capable
         return { thought: "Direct LLM response", tool: { tool: "finish", parameters: { output: llmResponse } } };
       }
     }
 
+    // Prioritize tool_calls if present (OpenAI function calling format)
     if (rawData.choices && rawData.choices.length > 0 && rawData.choices[0].message) {
       const message = rawData.choices[0].message;
 
@@ -166,6 +191,7 @@ export class AgentNode extends AsyncNode {
         thought = message.reasoning_content || `Calling tool: ${toolCall.tool}`;
         return { thought, tool: toolCall };
       } else if (typeof message.content === 'string' && message.content.trim().startsWith('{')) {
+        // If no tool_calls, but content is JSON (for thought/tool/finish)
         try {
           parsed = JSON.parse(message.content);
           if (parsed.thought && parsed.tool && parsed.tool.tool && parsed.tool.parameters !== undefined) {

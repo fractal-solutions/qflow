@@ -169,6 +169,36 @@ export function getToolDefinitions() {
     },
     
     {
+      name: "openrouter_llm_reasoning",
+      description: "A powerful language model for general reasoning, problem-solving, and generating text, using OpenRouter. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          model: {
+            type: "string",
+            description: "The OpenRouter model ID (e.g., 'openai/gpt-4o', 'mistralai/mistral-7b-instruct')."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your OpenRouter API key."
+          },
+          siteUrl: {
+            type: "string",
+            description: "Optional. Site URL for rankings on openrouter.ai."
+          },
+          siteTitle: {
+            type: "string",
+            description: "Optional. Site title for rankings on openrouter.ai."
+          }
+        },
+        required: ["prompt", "model", "apiKey"]
+      }
+    },
+    {
       name: "ollama_llm_reasoning",
       description: "A powerful local language model for general reasoning, problem-solving, and generating text, running via Ollama. Use this when you need to think, plan, or generate human-like responses locally. Do NOT use this for external actions like searching the web or interacting with files.",
       parameters: {

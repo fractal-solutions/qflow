@@ -15,17 +15,20 @@ import {
   SubFlowNode,
   IteratorNode,
   AppendFileNode,
-  MemoryNode
+  MemoryNode,
+  AgentOpenRouterLLMNode
 } from '../src/nodes';
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
 
 // --- Configuration ---
-const HF_TOKEN = process.env.HF_TOKEN; // Your API token
-const HF_AGENT_MODEL = process.env.HF_MODEL || 'HuggingFaceH4/zephyr-7b-beta'; // Agent-capable model
+const OPENROUTER_API_KEY = process.env.OPEN_ROUTER_KEY;
+const OPENROUTER_MODEL = process.env.OPEN_ROUTER_MODEL || 'openai/gpt-4o';
+const OPENROUTER_SITE_URL = process.env.OPEN_ROUTER_URL || 'https://example.com';
+const OPENROUTER_SITE_TITLE = process.env.OPENROUTER_SITE_TITLE || 'QFlow Agent';
 
-const KNOWLEDGE_BASE_DIR = path.join(os.tmpdir(), 'qflow_hf_agent_kb');
+const KNOWLEDGE_BASE_DIR = path.join(os.tmpdir(), 'qflow_or_agent_kb');
 
 const knowledgeBaseContent = [
   { id: 'doc_qflow_overview', content: 'qflow is a lightweight JavaScript library for building workflows and agents. It uses nodes for atomic operations and flows to chain them. It supports async operations and shared state.' },
@@ -78,13 +81,13 @@ async function setupAndLoadKnowledgeBase() {
 
 // --- Main Workflow ---
 (async () => {
-  if (!HF_TOKEN) {
-    console.warn("WARNING: HF_TOKEN is not set. Please set it to run the HuggingFace Agent example.");
-    console.warn("You can get a token from https://huggingface.co/settings/tokens");
+  if (!OPENROUTER_API_KEY) {
+    console.warn("WARNING: OPENROUTER_API_KEY is not set. Please set it to run the OpenRouter Agent example.");
+    console.warn("You can get a token from https://openrouter.ai/settings/tokens");
     return;
   }
 
-  console.log('--- Running HuggingFace Agent Test Workflow ---');
+  console.log('--- Running OpenRouter Agent Test Workflow ---');
 
   // 0. Setup the knowledge base files
   await setupAndLoadKnowledgeBase();
@@ -93,14 +96,13 @@ async function setupAndLoadKnowledgeBase() {
   const getGoalNode = new UserInputNode();
   getGoalNode.setParams({ prompt: 'Please enter the agent\'s goal: ' });
 
-  // 2. Instantiate the LLM for the agent's reasoning
-  const agentLLM = new AgentHuggingFaceLLMNode();
+  // 2. Instantiate the LLM for the agent\'s reasoning
+  const agentLLM = new AgentOpenRouterLLMNode();
   agentLLM.setParams({
-    model: HF_AGENT_MODEL,
-    hfToken: HF_TOKEN,
-    temperature: 0.7,
-    max_new_tokens: 4000, // Increased for potentially longer JSON outputs
-    baseUrl: process.env.HF_URL, //'https://router.huggingface.co/v1', // Use OpenAI-compatible router
+    model: OPENROUTER_MODEL,
+    apiKey: OPENROUTER_API_KEY,
+    siteUrl: OPENROUTER_SITE_URL,
+    siteTitle: OPENROUTER_SITE_TITLE,
   });
 
   // 3. Instantiate the tools the agent can use
@@ -172,14 +174,14 @@ async function setupAndLoadKnowledgeBase() {
   getGoalNode.next(agent);
 
   // 6. Create and run the flow
-  const hfAgentFlow = new AsyncFlow(getGoalNode);
+  const orAgentFlow = new AsyncFlow(getGoalNode);
 
   try {
-    const finalResult = await hfAgentFlow.runAsync({});
-    console.log('\n--- HuggingFace Agent Test Workflow Finished ---');
+    const finalResult = await orAgentFlow.runAsync({});
+    console.log('\n--- OpenRouter Agent Test Workflow Finished ---');
     console.log('Final Agent Output:', finalResult);
   } catch (error) {
-    console.error('\n--- HuggingFace Agent Test Workflow Failed ---', error);
+    console.error('\n--- OpenRouter Agent Test Workflow Failed ---', error);
   } finally {
     // Clean up temporary knowledge base (optional)
     try {
