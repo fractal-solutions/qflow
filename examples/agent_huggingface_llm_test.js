@@ -94,7 +94,7 @@ async function setupAndLoadKnowledgeBase() {
     model: HF_AGENT_MODEL,
     hfToken: HF_TOKEN,
     temperature: 0.7,
-    max_new_tokens: 500,
+    max_new_tokens: 2000, // Increased for potentially longer JSON outputs
     baseUrl: 'https://router.huggingface.co/v1' // Use OpenAI-compatible router
   });
 
