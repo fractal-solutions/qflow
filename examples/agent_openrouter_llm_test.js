@@ -16,8 +16,10 @@ import {
   IteratorNode,
   AppendFileNode,
   MemoryNode,
-  AgentOpenRouterLLMNode
-} from '../src/nodes';
+  AgentOpenRouterLLMNode,
+  InteractiveInputNode,
+  SystemNotificationNode
+    } from '../src/nodes';
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
@@ -123,6 +125,8 @@ async function setupAndLoadKnowledgeBase() {
   const codeInterpreter = new CodeInterpreterNode();
   const subFlow = new SubFlowNode();
   const iterator = new IteratorNode(); 
+  const interactiveInput = new InteractiveInputNode();
+  const systemNotification = new SystemNotificationNode();
 
   class StatefulAppendFileNode extends AppendFileNode {
     async execAsync(prepRes, shared) {
@@ -155,11 +159,14 @@ async function setupAndLoadKnowledgeBase() {
     http_request: httpRequest,
     web_scraper: webScraper,
     user_input: userInput,
+    interactive_input: interactiveInput,
+    system_notification: systemNotification,
     semantic_memory_node: semanticMemoryNode,
     transform_node: transformNode,
     code_interpreter: codeInterpreter,
     sub_flow: subFlow,
     iterator: iterator,
+    
     // Add other tools as needed
   };
 

@@ -14,8 +14,9 @@ function colorize(text, color) {
 
 export const logger = {
   info: (message) => console.log(colorize(`[INFO] ${message}`, colors.cyan)),
+  warn: (message) => console.log(colorize(`[WARN] ${message}`, colors.yellow)),
   thought: (message) => {
-    console.log("\n---------------------");
+    console.log("---------------------");
     console.log(colorize("🤔 Thought", colors.yellow));
     console.log(colorize(message, colors.grey));
     console.log("---------------------");

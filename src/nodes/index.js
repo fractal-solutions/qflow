@@ -6,6 +6,8 @@ export * from './hackernews.js';
 export * from './github.js';
 export * from './stripe.js';
 export * from './webscraper.js';
+export * from './system_notification.js';
+export * from './interactive_input.js';
 export * from './shell.js';
 export * from './filesystem.js';
 export * from './user.js';

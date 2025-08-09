@@ -476,6 +476,50 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "interactive_input",
+      description: "Prompts the user for input via a GUI popup (cross-platform).",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The message to display in the input dialog."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the input dialog. Defaults to 'QFlow Input'."
+          },
+          defaultValue: {
+            type: "string",
+            description: "Optional. The default value to pre-fill in the input field."
+          }
+        },
+        required: ["prompt"]
+      }
+    },
+    {
+      name: "system_notification",
+      description: "Displays a system-level notification across OSs.",
+      parameters: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "The main message content of the notification."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the notification. Defaults to 'QFlow Notification'."
+          },
+          icon: {
+            type: "string",
+            description: "Optional. Path to an icon file or a system icon name (Linux specific). Ignored on macOS/Windows."
+          }
+        },
+        required: ["message"]
+      }
+    },
+    {
       name: "sub_flow",
       description: "Executes a sub-flow.",
       parameters: {
