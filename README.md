@@ -145,6 +145,12 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
 *   **WebScraper:** For targeted web scraping.
 *   [**DataExtractor:**](#13-data-extraction-example) For targeted data extraction.
+*   **PDF Processor:** For extracting text and images from PDF documents.
+    *   **Prerequisite:** Requires `poppler-utils` to be installed on your system.
+        *   **Linux (Debian/Ubuntu):** `sudo apt-get install poppler-utils`
+        *   **Linux (Arch/Manjaro):** `sudo pacman -S poppler-utils`
+        *   **macOS:** `brew install poppler`
+        *   **Windows:** Install Poppler for Windows and add its executables to your system's PATH.
 *   **System Notification:** For displaying system-level notifications across different operating systems.
 *   **Interactive Input:** For getting user input via a GUI popup (cross-platform).
 *   **GitHub:** Creating and managing issues.
