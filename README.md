@@ -145,6 +145,8 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
 *   **WebScraper:** For targeted web scraping.
 *   [**DataExtractor:**](#13-data-extraction-example) For targeted data extraction.
+*   **System Notification:** For displaying system-level notifications across different operating systems.
+*   **Interactive Input:** For getting user input via a GUI popup (cross-platform).
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
 *   **Stripe:** Creating charges and retrieving account balances.
