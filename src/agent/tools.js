@@ -3,7 +3,7 @@ export function getToolDefinitions() {
   return [
     {
       name: "huggingface_llm_reasoning",
-      description: "A powerful language model for general reasoning, problem-solving, and generating text, using Hugging Face's OpenAI-compatible router. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      description: "Generates human-like text, reasons, and plans. Not for external actions.",
       parameters: {
         type: "object",
         properties: {
@@ -37,7 +37,7 @@ export function getToolDefinitions() {
     },
     {
       name: "semantic_memory_node",
-      description: "Stores and retrieves text-based memories using vector embeddings for semantic search. Requires a local Ollama server running an embedding model (e.g., 'nomic-embed-text').",
+      description: "Stores and retrieves text memories via semantic search (requires Ollama).",
       parameters: {
         type: "object",
         properties: {
@@ -84,7 +84,7 @@ export function getToolDefinitions() {
     },
     {
       name: "generate_embedding",
-      description: "Generates a vector embedding for a given text using a local Ollama embedding model. Requires Ollama to be running.",
+      description: "Generates vector embeddings for text (requires Ollama).",
       parameters: {
         type: "object",
         properties: {
@@ -106,7 +106,7 @@ export function getToolDefinitions() {
     },
     {
       name: "transform_node",
-      description: "Transforms input data using a provided JavaScript function. Useful for filtering, reformatting, or combining data from other tools.",
+      description: "Transforms data using a JavaScript function.",
       parameters: {
         type: "object",
         properties: {
@@ -124,7 +124,7 @@ export function getToolDefinitions() {
     },
     {
       name: "memory_node",
-      description: "Stores and retrieves text-based memories or knowledge from the agent's local file system. Useful for long-term memory and keyword-based retrieval.",
+      description: "Stores and retrieves text memories (keyword-based).",
       parameters: {
         type: "object",
         properties: {
@@ -155,7 +155,7 @@ export function getToolDefinitions() {
     },
     {
       name: "llm_reasoning",
-      description: "A powerful language model for general reasoning, problem-solving, and generating text. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      description: "Generates human-like text, reasons, and plans. Not for external actions.",
       parameters: {
         type: "object",
         properties: {
@@ -170,7 +170,7 @@ export function getToolDefinitions() {
     
     {
       name: "openrouter_llm_reasoning",
-      description: "A powerful language model for general reasoning, problem-solving, and generating text, using OpenRouter. Use this when you need to think, plan, or generate human-like responses. Do NOT use this for external actions like searching the web or interacting with files.",
+      description: "Generates human-like text, reasons, and plans via OpenRouter. Not for external actions.",
       parameters: {
         type: "object",
         properties: {
@@ -200,7 +200,7 @@ export function getToolDefinitions() {
     },
     {
       name: "ollama_llm_reasoning",
-      description: "A powerful local language model for general reasoning, problem-solving, and generating text, running via Ollama. Use this when you need to think, plan, or generate human-like responses locally. Do NOT use this for external actions like searching the web or interacting with files.",
+      description: "Generates human-like text, reasons, and plans locally via Ollama. Not for external actions.",
       parameters: {
         type: "object",
         properties: {
@@ -222,7 +222,7 @@ export function getToolDefinitions() {
     },
     {
       name: "data_extractor",
-      description: "Extracts structured data from input content (HTML, JSON, or plain text) using selectors, JSON paths, or regular expressions.",
+      description: "Extracts structured data from HTML, JSON, or text.",
       parameters: {
         type: "object",
         properties: {
@@ -257,7 +257,7 @@ export function getToolDefinitions() {
     },
     {
       name: "code_interpreter",
-      description: "Executes Python code snippets in a sandboxed environment. Requires user confirmation for execution.",
+      description: "Executes Python code (requires user confirmation).",
       parameters: {
         type: "object",
         properties: {
@@ -284,7 +284,7 @@ export function getToolDefinitions() {
     },
     {
       name: "duckduckgo_search",
-      description: "Performs a web search using DuckDuckGo's HTML-only interface. Use this to find information on the internet when you don't have a specific URL.",
+      description: "Performs web searches via DuckDuckGo.",
       parameters: {
         type: "object",
         properties: {
@@ -298,7 +298,7 @@ export function getToolDefinitions() {
     },
     {
       name: "google_search",
-      description: "Performs a web search using the Google Custom Search JSON API. Requires an API key and CSE ID. Use this for more robust and reliable web searches.",
+      description: "Performs web searches via Google Custom Search (requires API key).",
       parameters: {
         type: "object",
         properties: {
@@ -320,7 +320,7 @@ export function getToolDefinitions() {
     },
     {
       name: "shell_command",
-      description: "Executes a shell command on the local system. Use this for system interactions, running scripts, or installing packages. Be cautious with commands that modify the system.",
+      description: "Executes shell commands.",
       parameters: {
         type: "object",
         properties: {
@@ -334,7 +334,7 @@ export function getToolDefinitions() {
     },
     {
       name: "read_file",
-      description: "Reads the content of a specified file from the local filesystem.",
+      description: "Reads file content.",
       parameters: {
         type: "object",
         properties: {
@@ -348,7 +348,7 @@ export function getToolDefinitions() {
     },
     {
       name: "write_file",
-      description: "Writes content to a specified file in the local filesystem. Creates the file if it doesn't exist, overwrites if it does.",
+      description: "Writes content to a file.",
       parameters: {
         type: "object",
         properties: {
@@ -366,7 +366,7 @@ export function getToolDefinitions() {
     },
     {
       name: "append_file",
-      description: "Appends content to an existing file in the local filesystem. Creates the file if it doesn't exist.",
+      description: "Appends content to a file.",
       parameters: {
         type: "object",
         properties: {
@@ -384,7 +384,7 @@ export function getToolDefinitions() {
     },
     {
       name: "list_directory",
-      description: "Lists the files and subdirectories within a specified directory.",
+      description: "Lists directory contents.",
       parameters: {
         type: "object",
         properties: {
@@ -398,7 +398,7 @@ export function getToolDefinitions() {
     },
     {
       name: "http_request",
-      description: "Makes a generic HTTP request (GET, POST, PUT, DELETE) to any URL. Can be used to interact with REST APIs.",
+      description: "Makes HTTP requests.",
       parameters: {
         type: "object",
         properties: {
@@ -449,7 +449,7 @@ export function getToolDefinitions() {
     },
     {
       name: "web_scraper",
-      description: "Fetches the HTML content of a given URL. Use this to get the raw content of a webpage.",
+      description: "Fetches HTML content from a URL. Use with 'data_extractor' for specifics.",
       parameters: {
         type: "object",
         properties: {
@@ -463,7 +463,7 @@ export function getToolDefinitions() {
     },
     {
       name: "user_input",
-      description: "Prompts the user for input and waits for their response. Use this to ask the human user for clarification or approval.",
+      description: "Prompts user for input.",
       parameters: {
         type: "object",
         properties: {
@@ -495,7 +495,7 @@ export function getToolDefinitions() {
     },
     {
       name: "iterator",
-      description: "Iterates over a list of items and executes a sub-flow for each item.",
+      description: "Iterates items, executes sub-flow for each.",
       parameters: {
         type: "object",
         properties: {
@@ -513,7 +513,7 @@ export function getToolDefinitions() {
     },
     {
       name: "finish",
-      description: "Call this tool when you have successfully achieved the goal or if you are unable to proceed further. This will end the agent's execution.",
+      description: "Ends agent execution, returns final output.",
       parameters: {
         type: "object",
         properties: {

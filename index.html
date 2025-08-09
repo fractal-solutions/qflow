@@ -1,47 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>qflow - Lightweight JavaScript Workflow Library</title>
-    <style>
-        body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4;}
-        header {background: #333; color: #fff; padding: 20px; text-align: center;}
-        section {padding: 20px; max-width: 800px; margin: auto; background: #fff; margin-top: 20px; border-radius: 8px;}
-        h1, h2 {color: #333;}
-        ul {list-style: none; padding: 0;}
-        li {margin-bottom: 10px;}
-    </style>
+<meta charset="UTF-8">
+<title>QFlow – Lightweight Workflow Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Global styles */
+body{margin:0;font-family:'Inter',sans-serif;background:#0d1117;color:#c9d1d9;}
+
+/* Header container */
+header{background:linear-gradient(135deg,#0d1117,#2a2e3b);padding:3rem 1rem;text-align:center;position:relative;overflow:hidden;}
+
+/* Glowing animated QFlow text */
+header h1{margin:0;font-size:3.5rem;color:#58a6ff;letter-spacing:3px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden;}
+header h1 span{animation:glitch 1.5s infinite alternate;display:inline-block;}
+@keyframes glitch{
+0%{transform:translate(0) skew(0deg);}10%{transform:translate(-2px,-2px) skew(0deg);}20%{transform:translate(2px,3px) skew(-1deg);}30%{transform:translate(-5px,4px) skew(2deg);}40%{transform:translate(5px,0) skew(0deg);}50%{transform:translate(5px,2px) skew(0deg);}60%{transform:translate(-3px,-2px) skew(0deg);}70%{transform:translate(2px,-3px) skew(0deg);}80%{transform:translate(-2px,4px) skew(0deg);}90%,100%{transform:translate(0);}}
+
+/* Icon with subtle rotation */
+header .logo{width:45px;height:45px;margin-right:12px;animation:spin 6s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* Subheader text */
+header p{margin:0.5rem 0;font-size:1.25rem;}
+
+/* CTA button */
+.cta{display:inline-block;background:#238636;color:#fff;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;margin-top:2rem;}
+.cta:hover{background:#2ea043;}
+
+/* Features grid */
+section{max-width:1200px;margin:auto;padding:2rem 1rem;} 
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
+.card{background:#161b22;border-radius:8px;padding:1.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.5);transition:transform 0.3s;}
+.card:hover{transform:translateY(-5px);}
+.card h3{margin-top:0;font-size:1.25rem;color:#58a6ff;}
+.card p{font-size:1rem;line-height:1.5;}
+
+/* Footer */
+footer{text-align:center;padding:1rem;font-size:0.9rem;color:#8b949e;}
+</style>
 </head>
 <body>
 <header>
-    <h1>qflow</h1>
-    <p>Build intelligent workflows and agents with JavaScript.</p>
+  <h1><img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nodejs.svg" alt="node icon" class="logo"><span>QFlow</span></h1>
+  <p>Build workflows and agents with lightweight, node‑based JavaScript.</p>
+  <a href="#features" class="cta">Learn More</a>
 </header>
-<section>
-    <h2>What is qflow?</h2>
-    <p>qflow is a lightweight JavaScript library for building workflows and agents. It uses <strong>nodes</strong> for atomic operations and <strong>flows</strong> to chain them together. It supports asynchronous operations and shared state, making it ideal for complex tasks.</p>
-
-    <h2>Key Features</h2>
-    <ul>
-        <li><strong>Node-Based Architecture</strong>: Work with built-in nodes such as FileSystemNode, HttpRequestNode, CodeInterpreterNode, SemanticMemoryNode, and TransformNode.</li>
-        <li><strong>AgentNode</strong>: Integrates an LLM for reasoning and tool selection, following a Reason→Act→Observe loop.</li>
-        <li><strong>Asynchronous Support</strong>: Handle async operations seamlessly within flows.</li>
-        <li><strong>Shared State</strong>: Easily share data across nodes without complex plumbing.</li>
-    </ul>
-
-    <h2>Getting Started</h2>
-    <p>To begin using qflow, install the library via npm:</p>
-    <pre>npm install qflow</pre>
-    <p>Then, import and create a simple workflow:</p>
-    <pre>
-const { Flow, HttpRequestNode } = require('qflow');
-
-const flow = new Flow();
-flow.addNode(new HttpRequestNode('https://api.example.com/data'));
-flow.run();
-    </pre>
+<section id="features">
+  <div class="card-grid">
+    <div class="card"><h3>Lightweight</h3><p>Zero dependencies, minimal footprint – perfect for browser or Node.js.</p></div>
+    <div class="card"><h3>Node & Flow Architecture</h3><p>Create atomic node operations and chain them into flows for complex logic.</p></div>
+    <div class="card"><h3>Async & Shared State</h3><p>Supports async operations with a shared state accessible across nodes.</p></div>
+    <div class="card"><h3>Easy to Extend</h3><p>Write custom nodes in plain JavaScript or TypeScript and plug them into flows seamlessly.</p></div>
+  </div>
 </section>
-<footer style="text-align:center; margin-top:30px; color:#777;">© 2025 qflow. All rights reserved.</footer>
+<footer>© 2024 QFlow – All rights reserved.</footer>
 </body>
 </html>

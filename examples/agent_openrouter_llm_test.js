@@ -164,7 +164,17 @@ async function setupAndLoadKnowledgeBase() {
   };
 
   // 4. Instantiate the AgentNode
-  const agent = new AgentNode(agentLLM, availableTools, null, flowRegistry);
+  // 2.1. Instantiate a separate LLM for summarization (can be the same model or a smaller one)
+  const summarizeLLM = new AgentOpenRouterLLMNode();
+  summarizeLLM.setParams({
+    model: OPENROUTER_MODEL, // Or a smaller model like 'openai/gpt-3.5-turbo'
+    apiKey: OPENROUTER_API_KEY,
+    siteUrl: OPENROUTER_SITE_URL,
+    siteTitle: OPENROUTER_SITE_TITLE,
+  });
+
+  // 4. Instantiate the AgentNode
+  const agent = new AgentNode(agentLLM, availableTools, summarizeLLM, flowRegistry);
   // The goal will be set dynamically from the UserInputNode's output
   agent.prepAsync = async (shared) => {
     agent.setParams({ goal: shared.userInput });
