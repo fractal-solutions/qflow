@@ -291,6 +291,141 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "gis",
+      description: "Performs Geographic Information System (GIS) operations like geocoding and reverse geocoding.",
+      parameters: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: ["geocode", "reverseGeocode"],
+            description: "The GIS operation to perform: 'geocode' (address to coordinates) or 'reverseGeocode' (coordinates to address)."
+          },
+          provider: {
+            type: "string",
+            enum: ["google", "openstreetmap"],
+            default: "openstreetmap",
+            description: "The GIS service provider to use. Defaults to 'openstreetmap' (free, open-source)."
+          },
+          params: {
+            type: "object",
+            description: "Parameters specific to the operation. For 'geocode', requires { address: string }. For 'reverseGeocode', requires { lat: number, lng: number }."
+          }
+        },
+        required: ["operation", "params"]
+      }
+    },
+    {
+      name: "display_image",
+      description: "Displays an image file using the system's default image viewer.",
+      parameters: {
+        type: "object",
+        properties: {
+          imagePath: {
+            type: "string",
+            description: "The absolute path to the image file to display."
+          }
+        },
+        required: ["imagePath"]
+      }
+    },
+    {
+      name: "hardware_interaction",
+      description: "Communicates with local hardware via serial port (UART).",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["write", "read_line", "list_ports"],
+            description: "The action to perform: 'write' data, 'read_line' from port, or 'list_ports' available."
+          },
+          portPath: {
+            type: "string",
+            description: "Required for 'write'/'read_line'. The path to the serial port (e.g., '/dev/ttyUSB0', 'COM1')."
+          },
+          baudRate: {
+            type: "number",
+            description: "Optional. The baud rate for serial communication. Defaults to 9600."
+          },
+          dataToWrite: {
+            type: "string",
+            description: "Required for 'write'. The data string to send to the serial port."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Timeout in milliseconds for 'read_line' action. Defaults to 5000."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
+      name: "webhook",
+      description: "Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.",
+      parameters: {
+        type: "object",
+        properties: {
+          port: {
+            type: "number",
+            description: "Optional. The port number to listen on. Defaults to 3000."
+          },
+          path: {
+            type: "string",
+            description: "Optional. The URL path for the webhook endpoint. Defaults to '/webhook'."
+          },
+          flow: {
+            type: "string", // This will be the name of a flow in the flowRegistry
+            description: "The name of the qflow AsyncFlow instance to trigger when a webhook is received."
+          },
+          sharedSecret: {
+            type: "string",
+            description: "Optional. A shared secret for HMAC verification of incoming webhooks."
+          },
+          responseStatus: {
+            type: "number",
+            description: "Optional. The HTTP status code to send back to the webhook sender. Defaults to 200."
+          },
+          responseBody: {
+            type: "object",
+            description: "Optional. The JSON body to send back to the webhook sender. Defaults to { status: 'received' }."
+          }
+        },
+        required: ["flow"]
+      }
+    },
+    {
+      name: "scheduler",
+      description: "Schedules qflow flows for future or recurring execution using cron syntax or a delay.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["start", "stop"],
+            description: "The action to perform: 'start' a new schedule or 'stop' an existing one."
+          },
+          schedule: {
+            type: ["string", "number"],
+            description: "Required for 'start'. A cron string (e.g., '0 3 * * *') or a number in milliseconds for a one-time delay."
+          },
+          flow: {
+            type: "string", // This will be the name of a flow in the flowRegistry
+            description: "Required for 'start'. The name of the qflow AsyncFlow instance to trigger."
+          },
+          flowParams: {
+            type: "object",
+            description: "Optional. Parameters (shared object) to pass to the triggered flow's runAsync."
+          },
+          id: {
+            type: "string",
+            description: "Optional. A unique ID for the scheduled task (required for 'stop' action). If not provided for 'start', a random one will be generated."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
       name: "code_interpreter",
       description: "Executes Python code (requires user confirmation).",
       parameters: {

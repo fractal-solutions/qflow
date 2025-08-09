@@ -151,6 +151,16 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
         *   **Linux (Arch/Manjaro):** `sudo pacman -S poppler-utils`
         *   **macOS:** `brew install poppler`
         *   **Windows:** Install Poppler for Windows and add its executables to your system's PATH.
+*   **GIS:** For Geographic Information System operations like geocoding and reverse geocoding. Supports multiple providers (OpenStreetMap, Google Maps).
+    *   **OpenStreetMap:** Free and open-source. No API key required.
+    *   **Google Maps:** Requires a `GOOGLE_MAPS_API_KEY` environment variable.
+*   **Display Image:** For opening image files using the system's default image viewer. Useful for agents to show generated plots or other visual output.
+*   **Hardware Interaction:** For communicating with local hardware via serial port (UART).
+    *   **Prerequisite:** Requires the `serialport` library (`npm install serialport` or `bun add serialport`). This library has native components and may require build tools (Python, C/C++ compiler).
+    *   **Permissions:** On Linux, your user might need to be added to the `dialout` group (`sudo usermod -a -G dialout $USER`, then log out and back in).
+*   **WebHook:** Exposes an HTTP endpoint to receive webhooks, enabling event-driven flows.
+*   **Scheduler:** Schedules `qflow` flows for future or recurring execution.
+    *   **Prerequisite:** Requires the `node-cron` library (`npm install node-cron` or `bun add node-cron`).
 *   **System Notification:** For displaying system-level notifications across different operating systems.
 *   **Interactive Input:** For getting user input via a GUI popup (cross-platform).
 *   **GitHub:** Creating and managing issues.

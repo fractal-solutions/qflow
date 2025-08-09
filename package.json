@@ -43,7 +43,9 @@
   "homepage": "https://github.com/fractal-solutions/qflow#readme",
   "dependencies": {
     "chalk": "^5.5.0",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "node-cron": "^4.2.1",
+    "serialport": "^13.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest"
