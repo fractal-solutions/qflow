@@ -158,6 +158,18 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   **Hardware Interaction:** For communicating with local hardware via serial port (UART).
     *   **Prerequisite:** Requires the `serialport` library (`npm install serialport` or `bun add serialport`). This library has native components and may require build tools (Python, C/C++ compiler).
     *   **Permissions:** On Linux, your user might need to be added to the `dialout` group (`sudo usermod -a -G dialout $USER`, then log out and back in).
+*   **Image Gallery:** Generates an HTML gallery from multiple image files and opens it in a web browser. Useful for displaying multiple plots or images in a single view.
+*   **Speech Synthesis:** Converts text to spoken audio using OS capabilities or cloud APIs.
+    *   **Prerequisites:**
+        *   **macOS:** Built-in (`say` command).
+        *   **Linux:** `espeak` (`sudo apt install espeak` or `sudo pacman -S espeak`) and `alsa-utils` (`sudo apt install alsa-utils` or `sudo pacman -S alsa-utils`).
+        *   **Google Cloud TTS:** Requires `GOOGLE_TTS_API_KEY` environment variable.
+*   **Multimedia Processing:** Performs various operations on audio and video files using `ffmpeg` (e.g., convert formats, trim, extract audio/frames).
+    *   **Prerequisite:** Requires `ffmpeg` to be installed on your system.
+        *   **Linux (Debian/Ubuntu):** `sudo apt install ffmpeg`
+        *   **Linux (Arch/Manjaro):** `sudo pacman -S ffmpeg`
+        *   **macOS:** `brew install ffmpeg`
+        *   **Windows:** Download and install `ffmpeg` and add it to your system's PATH.
 *   **WebHook:** Exposes an HTTP endpoint to receive webhooks, enabling event-driven flows.
 *   **Scheduler:** Schedules `qflow` flows for future or recurring execution.
     *   **Prerequisite:** Requires the `node-cron` library (`npm install node-cron` or `bun add node-cron`).
