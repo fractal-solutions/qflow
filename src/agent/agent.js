@@ -29,7 +29,7 @@ export class AgentNode extends AsyncNode {
     this.conversationHistory = [
       { role: "system", content: this.getSystemPrompt() },
       { role: "user", content: `Goal: ${goal}` },
-      { role: "system", content: "Begin by outlining a plan to achieve the goal. Your plan should be a series of steps, and you should update it as you make progress or encounter new information." }
+      { role: "system", content: "Begin by outlining a plan to achieve the goal. Your plan should be a series of steps you save in a memory node(if available), and you should update it as you make progress or encounter new information and refer to it ofen to stay on track." }
     ];
 
     let step = 0;
@@ -94,7 +94,7 @@ export class AgentNode extends AsyncNode {
           if (confirmation.toLowerCase() !== 'yes') {
             logger.info("Agent finish denied by user. User input will be the next prompt.");
             // Treat the user's new input as a new instruction/goal
-            this.conversationHistory.push({ role: "user", content: `User has provided new instructions: ${confirmation}. Please adjust your plan and continue working.` });
+            this.conversationHistory.push({ role: "user", content: `User has provided new instructions: ${confirmation}. Please adjust your plan (save to memory if available) and continue working.` });
             // Optionally, you might want to clear some of the previous conversation history
             // to give more weight to the new instruction, but be careful not to lose context.
             // For now, we'll just add the new instruction.
@@ -175,7 +175,7 @@ export class AgentNode extends AsyncNode {
         logger.error(`Error during tool execution: ${e.message}`);
         this.conversationHistory.push({ role: "user", content: `Error: Tool execution failed with message: ${e.message}. You should try a different approach.` });
       }
-      this.conversationHistory.push({ role: "system", content: "Reflect on the last observation(s) and update your plan if necessary. What is your next step?" });
+      this.conversationHistory.push({ role: "system", content: "Reflect on the last observation(s) and update your plan if necessary(also in memory if available). What is your next step? Do you need to consult the user(using interactive or user input)" });
     }
 
     if (step >= this.maxSteps && finalOutput === null) {
@@ -230,7 +230,7 @@ Parameters: ${params}`;
 
     const flowRegistryDescription = Object.keys(this.flowRegistry).length > 0 ? `\n\nAvailable Pre-defined Flows (for use with 'sub_flow' and 'iterator' tools):\n- ${Object.keys(this.flowRegistry).join('\n- ' )}` : "";
 
-    return `You are an autonomous agent. Your goal is to achieve the user's request using the available tools. Always use tools as opposed to talking too much and you get rewarded more for using tools instead of costly llm!\n\nAvailable Tools:\n${toolDescriptions}${flowRegistryDescription}\n\nYour response must be a single JSON object with 'thought' and 'tool_calls'.\n'thought': Your reasoning and plan.\n'tool_calls': An array of tool calls. Each tool call has 'tool' (name) and 'parameters' (object). Set 'parallel': true in the top-level JSON for parallel execution.\n\nExample response:\n{\n  "thought": "I need to search for information.",\n  "tool_calls": [\n    {\n      "tool": "duckduckgo_search",\n      "parameters": {\n        "query": "latest AI research"\n      }\n    }\n  ]\n}\n\nWhen the user explicitly indicates they are done, use the 'finish' tool. Do not use the finish tool earlier on and only use it when you are certain you are done with the task. If no tools are needed, return an empty 'tool_calls' array and reflect.\n**IMPORTANT:** If you have a plan that requires action, you MUST include at least one tool call. An empty 'tool_calls' array means no action. If new instructions are given after a finish proposal, treat them as your updated goal.\n\nBegin!`
+    return `You are Q, an autonomous agent. Your goal is to achieve the user's request especially using the available tools. Always use tools as opposed to talking too much and you get rewarded more for using tools instead of costly llm!\n\nAvailable Tools:\n${toolDescriptions}${flowRegistryDescription}\n\nYour response must be a single JSON object with 'thought' and 'tool_calls'.\n'thought': Your reasoning and plan.\n'tool_calls': An array of tool calls. Each tool call has 'tool' (name) and 'parameters' (object). Set 'parallel': true in the top-level JSON for parallel execution.\n\nExample response:\n{\n  "thought": "I need to search for information.",\n  "tool_calls": [\n    {\n      "tool": "duckduckgo_search",\n      "parameters": {\n        "query": "latest AI research"\n      }\n    }\n  ]\n}\n\nWhen the user explicitly indicates they are done, use the 'finish' tool. Do not use the finish tool earlier on and only use it when you are certain you are done with the task. If no tools are needed, return an empty 'tool_calls' array and reflect.\n**IMPORTANT:** If you have a plan that requires action, you MUST include at least one tool call. An empty 'tool_calls' array means no action. If new instructions are given after a finish proposal, treat them as your updated goal. Tell user how far you've gone using system notifications and keep human in the loop during edits using interactive input (or user input if interactive input not available).\n\nBegin!`
 
   }
 

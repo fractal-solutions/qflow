@@ -716,7 +716,7 @@ export function getToolDefinitions() {
     },
     {
       name: "shell_command",
-      description: "Executes shell commands.",
+      description: "Executes shell commands. When running long running processes like npm run dev or bun run dev, add an ampersand (&) to the end to run in the background eg. 'npm run dev &'",
       parameters: {
         type: "object",
         properties: {
