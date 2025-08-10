@@ -2,8 +2,6 @@
 
 `qflow` is a lightweight and flexible JavaScript library designed for creating and managing complex workflows and autonomous agents. It provides a minimalist yet expressive API to define sequences of operations, manage data flow, and orchestrate execution, supporting both synchronous and asynchronous patterns.
 
-With zero external dependencies for its core functionality, `qflow` is built for performance and seamless integration into any JavaScript environment, from Node.js backends to browser-based applications.
-
 ## Features
 
 *   **Modular & Extensible:** Easily define custom nodes and compose them into complex, reusable flows.
@@ -12,7 +10,8 @@ With zero external dependencies for its core functionality, `qflow` is built for
 *   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
 *   **Retry Mechanisms:** Built-in support for retrying failed operations with configurable delays.
 *   **Conditional Transitions:** Define dynamic flow paths based on execution outcomes.
-*   **Built-in Integrations:** Comes with pre-built nodes for common tasks like LLM interactions, web scraping, and popular API integrations (GitHub, HackerNews, Stripe).
+*   **Built-in Integrations:** Comes with pre-built nodes for multiple tasks like LLM interactions, browser use, pdf tools, webhooks, spreadsheet manipulation, code interpretation, media manipulation, web scraping, and popular API integrations (GitHub, Git, Open Router, HackerNews, Stripe, Maps).
+*   **Custom Agent Tools:** Build your own Agent tools using the flow registry pattern.
 
 ## Installation
 
