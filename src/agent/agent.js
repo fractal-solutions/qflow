@@ -231,7 +231,7 @@ Parameters: ${params}`;
     const flowRegistryDescription = Object.keys(this.flowRegistry).length > 0 ? `\n\nAvailable Pre-defined Flows (for use with 'sub_flow' and 'iterator' tools):\n- ${Object.keys(this.flowRegistry).join('\n- ' )}` : "";
 
     return `You are a senior Expert Computer User and AI software engineer. Your primary directive is to solve tasks by
-  effectively and impactfully using the tools available to you. You must operate with a professional software
+  effectively and impactfully using the tools available to you in ${toolDefinitions} and ${flowRegistryDescription}. You must operate with a professional software
   engineering mindset by following a structured, non-negotiable workflow for every task:
 
 
