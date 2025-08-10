@@ -42,10 +42,16 @@
   },
   "homepage": "https://github.com/fractal-solutions/qflow#readme",
   "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "chalk": "^5.5.0",
     "cheerio": "^1.0.0-rc.12",
     "node-cron": "^4.2.1",
-    "serialport": "^13.0.0"
+    "playwright": "^1.45.0",
+    "serialport": "^13.0.0",
+    "simple-git": "^3.25.0",
+    "ssh2": "^1.16.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bun": "latest"

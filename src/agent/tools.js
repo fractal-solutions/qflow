@@ -527,6 +527,131 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "remote_execution",
+      description: "Executes commands on remote machines via SSH.",
+      parameters: {
+        type: "object",
+        properties: {
+          host: {
+            type: "string",
+            description: "The hostname or IP address of the remote machine."
+          },
+          port: {
+            type: "number",
+            description: "Optional. The SSH port. Defaults to 22."
+          },
+          username: {
+            type: "string",
+            description: "The username for SSH authentication."
+          },
+          password: {
+            type: "string",
+            description: "Optional. The password for SSH authentication (use with caution, prefer privateKey)."
+          },
+          privateKey: {
+            type: "string",
+            description: "Optional. The content of the private SSH key or its absolute path."
+          },
+          passphrase: {
+            type: "string",
+            description: "Optional. The passphrase for an encrypted private key."
+          },
+          action: {
+            type: "string",
+            enum: ["execute_command"],
+            description: "The action to perform. Currently only 'execute_command' is supported."
+          },
+          command: {
+            type: "string",
+            description: "The command string to execute on the remote machine."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Timeout in milliseconds for the command execution. Defaults to 30000 (30 seconds)."
+          }
+        },
+        required: ["host", "username", "action", "command"]
+      }
+    },
+    {
+      name: "data_validation",
+      description: "Validates structured data against a JSON Schema.",
+      parameters: {
+        type: "object",
+        properties: {
+          data: {
+            type: "object", // Can be any JSON-compatible type
+            description: "The data to be validated."
+          },
+          schema: {
+            type: "object",
+            description: "The JSON Schema object directly."
+          },
+          schemaPath: {
+            type: "string",
+            description: "Optional. Path to a JSON Schema file. If provided, 'schema' parameter is ignored."
+          },
+          action: {
+            type: "string",
+            enum: ["validate"],
+            description: "The action to perform. Currently only 'validate' is supported."
+          }
+        },
+        required: ["data"]
+      }
+    },
+    {
+      name: "spreadsheet",
+      description: "Reads from and writes to spreadsheet files (.xlsx, .xls, .csv) with advanced manipulation.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["read", "write", "list_sheets", "read_range", "write_range", "append_rows", "delete_rows", "insert_rows", "add_sheet", "delete_sheet", "rename_sheet", "format_cells"],
+            description: "The action to perform."
+          },
+          filePath: {
+            type: "string",
+            description: "The absolute path to the spreadsheet file."
+          },
+          sheetName: {
+            type: "string",
+            description: "Required for .xlsx/.xls files and sheet-specific actions. The name of the sheet."
+          },
+          data: {
+            type: "array",
+            description: "Required for 'write', 'write_range', 'append_rows'. The data to write (array of arrays or array of objects)."
+          },
+          headerRow: {
+            type: "boolean",
+            description: "Optional. True if the first row is a header. Defaults to true."
+          },
+          range: {
+            type: "string",
+            description: "Required for 'read_range', 'write_range', 'format_cells'. A1 notation (e.g., 'Sheet1!A1:C10')."
+          },
+          startRow: {
+            type: "number",
+            description: "Required for 'delete_rows', 'insert_rows'. The 1-indexed starting row."
+          },
+          numRows: {
+            type: "number",
+            description: "Required for 'delete_rows', 'insert_rows'. The number of rows to delete/insert."
+          },
+          newSheetName: {
+            type: "string",
+            description: "Required for 'add_sheet', 'rename_sheet'. The name of the new sheet."
+          },
+          formats: {
+            type: "object",
+            description: "Required for 'format_cells'. Formatting options (conceptual, basic XLSX.js has limited styling)."
+          }
+        },
+        required: ["action", "filePath"]
+      }
+    },
+    {
       name: "code_interpreter",
       description: "Executes Python code (requires user confirmation).",
       parameters: {
@@ -824,6 +949,79 @@ export function getToolDefinitions() {
           }
         },
         required: ["items", "flow"]
+      }
+    },
+    {
+      name: "browser_control",
+      description: "Controls a web browser to navigate pages, interact with elements, and take screenshots.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["goto", "click", "type", "screenshot", "close"],
+            description: "The browser action to perform."
+          },
+          url: {
+            type: "string",
+            description: "The URL to navigate to (for 'goto' action)."
+          },
+          selector: {
+            type: "string",
+            description: "A CSS selector to target an element (for 'click' and 'type' actions)."
+          },
+          text: {
+            type: "string",
+            description: "The text to type into an input field (for 'type' action)."
+          },
+          path: {
+            type: "string",
+            description: "The file path to save a screenshot (for 'screenshot' action)."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
+      name: "git",
+      description: "Performs Git operations like clone, add, commit, and push.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["clone", "init", "add", "commit", "push", "pull", "status"],
+            description: "The Git action to perform."
+          },
+          repoPath: {
+            type: "string",
+            description: "The local path to the repository."
+          },
+          remoteUrl: {
+            type: "string",
+            description: "The URL of the remote repository (for 'clone' action)."
+          },
+          files: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "An array of file paths to add to the staging area (for 'add' action)."
+          },
+          message: {
+            type: "string",
+            description: "The commit message (for 'commit' action)."
+          },
+          branch: {
+            type: "string",
+            description: "The branch to push to or pull from."
+          },
+          remote: {
+            type: "string",
+            description: "The name of the remote (e.g., 'origin')."
+          }
+        },
+        required: ["action"]
       }
     },
     {
