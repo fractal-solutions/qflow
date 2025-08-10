@@ -51,6 +51,7 @@
     "serialport": "^13.0.0",
     "simple-git": "^3.25.0",
     "ssh2": "^1.16.0",
+    "ws": "^8.18.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

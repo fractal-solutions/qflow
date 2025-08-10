@@ -1025,6 +1025,29 @@ export function getToolDefinitions() {
       }
     },
     {
+      name: "websockets",
+      description: "Establishes and manages WebSocket connections.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["connect", "send", "receive", "close"],
+            description: "The WebSocket action to perform."
+          },
+          url: {
+            type: "string",
+            description: "The URL of the WebSocket server (for 'connect' action)."
+          },
+          message: {
+            type: "string",
+            description: "The message to send to the server (for 'send' action)."
+          }
+        },
+        required: ["action"]
+      }
+    },
+    {
       name: "finish",
       description: "Ends agent execution, returns final output.",
       parameters: {

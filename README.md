@@ -122,7 +122,6 @@ A helper class used in conjunction with `Node.transition()` to define conditiona
 
 ## How to use the Docs and Examples
 
-
 The examples in [Basic Usage & Examples](#basic-usage--examples) below will cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
 *   [**LLMs (DeepSeek, OpenAI, Gemini, Ollama, Hugging Face, OpenRouter):**](#7-inter-node-communication-with-shared-state-advanced-example) The core of agentic behavior.
@@ -144,11 +143,14 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
 *   **WebScraper:** For targeted web scraping.
+*   **BrowserControl:** For controlling a web browser with Playwright.
+*   **Git:** For performing Git operations.
+*   **WebSockets:** For real-time, two-way communication with web services.
 *   [**DataExtractor:**](#13-data-extraction-example) For targeted data extraction.
 *   **PDF Processor:** For extracting text and images from PDF documents.
     *   **Prerequisite:** Requires `poppler-utils` to be installed on your system.
         *   **Linux (Debian/Ubuntu):** `sudo apt-get install poppler-utils`
-        *   **Linux (Arch/Manjaro):** `sudo pacman -S poppler-utils`
+        *   **Linux (Arch/Manjaro):** `sudo pacman -S poppler`
         *   **macOS:** `brew install poppler`
         *   **Windows:** Install Poppler for Windows and add its executables to your system's PATH.
 *   **GIS:** For Geographic Information System operations like geocoding and reverse geocoding. Supports multiple providers (OpenStreetMap, Google Maps).
@@ -162,7 +164,7 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   **Speech Synthesis:** Converts text to spoken audio using OS capabilities or cloud APIs.
     *   **Prerequisites:**
         *   **macOS:** Built-in (`say` command).
-        *   **Linux:** `espeak` (`sudo apt install espeak` or `sudo pacman -S espeak`) and `alsa-utils` (`sudo apt install alsa-utils` or `sudo pacman -S alsa-utils`).
+        *   **Linux:** `espeak` (`sudo apt install espeak` or `sudo pacman -S alsa-utils`).
         *   **Google Cloud TTS:** Requires `GOOGLE_TTS_API_KEY` environment variable.
 *   **Multimedia Processing:** Performs various operations on audio and video files using `ffmpeg` (e.g., convert formats, trim, extract audio/frames).
     *   **Prerequisite:** Requires `ffmpeg` to be installed on your system.
