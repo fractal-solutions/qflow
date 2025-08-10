@@ -8,8 +8,6 @@
 *   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution models.
 *   **Shared State Management:** Pass and manipulate data across nodes using a central, mutable `shared` object.
 *   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
-*   **Retry Mechanisms:** Built-in support for retrying failed operations with configurable delays.
-*   **Conditional Transitions:** Define dynamic flow paths based on execution outcomes.
 *   **Agents:** Built upon the `qflow` core functionality are plug and play agents with extensive tool integrations available.
 *   **Built-in Integrations:** Comes with pre-built nodes for multiple tasks like LLM interactions, browser use, pdf tools, webhooks, spreadsheet manipulation, code interpretation, media manipulation, web scraping, and popular API integrations (GitHub, Git, Open Router, HackerNews, Stripe, Maps).
 *   **Custom Agent Tools:** Build your own Agent tools using the flow registry pattern.
@@ -78,18 +76,11 @@ A `Flow` orchestrates the execution of a sequence of `Node`s. It defines the ove
 **Batch Flows (`BatchFlow`, `AsyncBatchFlow`, `AsyncParallelBatchFlow`)**
 These specialized flows are designed to process collections of items. They run a sub-flow for each item in the batch. `AsyncParallelBatchFlow` is particularly useful for concurrently processing batch items, significantly speeding up operations.
 
-### ConditionalTransition
+## Agents
 
-A helper class used in conjunction with `Node.transition()` to define conditional branching within your workflows.
+The introduction of the `AgentNode` is a game-changer for qflow. It shifts the paradigm from pre-defined, static workflows to dynamic, intelligent, and autonomous task execution.
 
-*   `to(targetNode)`: Specifies the target node for the transition based on the action returned by the preceding node.
-
-
-## What Can We Do Now That We Have Agents?
-
-
-  The introduction of the `AgentNode` is a game-changer for qflow. It shifts the paradigm from
-  pre-defined, static workflows to dynamic, intelligent, and autonomous task execution.
+### What Can We Do Now That We Have Agents? 
 
   Here are some key capabilities and applications unlocked by having agents:
 
@@ -120,7 +111,7 @@ A helper class used in conjunction with `Node.transition()` to define conditiona
       and synthesize information into comprehensive answers or documents, acting as automated
       research assistants.
 
-## How to use the Docs and Examples
+## Integrated Nodes and their Examples
 
 The examples in [Basic Usage & Examples](#basic-usage--examples) below will cover the core functionalities of `qflow`. For more advanced and specific use cases involving the built-in integrations, please explore the [`examples/` folder](https://github.com/fractal-solutions/qflow/tree/main/examples) in the project's GitHub repository. There you will find detailed scripts demonstrating how to use nodes for:
 
@@ -142,45 +133,45 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   [**Web Search:**](#11-web-search-example) Discovering information on the web using either:
     *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
-*   **WebScraper:** For targeted web scraping.
-*   **BrowserControl:** For controlling a web browser with Playwright.
-*   **Git:** For performing Git operations.
-*   **WebSockets:** For real-time, two-way communication with web services.
+*   [**WebScraper:**](https://github.com/fractal-solutions/qflow/blob/main/examples/webscraper_test.js) For targeted web scraping.
+*   [**BrowserControl:**](https://github.com/fractal-solutions/qflow/blob/main/examples/browser_control_test.js) For controlling a web browser with Playwright.
+*   [**Git:**](https://github.com/fractal-solutions/qflow/blob/main/examples/git_example.js) For performing Git operations.
+*   [**WebSockets:**](https://github.com/fractal-solutions/qflow/blob/main/examples/websockets_test.js) For real-time, two-way communication with web services.
 *   [**DataExtractor:**](#13-data-extraction-example) For targeted data extraction.
-*   **PDF Processor:** For extracting text and images from PDF documents.
+*   [**PDF Processor:**](https://github.com/fractal-solutions/qflow/blob/main/examples/pdf_processor_example.js) For extracting text and images from PDF documents.
     *   **Prerequisite:** Requires `poppler-utils` to be installed on your system.
         *   **Linux (Debian/Ubuntu):** `sudo apt-get install poppler-utils`
         *   **Linux (Arch/Manjaro):** `sudo pacman -S poppler`
         *   **macOS:** `brew install poppler`
         *   **Windows:** Install Poppler for Windows and add its executables to your system's PATH.
-*   **GIS:** For Geographic Information System operations like geocoding and reverse geocoding. Supports multiple providers (OpenStreetMap, Google Maps).
+*   [**GIS:**](https://github.com/fractal-solutions/qflow/blob/main/examples/gis_example.js) For Geographic Information System operations like geocoding and reverse geocoding. Supports multiple providers (OpenStreetMap, Google Maps).
     *   **OpenStreetMap:** Free and open-source. No API key required.
     *   **Google Maps:** Requires a `GOOGLE_MAPS_API_KEY` environment variable.
-*   **Display Image:** For opening image files using the system's default image viewer. Useful for agents to show generated plots or other visual output.
-*   **Hardware Interaction:** For communicating with local hardware via serial port (UART).
+*   [**Display Image:**](https://github.com/fractal-solutions/qflow/blob/main/examples/display_image_test.js) For opening image files using the system's default image viewer. Useful for agents to show generated plots or other visual output.
+*   [**Image Gallery:**](https://github.com/fractal-solutions/qflow/blob/main/examples/image_gallery_example.js) Generates an HTML gallery from multiple image files and opens it in a web browser. Useful for displaying multiple plots or images in a single view.
+*   [**Hardware Interaction:**](https://github.com/fractal-solutions/qflow/blob/main/examples/hardware_interaction_example.js) For communicating with local hardware via serial port (UART).
     *   **Prerequisite:** Uses the `serialport` library. This library has native components and may require build tools (Python, C/C++ compiler).
     *   **Permissions:** On Linux, your user might need to be added to the `dialout` group (`sudo usermod -a -G dialout $USER`, then log out and back in).
-*   **Image Gallery:** Generates an HTML gallery from multiple image files and opens it in a web browser. Useful for displaying multiple plots or images in a single view.
-*   **Speech Synthesis:** Converts text to spoken audio using OS capabilities or cloud APIs.
+*   [**Speech Synthesis:**](https://github.com/fractal-solutions/qflow/blob/main/examples/speech_synthesis_example.js) Converts text to spoken audio using OS capabilities or cloud APIs.
     *   **Prerequisites:**
         *   **macOS:** Built-in (`say` command).
         *   **Linux:** `espeak` (`sudo apt install espeak` or `sudo pacman -S alsa-utils`).
         *   **Google Cloud TTS:** Requires `GOOGLE_TTS_API_KEY` environment variable.
-*   **Multimedia Processing:** Performs various operations on audio and video files using `ffmpeg` (e.g., convert formats, trim, extract audio/frames).
+*   [**Multimedia Processing:**](https://github.com/fractal-solutions/qflow/blob/main/examples/multimedia_processing_example.js) Performs various operations on audio and video files using `ffmpeg` (e.g., convert formats, trim, extract audio/frames).
     *   **Prerequisite:** Requires `ffmpeg` to be installed on your system.
         *   **Linux (Debian/Ubuntu):** `sudo apt install ffmpeg`
         *   **Linux (Arch/Manjaro):** `sudo pacman -S ffmpeg`
         *   **macOS:** `brew install ffmpeg`
         *   **Windows:** Download and install `ffmpeg` and add it to your system's PATH.
-*   **Remote Execution:** Executes commands on remote machines via SSH.
+*   [**Remote Execution:**](https://github.com/fractal-solutions/qflow/blob/main/examples/remote_execution_example.js) Executes commands on remote machines via SSH.
     *   **Prerequisite:** Uses the `ssh2` library. This library has native components and may require build tools (Python, C/C++ compiler).
-*   **Data Validation:** Validates structured data against JSON Schemas.
+*   [**Data Validation:**](https://github.com/fractal-solutions/qflow/blob/main/examples/data_validation_example.js) Validates structured data against JSON Schemas.
     *   **Prerequisite:** Uses the `ajv` library.
-*   **WebHook:** Exposes an HTTP endpoint to receive webhooks, enabling event-driven flows.
-*   **Scheduler:** Schedules `qflow` flows for future or recurring execution.
+*   [**WebHook:**](https://github.com/fractal-solutions/qflow/blob/main/examples/webhook_example.js) Exposes an HTTP endpoint to receive webhooks, enabling event-driven flows.
+*   [**Scheduler:**](https://github.com/fractal-solutions/qflow/blob/main/examples/scheduler_example.js) Schedules `qflow` flows for future or recurring execution.
     *   **Prerequisite:** Uses the `node-cron` library.
-*   **System Notification:** For displaying system-level notifications across different operating systems.
-*   **Interactive Input:** For getting user input via a GUI popup (cross-platform).
+*   [**System Notification:**](https://github.com/fractal-solutions/qflow/blob/main/examples/system_notification_test.js) For displaying system-level notifications across different operating systems.
+*   [**Interactive Input:**](https://github.com/fractal-solutions/qflow/blob/main/examples/interactive_input_test.js) For getting user input via a GUI popup (cross-platform).
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
 *   **Stripe:** Creating charges and retrieving account balances.
