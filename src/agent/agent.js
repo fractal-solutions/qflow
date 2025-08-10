@@ -287,17 +287,20 @@ Parameters: ${params}`;
   }
 
   parseLLMResponse(llmResponse) {
-    let parsed;
-
     if (typeof llmResponse === 'string') {
-      // Regex to find json content within ```json ... ``` or just ``` ... ```
-      const markdownMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonString = markdownMatch ? markdownMatch[1] : llmResponse;
+      let jsonString = llmResponse;
+
+      // Find the first '{' and the last '}' to isolate the JSON object
+      const firstBrace = jsonString.indexOf('{');
+      const lastBrace = jsonString.lastIndexOf('}');
+
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+      }
 
       try {
-        parsed = JSON.parse(jsonString);
+        const parsed = JSON.parse(jsonString);
         if (parsed.thought && Array.isArray(parsed.tool_calls)) {
-          // This is a valid, complete tool call plan.
           return {
             thought: parsed.thought,
             toolCalls: parsed.tool_calls,
@@ -305,13 +308,10 @@ Parameters: ${params}`;
           };
         }
       } catch (e) {
-        // JSON.parse failed. This is expected if the LLM just sends a text response.
-        // We will fall through and treat the original response as a thought.
+        // Parsing failed, fall through to treat the original string as a thought.
       }
-      
-      // If we are here, it means the response was either not valid JSON,
-      // or it was valid JSON but didn't have the required 'thought' and 'tool_calls' keys.
-      // In either case, we treat the entire original response as a thought with no tool calls.
+
+      // Fallback for plain text responses or malformed JSON.
       return { thought: llmResponse, toolCalls: [], parallel: false };
     }
 
@@ -330,7 +330,7 @@ Parameters: ${params}`;
         return { thought, toolCalls, parallel: false };
       } else if (typeof message.content === 'string' && message.content.trim().startsWith('{')) {
         try {
-          parsed = JSON.parse(message.content);
+          const parsed = JSON.parse(message.content);
           if (parsed.thought && Array.isArray(parsed.tool_calls)) {
             return {
               thought: parsed.thought,
