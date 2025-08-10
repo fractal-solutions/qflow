@@ -158,7 +158,7 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   **Google Maps:** Requires a `GOOGLE_MAPS_API_KEY` environment variable.
 *   **Display Image:** For opening image files using the system's default image viewer. Useful for agents to show generated plots or other visual output.
 *   **Hardware Interaction:** For communicating with local hardware via serial port (UART).
-    *   **Prerequisite:** Requires the `serialport` library (`npm install serialport` or `bun add serialport`). This library has native components and may require build tools (Python, C/C++ compiler).
+    *   **Prerequisite:** Uses the `serialport` library. This library has native components and may require build tools (Python, C/C++ compiler).
     *   **Permissions:** On Linux, your user might need to be added to the `dialout` group (`sudo usermod -a -G dialout $USER`, then log out and back in).
 *   **Image Gallery:** Generates an HTML gallery from multiple image files and opens it in a web browser. Useful for displaying multiple plots or images in a single view.
 *   **Speech Synthesis:** Converts text to spoken audio using OS capabilities or cloud APIs.
@@ -173,12 +173,12 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
         *   **macOS:** `brew install ffmpeg`
         *   **Windows:** Download and install `ffmpeg` and add it to your system's PATH.
 *   **Remote Execution:** Executes commands on remote machines via SSH.
-    *   **Prerequisite:** Requires the `ssh2` library (`npm install ssh2` or `bun add ssh2`). This library has native components and may require build tools (Python, C/C++ compiler).
+    *   **Prerequisite:** Uses the `ssh2` library. This library has native components and may require build tools (Python, C/C++ compiler).
 *   **Data Validation:** Validates structured data against JSON Schemas.
-    *   **Prerequisite:** Requires the `ajv` library (`npm install ajv` or `bun add ajv`).
+    *   **Prerequisite:** Uses the `ajv` library.
 *   **WebHook:** Exposes an HTTP endpoint to receive webhooks, enabling event-driven flows.
 *   **Scheduler:** Schedules `qflow` flows for future or recurring execution.
-    *   **Prerequisite:** Requires the `node-cron` library (`npm install node-cron` or `bun add node-cron`).
+    *   **Prerequisite:** Uses the `node-cron` library.
 *   **System Notification:** For displaying system-level notifications across different operating systems.
 *   **Interactive Input:** For getting user input via a GUI popup (cross-platform).
 *   **GitHub:** Creating and managing issues.
