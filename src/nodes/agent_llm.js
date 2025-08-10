@@ -49,7 +49,7 @@ export class AgentDeepSeekLLMNode extends DeepSeekLLMNode {
     }
 
     const data = await response.json();
-    console.log("DeepSeek Raw Data:", JSON.stringify(data, null, 2)); // Added logging
+    //console.log("DeepSeek Raw Data:", JSON.stringify(data, null, 2)); // Added logging
     if (!data.choices || data.choices.length === 0 || !data.choices[0].message || typeof data.choices[0].message.content !== 'string') {
       throw new Error('Invalid response structure from DeepSeek API or missing content.');
     }

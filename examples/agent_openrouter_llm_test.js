@@ -23,6 +23,7 @@ import {
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
+import { BrowserControlNode } from '../src/nodes/browser_control.js';
 
 // --- Configuration ---
 const OPENROUTER_API_KEY = process.env.OPEN_ROUTER_KEY;
@@ -127,6 +128,7 @@ async function setupAndLoadKnowledgeBase() {
   const iterator = new IteratorNode(); 
   const interactiveInput = new InteractiveInputNode();
   const systemNotification = new SystemNotificationNode();
+  const browserControl = new BrowserControlNode();
 
   class StatefulAppendFileNode extends AppendFileNode {
     async execAsync(prepRes, shared) {
@@ -158,7 +160,7 @@ async function setupAndLoadKnowledgeBase() {
     write_file: writeFile,
     http_request: httpRequest,
     web_scraper: webScraper,
-    user_input: userInput,
+    browser_control: browserControl,
     interactive_input: interactiveInput,
     system_notification: systemNotification,
     semantic_memory_node: semanticMemoryNode,

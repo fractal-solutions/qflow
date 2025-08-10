@@ -15,7 +15,7 @@ export class AgentNode extends AsyncNode {
     this.summarizeLLM = summarizeLLM;
     this.flowRegistry = flowRegistry;
     this.conversationHistory = [];
-    this.maxSteps = 20;
+    this.maxSteps = 70;
     this.requireFinishConfirmation = requireFinishConfirmation;
     this.maxConversationHistoryTokens = maxConversationHistoryTokens;
   }
@@ -117,7 +117,7 @@ export class AgentNode extends AsyncNode {
           logger.toolCall(toolCall.tool, toolCall.parameters);
 
           // If the tool is a sub-flow or iterator, look up the flow in the registry
-          if (toolCall.tool === 'sub_flow' || toolCall.tool === 'iterator') {
+          if (toolCall.tool === 'sub_flow' || toolCall.tool === 'iterator' || toolCall.tool === 'scheduler') {
             const flowName = toolCall.parameters.flow;
             if (!this.flowRegistry[flowName]) {
               throw new Error(`Flow '${flowName}' not found in registry.`);
@@ -299,9 +299,9 @@ Parameters: ${params}`;
         }
         throw new Error("Missing required keys or invalid format in LLM response (thought, tool_calls array).");
       } catch (e) {
-        // If it's not valid JSON for tool calls, assume it's a direct text response from LLM
-        //return { thought: "Direct LLM response", toolCalls: [{ tool: "finish", parameters: { output: llmResponse } }], parallel: false };
-        return { thought: message.content, toolCalls: [], parallel: false };  
+        // If it's not valid JSON for tool calls, assume it's a direct text response from the LLM.
+        // Treat the whole response as a "thought".
+        return { thought: llmResponse, toolCalls: [], parallel: false };  
       }
     }
 
