@@ -55,7 +55,6 @@ The fundamental building block of any `qflow` workflow. A `Node` represents a si
 *   `post(shared, prepRes, execRes)`: Processes the result of `exec`. Receives the `shared` object.
 *   `setParams(params)`: Configures the node with specific parameters. Parameters are accessible via `this.params`.
 *   `next(node, action = "default")`: Chains this node to another, defining the next step in the flow.
-*   `transition(action)`: Initiates a conditional transition to another node, allowing for dynamic branching.
 
 **Asynchronous Nodes (`AsyncNode`, `AsyncBatchNode`, `AsyncParallelBatchNode`)**
 For operations that involve I/O or are inherently asynchronous, `qflow` provides `AsyncNode` and its variants. These nodes leverage `async`/`await` for non-blocking execution. When working within `AsyncFlow`s, it's crucial to implement the `async` versions of the lifecycle methods:
@@ -105,7 +104,7 @@ The introduction of the `AgentNode` is a game-changer for qflow. It shifts the p
       interactive. They can ask clarifying questions, seek approval for critical actions, or
       provide progress updates, making them more collaborative.
    7. **Data Analysis and Reporting:** Agents can gather data from various sources (web, files,
-      APIs), process it (potentially with a future code interpreter), and then synthesize
+      APIs), process it, and then synthesize
       findings into structured reports or summaries.
    8. **Research and Information Synthesis:** Agents can research topics, scrape relevant pages,
       and synthesize information into comprehensive answers or documents, acting as automated
@@ -129,7 +128,6 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
 *   [**Shell:**](#8-shell-command-example) For system-level interaction and execution.
 *   [**HTTP:**](#10-generic-http-request-example) For universal API access.
 *   [**FileSystem:**](#9-file-system-example) For reading and writing local data.
-*   **User Input:** For human-in-the-loop control.
 *   [**Web Search:**](#11-web-search-example) Discovering information on the web using either:
     *   `DuckDuckGoSearchNode`: API-key-free, using DuckDuckGo's HTML interface.
     *   `GoogleSearchNode`: Requires a Google API Key and Custom Search Engine ID for more robust results.
@@ -172,6 +170,7 @@ The examples in [Basic Usage & Examples](#basic-usage--examples) below will cove
     *   **Prerequisite:** Uses the `node-cron` library.
 *   [**System Notification:**](https://github.com/fractal-solutions/qflow/blob/main/examples/system_notification_test.js) For displaying system-level notifications across different operating systems.
 *   [**Interactive Input:**](https://github.com/fractal-solutions/qflow/blob/main/examples/interactive_input_test.js) For getting user input via a GUI popup (cross-platform).
+*   [**User Input:**](https://github.com/fractal-solutions/qflow/blob/main/examples/user_input_test.js) For human-in-the-loop control.
 *   **GitHub:** Creating and managing issues.
 *   **HackerNews:** Fetching top stories and item details.
 *   **Stripe:** Creating charges and retrieving account balances.
