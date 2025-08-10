@@ -22,7 +22,9 @@ export class UserInputNode extends AsyncNode {
     });
 
     return new Promise((resolve) => {
-      rl.question(prompt, (answer) => {
+      // ANSI escape codes for yellow text
+      const yellowPrompt = `\x1b[33m${prompt}\x1b[0m`;
+      rl.question(yellowPrompt, (answer) => {
         rl.close();
         resolve(answer);
       });
