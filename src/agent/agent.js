@@ -106,70 +106,75 @@ export class AgentNode extends AsyncNode {
         break;
       }
 
-      const executeTool = async (toolCall) => {
-        const toolInstance = this.availableTools[toolCall.tool];
-        if (!toolInstance) {
-          return `Error: Tool '${toolCall.tool}' not found. Available tools: ${Object.keys(this.availableTools).join(', ')}.`;
-        }
+      try {
+        const executeTool = async (toolCall) => {
+          const toolInstance = this.availableTools[toolCall.tool];
+          if (!toolInstance) {
+            return `Error: Tool '${toolCall.tool}' not found. Available tools: ${Object.keys(this.availableTools).join(', ')}.`;
+          }
 
-        let toolOutput;
-        try {
-          logger.toolCall(toolCall.tool, toolCall.parameters);
+          let toolOutput;
+          try {
+            logger.toolCall(toolCall.tool, toolCall.parameters);
 
-          // If the tool is a sub-flow or iterator, look up the flow in the registry
-          if (toolCall.tool === 'sub_flow' || toolCall.tool === 'iterator' || toolCall.tool === 'scheduler') {
-            const flowName = toolCall.parameters.flow;
-            if (!this.flowRegistry[flowName]) {
-              throw new Error(`Flow '${flowName}' not found in registry.`);
+            // If the tool is a sub-flow, iterator or scheduler, look up the flow in the registry
+            if (toolCall.tool === 'sub_flow' || toolCall.tool === 'iterator' || toolCall.tool === 'scheduler') {
+              const flowName = toolCall.parameters.flow;
+              if (!this.flowRegistry[flowName]) {
+                throw new Error(`Flow '${flowName}' not found in registry.`);
+              }
+              toolCall.parameters.flow = this.flowRegistry[flowName];
             }
-            toolCall.parameters.flow = this.flowRegistry[flowName];
-          }
 
-          toolInstance.setParams(toolCall.parameters);
-          const ToolFlowClass = toolInstance instanceof AsyncNode ? AsyncFlow : Flow;
-          const toolFlow = new ToolFlowClass(toolInstance);
-          
-          if (toolInstance instanceof AsyncNode) {
-            toolOutput = await toolFlow.runAsync({});
-          } else {
-            toolOutput = toolFlow.run({});
-          }
-          logger.toolResult(toolCall.tool, toolOutput);
+            toolInstance.setParams(toolCall.parameters);
+            const ToolFlowClass = toolInstance instanceof AsyncNode ? AsyncFlow : Flow;
+            const toolFlow = new ToolFlowClass(toolInstance);
+            
+            if (toolInstance instanceof AsyncNode) {
+              toolOutput = await toolFlow.runAsync({});
+            } else {
+              toolOutput = toolFlow.run({});
+            }
+            logger.toolResult(toolCall.tool, toolOutput);
 
-          if (this.summarizeLLM && typeof toolOutput === 'string' && toolOutput.length > 1000) {
-            logger.info(`Summarizing large tool output (${toolOutput.length} chars)...`);
-            const summarizeNode = new SummarizeNode();
-            summarizeNode.setParams({ text: toolOutput, llmNode: this.summarizeLLM });
-            const summarizeFlow = new AsyncFlow(summarizeNode);
-            toolOutput = await summarizeFlow.runAsync({});
-            logger.info(`Summarized to ${toolOutput.length} chars.`);
+            if (this.summarizeLLM && typeof toolOutput === 'string' && toolOutput.length > 1000) {
+              logger.info(`Summarizing large tool output (${toolOutput.length} chars)...`);
+              const summarizeNode = new SummarizeNode();
+              summarizeNode.setParams({ text: toolOutput, llmNode: this.summarizeLLM });
+              const summarizeFlow = new AsyncFlow(summarizeNode);
+              toolOutput = await summarizeFlow.runAsync({});
+              logger.info(`Summarized to ${toolOutput.length} chars.`);
+            }
+            return toolOutput;
+          } catch (e) {
+            return `Error executing tool '${toolCall.tool}': ${e.message}`;
           }
-          return toolOutput;
-        } catch (e) {
-          return `Error executing tool '${toolCall.tool}': ${e.message}`;
-        }
-      };
+        };
 
-      let observations = [];
-      if (parallel) {
-        const results = await Promise.all(toolCalls.map(executeTool));
-        observations = results.map((result, index) => ({
-          tool: toolCalls[index].tool,
-          parameters: toolCalls[index].parameters,
-          output: result
-        }));
-      } else {
-        for (const toolCall of toolCalls) {
-          const result = await executeTool(toolCall);
-          observations.push({
-            tool: toolCall.tool,
-            parameters: toolCall.parameters,
+        let observations = [];
+        if (parallel) {
+          const results = await Promise.all(toolCalls.map(executeTool));
+          observations = results.map((result, index) => ({
+            tool: toolCalls[index].tool,
+            parameters: toolCalls[index].parameters,
             output: result
-          });
+          }));
+        } else {
+          for (const toolCall of toolCalls) {
+            const result = await executeTool(toolCall);
+            observations.push({
+              tool: toolCall.tool,
+              parameters: toolCall.parameters,
+              output: result
+            });
+          }
         }
-      }
 
-      this.conversationHistory.push({ role: "user", content: `Observation: ${JSON.stringify(observations)}` });
+        this.conversationHistory.push({ role: "user", content: `Observation: ${JSON.stringify(observations)}` });
+      } catch (e) {
+        logger.error(`Error during tool execution: ${e.message}`);
+        this.conversationHistory.push({ role: "user", content: `Error: Tool execution failed with message: ${e.message}. You should try a different approach.` });
+      }
       this.conversationHistory.push({ role: "system", content: "Reflect on the last observation(s) and update your plan if necessary. What is your next step?" });
     }
 
@@ -283,57 +288,60 @@ Parameters: ${params}`;
 
   parseLLMResponse(llmResponse) {
     let parsed;
-    let thought = '';
-    let toolCalls = [];
-    let parallel = false;
 
-    let rawData = llmResponse;
     if (typeof llmResponse === 'string') {
+      // Regex to find json content within ```json ... ``` or just ``` ... ```
+      const markdownMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonString = markdownMatch ? markdownMatch[1] : llmResponse;
+
       try {
-        parsed = JSON.parse(llmResponse);
+        parsed = JSON.parse(jsonString);
         if (parsed.thought && Array.isArray(parsed.tool_calls)) {
-          thought = parsed.thought;
-          toolCalls = parsed.tool_calls;
-          parallel = parsed.parallel || false;
-          return { thought, toolCalls, parallel };
+          // This is a valid, complete tool call plan.
+          return {
+            thought: parsed.thought,
+            toolCalls: parsed.tool_calls,
+            parallel: parsed.parallel || false,
+          };
         }
-        throw new Error("Missing required keys or invalid format in LLM response (thought, tool_calls array).");
       } catch (e) {
-        // If it's not valid JSON for tool calls, assume it's a direct text response from the LLM.
-        // Treat the whole response as a "thought".
-        return { thought: llmResponse, toolCalls: [], parallel: false };  
+        // JSON.parse failed. This is expected if the LLM just sends a text response.
+        // We will fall through and treat the original response as a thought.
       }
+      
+      // If we are here, it means the response was either not valid JSON,
+      // or it was valid JSON but didn't have the required 'thought' and 'tool_calls' keys.
+      // In either case, we treat the entire original response as a thought with no tool calls.
+      return { thought: llmResponse, toolCalls: [], parallel: false };
     }
 
-    // Prioritize tool_calls if present (OpenAI function calling format)
+    // This part of the function handles the case where llmResponse is an OBJECT,
+    // typically from OpenAI's function calling API.
+    const rawData = llmResponse;
     if (rawData.choices && rawData.choices.length > 0 && rawData.choices[0] && rawData.choices[0].message) {
       const message = rawData.choices[0].message;
 
       if (message.tool_calls && message.tool_calls.length > 0) {
-        toolCalls = message.tool_calls.map(tc => ({
+        const toolCalls = message.tool_calls.map(tc => ({
           tool: tc.function.name,
           parameters: JSON.parse(tc.function.arguments)
         }));
-        thought = message.reasoning_content || `Calling tool(s): ${toolCalls.map(tc => tc.tool).join(', ')}`;
-        // OpenAI function calling implies sequential execution unless explicitly handled otherwise
-        parallel = false; 
-        return { thought, toolCalls, parallel };
+        const thought = message.reasoning_content || `Calling tool(s): ${toolCalls.map(tc => tc.tool).join(', ')}`;
+        return { thought, toolCalls, parallel: false };
       } else if (typeof message.content === 'string' && message.content.trim().startsWith('{')) {
-        // If no tool_calls, but content is JSON (for thought/tool_calls/finish)
         try {
           parsed = JSON.parse(message.content);
           if (parsed.thought && Array.isArray(parsed.tool_calls)) {
-            thought = parsed.thought;
-            toolCalls = parsed.tool_calls;
-            parallel = parsed.parallel || false;
-            return { thought, toolCalls, parallel };
+            return {
+              thought: parsed.thought,
+              toolCalls: parsed.tool_calls,
+              parallel: parsed.parallel || false,
+            };
           }
-          throw new Error("Missing required keys or invalid format in message.content (thought, tool_calls array).");
         } catch (e) {
           throw new Error(`Invalid JSON or unexpected format in message.content: ${e.message}. Content: ${message.content}`);
         }
       } else if (typeof message.content === 'string') {
-        // If it's a plain string, treat it as a thought and no tool calls
         return { thought: message.content, toolCalls: [], parallel: false };
       }
     }
