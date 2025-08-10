@@ -10,7 +10,8 @@
 *   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
 *   **Retry Mechanisms:** Built-in support for retrying failed operations with configurable delays.
 *   **Conditional Transitions:** Define dynamic flow paths based on execution outcomes.
-*   **Built-in Integrations:** Comes with pre-built nodes for multiple tasks like LLM interactions, agents, browser use, pdf tools, webhooks, spreadsheet manipulation, code interpretation, media manipulation, web scraping, and popular API integrations (GitHub, Git, Open Router, HackerNews, Stripe, Maps).
+*   **Agents:** Built upon the `qflow` core functionality are plug and play agents with extensive tool integrations available.
+*   **Built-in Integrations:** Comes with pre-built nodes for multiple tasks like LLM interactions, browser use, pdf tools, webhooks, spreadsheet manipulation, code interpretation, media manipulation, web scraping, and popular API integrations (GitHub, Git, Open Router, HackerNews, Stripe, Maps).
 *   **Custom Agent Tools:** Build your own Agent tools using the flow registry pattern.
 
 ## Installation
