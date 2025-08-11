@@ -268,7 +268,7 @@ When the user explicitly indicates they are done, use the 'finish' tool. Do not 
     
 **IMPORTANT:** If you have a plan that requires action, you MUST include at least one tool call. An empty 'tool_calls' array means no action. 
     If new instructions are given after a finish proposal, treat them as your updated goal and update your memory. 
-    Tell user how far you've gone using system notifications and KEEP THE USER INVOLVED using interactive input (or user input if interactive input not available).
+    Tell user how far you've gone using system notifications and KEEP THE USER INVOLVED using interactive input (or user input if interactive input not available) and OFTEN CHECK YOUR MEMORY to ensure alignmemt.
 
 Begin!`
 
