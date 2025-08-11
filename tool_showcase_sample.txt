@@ -1,1 +1,2 @@
-This file was created by Q's write_file tool as part of the demonstration.
+This file was created as part of the tool showcase demonstration!
+It showcases write_file capabilities.
