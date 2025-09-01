@@ -1060,6 +1060,50 @@ export function getToolDefinitions() {
         },
         required: ["output"]
       }
+    },
+    {
+      name: "database",
+      description: "Interacts with a database.",
+      parameters: {
+        type: "object",
+        properties: {
+          adapter: {
+            type: "string",
+            enum: ["sqlite", "postgres", "mysql"],
+            description: "The database adapter to use."
+          },
+          connection: {
+            type: "string",
+            description: "The connection string for the database."
+          },
+          action: {
+            type: "string",
+            enum: ["query", "insert", "bulk_insert", "update", "delete", "transaction"],
+            description: "The action to perform."
+          },
+          query: {
+            type: "string",
+            description: "The SQL query to execute (for the 'query' action)."
+          },
+          table: {
+            type: "string",
+            description: "The name of the table to operate on."
+          },
+          data: {
+            type: "object",
+            description: "The data to insert or update."
+          },
+          where: {
+            type: "string",
+            description: "The WHERE clause for 'update' and 'delete' actions."
+          },
+          operations: {
+            type: "array",
+            description: "An array of operations to execute within a transaction."
+          }
+        },
+        required: ["adapter", "connection", "action"]
+      }
     }
   ];
 }
