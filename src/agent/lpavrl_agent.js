@@ -2,6 +2,7 @@
 import { BaseAgent } from './base_agent.js';
 import { logger } from './logger.js';
 import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
+import { UserInputNode } from '../nodes/index.js';
 
 export class LPAVRLAgent extends BaseAgent {
     async execAsync() {
@@ -120,12 +121,6 @@ Explain *why* these tools failed. Propose an alternative tool or a revised plan 
             logger.thought(learnThought);
             this.conversationHistory.push({ role: "assistant", content: JSON.stringify({ thought: learnThought }) });
 
-
-            if (finishToolCall) {
-                finalOutput = finishToolCall.parameters.output;
-                logger.final(finalOutput);
-                break;
-            }
         }
 
         if (step >= this.maxSteps && finalOutput === null) {

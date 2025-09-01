@@ -2,6 +2,7 @@
 import { BaseAgent } from './base_agent.js';
 import { logger } from './logger.js';
 import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
+import { UserInputNode } from '../nodes/index.js';
 
 export class OODAAgent extends BaseAgent {
     async execAsync() {
