@@ -1,1 +1,37 @@
-Tool showcase roadmap: 1. Create demo directory 2. Write sample files 3. List directory contents 4. Read file content 5. Make HTTP request 6. Use LLM reasoning 7. Display system notification 8. Finish execution
+Tool Showcase Roadmap:
+
+1. FILE OPERATIONS DEMO
+   - Create and write to a sample file
+   - Read back the file content
+   - List directory contents
+   - Append additional content
+
+2. WEB INTERACTIONS DEMO
+   - Perform a web search
+   - Scrape a website
+   - Extract structured data from HTML
+   - Make HTTP requests
+
+3. SYSTEM UTILITIES DEMO
+   - Display system notifications
+   - Get user input interactively
+   - Execute shell commands
+   - Generate embeddings
+
+4. DATA PROCESSING DEMO
+   - Transform data with JavaScript functions
+   - Validate data against schema
+   - Process spreadsheet operations
+   - Extract data from PDFs
+
+5. ADVANCED CAPABILITIES DEMO
+   - LLM reasoning demonstrations
+   - Database operations
+   - Multimedia processing
+   - Hardware interactions
+
+6. USER ENGAGEMENT
+   - Regular progress notifications
+   - Interactive input requests
+   - Memory retrieval demonstrations
+   - Final summary and completion

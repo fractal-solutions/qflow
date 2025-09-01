@@ -105,26 +105,6 @@ Explain *why* these tools failed. Propose an alternative tool or a revised plan 
             logger.thought(reflectThought);
             this.conversationHistory.push({ role: "assistant", content: JSON.stringify({ thought: reflectThought }) });
 
-            if (finishToolCall) {
-                finalOutput = finishToolCall.parameters.output;
-                if (this.requireFinishConfirmation) {
-                    const confirmNode = new UserInputNode();
-                    confirmNode.setParams({
-                        prompt: `Agent proposes to finish with output: "${finalOutput}". Do you approve? (yes/no): `
-                    });
-                    const confirmFlow = new AsyncFlow(confirmNode);
-                    const confirmation = await confirmFlow.runAsync({});
-
-                    if (confirmation.toLowerCase() !== 'yes') {
-                        logger.info("Agent finish denied by user. User input will be the next prompt.");
-                        this.conversationHistory.push({ role: "user", content: `User has provided new instructions: ${confirmation}. Please adjust your plan and continue working.` });
-                        continue; // Continue the loop
-                    }
-                }
-
-                logger.final(finalOutput);
-                break;
-            }
         }
 
         if (step >= this.maxSteps && finalOutput === null) {
