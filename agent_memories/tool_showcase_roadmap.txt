@@ -1,0 +1,1 @@
+Tool showcase roadmap: 1. Create demo directory 2. Write sample files 3. List directory contents 4. Read file content 5. Make HTTP request 6. Use LLM reasoning 7. Display system notification 8. Finish execution

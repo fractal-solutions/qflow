@@ -26,6 +26,9 @@ export class AgentNode extends AsyncNode {
       throw new Error("AgentNode requires a 'goal' parameter.");
     }
 
+    // Set the goal on the internal agent instance (RAORAgent in this case)
+    this.llmNode.setParams({ goal });
+
     this.conversationHistory = [
       { role: "system", content: this.getSystemPrompt() },
       { role: "user", content: `Goal: ${goal}` },
@@ -346,13 +349,12 @@ Begin!`
             toolCalls: parsed.tool_calls,
             parallel: parsed.parallel || false,
           };
+        } else {
+          throw new Error("JSON is missing 'thought' or 'tool_calls' array.");
         }
       } catch (e) {
-        // Parsing failed, fall through to treat the original string as a thought.
+        throw new Error(`Invalid JSON format: ${e.message}. Content: ${jsonString}`);
       }
-
-      // Fallback for plain text responses or malformed JSON.
-      return { thought: llmResponse, toolCalls: [], parallel: false };
     }
 
     // This part of the function handles the case where llmResponse is an OBJECT,
@@ -377,12 +379,14 @@ Begin!`
               toolCalls: parsed.tool_calls,
               parallel: parsed.parallel || false,
             };
+          } else {
+            throw new Error("JSON in message.content is missing 'thought' or 'tool_calls' array.");
           }
         } catch (e) {
-          throw new Error(`Invalid JSON or unexpected format in message.content: ${e.message}. Content: ${message.content}`);
+          throw new Error(`Invalid JSON in message.content: ${e.message}. Content: ${message.content}`);
         }
       } else if (typeof message.content === 'string') {
-        return { thought: message.content, toolCalls: [], parallel: false };
+        throw new Error(`Expected JSON with 'thought' and 'tool_calls', but received plain string content: ${message.content}`);
       }
     }
 
