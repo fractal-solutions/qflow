@@ -44,20 +44,20 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "chalk": "^5.5.0",
-    "cheerio": "^1.0.0-rc.12",
+    "chalk": "^5.6.2",
+    "cheerio": "^1.1.2",
     "node-cron": "^4.2.1",
-    "playwright": "^1.45.0",
+    "playwright": "^1.55.0",
     "serialport": "^13.0.0",
-    "simple-git": "^3.25.0",
-    "ssh2": "^1.16.0",
-    "ws": "^8.18.0",
+    "simple-git": "^3.28.0",
+    "ssh2": "^1.17.0",
+    "ws": "^8.18.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5.9.2"
   }
 }

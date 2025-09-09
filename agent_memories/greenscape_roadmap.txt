@@ -1,0 +1,27 @@
+PDF to Spreadsheet Transformation Roadmap:
+
+1. DATA EXTRACTION PHASE:
+   - Extract tabular data from PDF text (items 1-12 from the quotation)
+   - Identify: DESCRIPTION, QTY, PRICE @, TOTAL columns
+
+2. DATA TRANSFORMATION PHASE:
+   - Map DESCRIPTION to 'item' column
+   - Extract/derive 'unit' from QTY (convert pcs/bags/lorry/tones to appropriate units, prioritize m2 where applicable)
+   - Extract numeric 'quantity' from QTY
+   - Map PRICE @ to 'rate' column
+   - Map TOTAL to 'amount' column
+   - Handle unit conversions: pcs → units, bags → units, lorry → units, tones → tons
+
+3. SPREADSHEET CREATION PHASE:
+   - Create new spreadsheet file
+   - Set headers: item, unit, quantity, rate, amount
+   - Populate with transformed data
+   - Save as Excel/CSV format
+
+4. VALIDATION PHASE:
+   - Verify calculations (quantity * rate = amount)
+   - Ensure proper unit labeling
+   - Check data integrity
+
+Target columns: item, unit (m2), quantity, rate, amount
+Source data: 12 items from GREENSCAPE_CABRO_Q1.pdf quotation

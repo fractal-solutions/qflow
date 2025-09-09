@@ -1,0 +1,8 @@
+Goal: Find junior backend developer job openings in Nairobi or remote. Collect metadata (contact name, phone, email) for each job lead. Save to a text file. CV location: /home/fractal/Downloads/Jeremy_Mumia_CV_Latest.docx.
+
+Roadmap:
+1. Search for job openings using web search tools (DuckDuckGo or Google Search if credentials are available).
+2. Extract job details and metadata from search results or job posting websites.
+3. Compile the job leads into a structured text file with each entry including job title, company, contact name, phone, email, and application link.
+4. Notify the user of progress and seek feedback if needed.
+5. Use the CV file for potential applications if required by the user later.

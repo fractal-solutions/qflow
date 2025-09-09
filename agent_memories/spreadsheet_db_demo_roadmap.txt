@@ -1,0 +1,8 @@
+Spreadsheet Data Enrichment and SQL Database Integration Roadmap:
+1. Create sample spreadsheet with basic customer/product data
+2. Enrich data through: geocoding addresses, calculating derived fields, adding categorization
+3. Transform and validate enriched data
+4. Store in SQLite database
+5. Perform database operations: queries, updates, transactions
+6. Export final enriched dataset
+7. Showcase integration between spreadsheet tools and database operations
