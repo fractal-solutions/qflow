@@ -40,7 +40,7 @@ export class InteractiveInputNode extends AsyncNode {
       case 'win32': // Windows
         // PowerShell for input box
         // (New-Object -TypeName Microsoft.VisualBasic.Interaction).InputBox("PROMPT", "TITLE", "DEFAULT")
-        command = `powershell -Command "(New-Object -TypeName Microsoft.VisualBasic.Interaction).InputBox(\"${prompt}\", \"${title}\", \"${defaultValue}\")"`;
+        command = `powershell -Command "(New-Object -TypeName Microsoft.VisualBasic.Interaction).InputBox('${prompt}', '${title}', '${defaultValue}')"`;
         break;
       default:
         throw new Error(`Unsupported platform for InteractiveInputNode: ${platform}`);
