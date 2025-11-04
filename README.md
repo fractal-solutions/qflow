@@ -14,7 +14,7 @@
 
 ## Installation
 
-To get started quickly with a new project, you can use the `create-qflow` tool:
+To get started quickly with a new project, you can use the `create-qflow` tool (Recommended):
 
 ```bash
 bunx create-qflow@latest <project-name>
