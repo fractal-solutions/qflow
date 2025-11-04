@@ -14,18 +14,20 @@
 
 ## Installation
 
+To get started quickly with a new project, you can use the `create-qflow` tool:
+
+```bash
+bunx create-qflow@latest <project-name>
+```
+
+or
+
 You can install `qflow` via npm or Bun:
 
 ```bash
 npm install @fractal-solutions/qflow
 # or
 bun add @fractal-solutions/qflow
-```
-
-To get started quickly with a new project, you can use the `create-qflow` tool:
-
-```bash
-bunx create-qflow@latest <project-name>
 ```
 
 ## Module Imports
