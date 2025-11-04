@@ -1,2 +1,0 @@
-This file was created as part of the tool showcase demonstration!
-It showcases write_file capabilities.

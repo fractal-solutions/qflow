@@ -1,6 +1,0 @@
-customer_id,name,email,address,city,state,zip_code,product,purchase_amount,purchase_date,tax_amount,total_amount,customer_tier,product_category,formatted_date
-1,John Smith,john@email.com,123 Main St,New York,NY,10001,Laptop,1200.5,45306.125185185185,96.04,1296.54,Platinum,Computer,2024-01-15
-2,Jane Doe,jane@email.com,456 Oak Ave,Los Angeles,CA,90001,Monitor,350.75,45311.125185185185,28.06,378.81,Silver,Display,2024-01-20
-3,Bob Johnson,bob@email.com,789 Pine Rd,Chicago,IL,60601,Keyboard,89.99,45327.125185185185,7.20,97.19,Bronze,Accessory,2024-02-05
-4,Alice Brown,alice@email.com,321 Elm St,Houston,TX,77001,Mouse,45.25,45332.125185185185,3.62,48.87,Bronze,Accessory,2024-02-10
-5,Charlie Wilson,charlie@email.com,654 Maple Dr,Phoenix,AZ,85001,Headphones,199.99,45337.125185185185,16.00,215.99,Silver,Accessory,2024-02-15

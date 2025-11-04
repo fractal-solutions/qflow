@@ -1,3 +1,0 @@
-AI in healthcare
-Benefits of serverless architecture
-Introduction to quantum computing
