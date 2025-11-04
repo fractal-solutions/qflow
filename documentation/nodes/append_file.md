@@ -10,7 +10,8 @@ The `AppendFileNode` appends content to an existing file.
 ### Example Usage
 
 ```javascript
-import { AsyncFlow, ReadFileNode, WriteFileNode, AppendFileNode, ListDirectoryNode } from '@fractal-solutions/qflow';
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { WriteFileNode, AppendFileNode, ReadFileNode, ListDirectoryNode } from '@fractal-solutions/qflow/nodes';
 
 (async () => {
   console.log('--- Running File System Test Workflow ---');

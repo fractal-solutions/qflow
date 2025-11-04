@@ -12,7 +12,8 @@ The `CodeInterpreterNode` executes Python code snippets.
 ### Example Usage
 
 ```javascript
-import { AsyncFlow, CodeInterpreterNode } from '@fractal-solutions/qflow';
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { CodeInterpreterNode } from '@fractal-solutions/qflow/nodes';
 
 (async () => {
   console.log('--- Running Python CodeInterpreterNode Test Workflow ---');

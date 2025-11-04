@@ -13,7 +13,8 @@ The `BrowserControlNode` controls a web browser to navigate pages, interact with
 ### Example Usage
 
 ```javascript
-import { AsyncFlow, BrowserControlNode, DisplayImageNode } from '@fractal-solutions/qflow';
+import { AsyncFlow} from '@fractal-solutions/qflow';
+import { BrowserControlNode, DisplayImageNode } from '@fractal-solutions/qflow/nodes';
 
 (async () => {
   console.log('--- Running Browser Control Test Workflow ---');

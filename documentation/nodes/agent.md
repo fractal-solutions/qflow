@@ -11,7 +11,8 @@ The `AgentNode` is the core of agentic behavior in qflow. It orchestrates tools 
 ### Example Usage
 
 ```javascript
-import { AsyncFlow, DuckDuckGoSearchNode, ShellCommandNode, ReadFileNode, WriteFileNode, HttpRequestNode, ScrapeURLNode, UserInputNode, AgentNode, AgentDeepSeekLLMNode } from '@fractal-solutions/qflow';
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { DuckDuckGoSearchNode, ShellCommandNode, ReadFileNode, WriteFileNode, HttpRequestNode, ScrapeURLNode, UserInputNode, AgentNode, AgentDeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
 
 // Ensure your DeepSeek API Key is set as an environment variable
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
