@@ -48,18 +48,19 @@ bunx create-qflow@latest <project-name>
 
 For a detailed explanation of the core abstractions, see the [Core Abstractions documentation](documentation/core_abstractions.md).
 
+## Basic Usage & Examples
+
+See [documentation/examples.md](documentation/examples.md) for a full list of examples.
+
+
 ## Agents
 
 For a detailed explanation of the agents, see the [Agents documentation](documentation/agents.md).
 
 ## Integrated Nodes and their Examples
 
-For a detailed explanation of the integrated nodes and their examples, see the [Integrated Nodes documentation](documentation/integrated_nodes.md).
+For a detailed explanation of the integrated nodes and their examples, see the [Integrated Nodes documentation](documentation/nodes/index.md).
 
-
-## Basic Usage & Examples
-
-See [documentation/examples.md](documentation/examples.md) for a full list of examples.
 
 
 
