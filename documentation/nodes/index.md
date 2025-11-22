@@ -52,6 +52,7 @@ This section contains detailed documentation for each of the integrated nodes in
 *   [BrowserControlNode](browser_control.md)
 *   [WebSocketsNode](websockets.md)
 *   [WebhookNode](webhook.md)
+*   [HttpServerNode](http_server.md)
 
 ### Flow Control
 
