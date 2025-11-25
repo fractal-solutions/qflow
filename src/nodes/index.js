@@ -25,6 +25,7 @@ export * from './shell.js';
 export * from './filesystem.js';
 export * from './user.js';
 export * from './http.js';
+export * from './http_server.js'
 export * from './search.js';
 export * from './summarize.js';
 export * from './memory.js';

@@ -1,147 +1,207 @@
-## HttpServerNode
+# HttpServerNode
 
-The `HttpServerNode` is a powerful, general-purpose node designed to create a web server and handle HTTP requests by triggering a qflow flow.
+The `HttpServerNode` is a powerful node that allows you to create a fully-featured HTTP server within a qflow workflow. It can handle dynamic routes by triggering other flows, serve static files, and manage CORS headers, making it ideal for building simple APIs or web backends.
 
-### Parameters
+## Purpose
 
-When you create an `HttpServerNode`, you can configure it with the following parameters in the `setParams` method:
+Use the `HttpServerNode` to listen for incoming HTTP requests and delegate them to specific `AsyncFlow` instances based on the request's path and method. This turns your qflow workflows into web-accessible endpoints.
 
-*   `port` (number, optional, default: 3000): The port on which the server will listen for requests.
-*   `flow` (AsyncFlow, required): The qflow `AsyncFlow` instance that will be triggered to handle every incoming HTTP request.
-*   `waitForFlow` (boolean, optional, default: false): This parameter controls the response behavior:
-    *   If `false` (the default), the server triggers the flow in a "fire-and-forget" manner. It does not wait for the flow to complete, and it is up to your flow to send a response to the client using the `res` object.
-    *   If `true`, the server will await the completion of the entire flow. It will then automatically take the return value of the flow, convert it to a JSON string, and send it as the HTTP response with a 200 OK status. If the flow throws an error, it will send a generic `500 Flow execution failed` error.
+## Parameters
 
-### Request Handling
+| Parameter   | Type     | Description                                                                                                                                                           | Default     |
+|-------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| `port`      | `number` | The port number for the server to listen on.                                                                                                                          | `3000`      |
+| `routes`    | `object` | An object defining the dynamic routes. The keys are URL paths (e.g., `/`, `/users/:id`), and the values are objects mapping HTTP methods (e.g., `GET`, `POST`) to `AsyncFlow` instances. | `{}`        |
+| `staticDir` | `string` | The absolute or relative path to a directory from which to serve static files (e.g., HTML, CSS, images).                                                               | `undefined` |
+| `cors`      | `object` | A configuration object for enabling and customizing Cross-Origin Resource Sharing (CORS) headers.                                                                     | `undefined` |
 
-For every HTTP request the server receives, regardless of the path or method, it does the following:
+### `routes` Object Structure
 
-1.  **Parses the Request**: It parses the URL, including the path and any query string parameters. It also attempts to parse the request body as JSON if a body exists.
-2.  **Creates a `shared` Object**: It constructs a `shared` object that contains all the information about the request and passes it to the flow you provided. This `shared` object has the following structure:
-
-    ```json
-    {
-      "webhook": {
-        "req": "The raw Node.js HTTP request object.",
-        "res": "The raw Node.js HTTP response object.",
-        "headers": "An object containing all the request headers.",
-        "payload": "The parsed JSON request body (or undefined if no body).",
-        "method": "The HTTP method of the request (e.g., 'GET', 'POST').",
-        "path": "The path of the request (e.g., '/workflows').",
-        "query": "An object containing the parsed query string parameters."
-      }
-    }
-    ```
-
-3.  **Triggers the Flow**: It calls `runAsync` on your flow, passing in the `shared` object.
-
-### Response Handling
-
-Your flow has full control over the HTTP response by using the `res` object located at `shared.webhook.res`. You can:
-
-*   Set the status code: `res.writeHead(201, { 'Content-Type': 'application/json' });`
-*   Set headers: `res.setHeader('X-Custom-Header', 'value');`
-*   Send a response and end the connection: `res.end(JSON.stringify({ message: 'Success!' }));`
-
-The `waitForFlow: true` parameter provides a convenient shortcut for simple request-response flows where the entire result of the flow is the response body. For more complex scenarios, you can leave `waitForFlow: false` and manage the `res` object manually within your flow.
-
-### Example Usage
-
-#### Simple "Hello World" Server
-
-This example shows a basic server that sends a simple text response.
+The `routes` object maps URL paths to method-specific flow handlers.
 
 ```javascript
-import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';
-import { HttpServerNode } from '@fractal-solutions/qflow/nodes';
-
-const simpleFlow = new AsyncFlow();
-const helloNode = new AsyncNode();
-
-helloNode.execAsync = async (prepRes, shared) => {
-    const { res } = shared.webhook;
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Hello World!');
+const serverRoutes = {
+    // A simple GET route
+    '/': {
+        'GET': welcomeFlow
+    },
+    // A route with a path parameter
+    '/users/:id': {
+        'GET': userFlow
+    },
+    // A route that handles POST requests
+    '/items': {
+        'POST': createItemFlow
+    }
 };
-
-simpleFlow.start(helloNode);
-
-const server = new HttpServerNode();
-server.setParams({
-    port: 3000,
-    flow: simpleFlow,
-    waitForFlow: false
-});
-
-console.log('Server running at http://localhost:3000/');
 ```
 
-#### Handling Multiple Routes
+### `cors` Object Structure
 
-The `HttpServerNode` listens on a single port and passes all requests to your flow. You can handle different paths and methods within your flow to create a complete API.
-
-This example demonstrates a router that handles multiple endpoints (`/status`, `/workflows`, `/users/:id`).
+The `cors` object allows you to specify standard CORS headers.
 
 ```javascript
-import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';
-import { HttpServerNode } from '@fractal-solutions/qflow/nodes';
+const corsConfig = {
+    origin: '*', // or 'https://your-frontend-domain.com'
+    methods: 'GET,POST,PUT,DELETE,OPTIONS',
+    headers: 'Content-Type,Authorization'
+};
+```
 
-const routerFlow = new AsyncFlow();
-const routerNode = new AsyncNode();
+## Triggered Flow Context
 
-// This single node is your entire API router.
-// It receives EVERY request that comes into the server.
-rrouterNode.execAsync = async function(prepRes, shared) {
-    const { path, method, payload, query, res } = shared.webhook;
+When a dynamic route is matched, the corresponding `AsyncFlow` is triggered. The flow receives a `request` object within its `shared` state (`shared.request`).
 
-    // --- Route 1: GET /status ---
-    if (path === '/status' && method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ status: 'ok', timestamp: new Date() }));
+The `shared.request` object contains:
+- `headers`: An object of request headers.
+- `body`: The parsed JSON payload (if the request body is valid JSON) or the raw string body.
+- `method`: The HTTP request method (e.g., `GET`, `POST`).
+- `path`: The URL path.
+- `query`: An object containing the URL query string parameters.
+- `params`: An object containing parameters extracted from the URL path (e.g., `{ id: '123' }` for a `/users/123` request to a `/users/:id` route).
+
+## Triggered Flow Response
+
+The triggered flow is expected to return a response object that the `HttpServerNode` will use to reply to the client.
+
+The response object should have the following structure:
+- `statusCode` (optional, `number`): The HTTP status code. Defaults to `200`.
+- `headers` (optional, `object`): An object of response headers. Defaults to `{ 'Content-Type': 'application/json' }` if the body is an object.
+- `body` (optional, `string | object | Buffer`): The response body. Objects will be automatically stringified as JSON.
+
+If the flow returns `null` or `undefined`, a `204 No Content` response will be sent.
+
+## Example: Mock API with Static Files
+
+Here is a more robust example demonstrating how to build a simple mock API that also serves static files (e.g., an `index.html`).
+
+### 1. File Structure
+
+For this example, assume you have the following file structure. The server will serve dynamic API routes and also serve any files placed in the `public` directory.
+
+```
+.
+├── your_script.js
+└── public/
+    └── index.html
+```
+
+Create a `public` directory and place an `index.html` file inside it with some content, like `<h1>Welcome to the Static Site!</h1>`.
+
+### 2. Server Script (`your_script.js`)
+
+The script will define the API routes and tell the server to serve static files from the `public` directory.
+
+```javascript
+import { AsyncFlow, AsyncNode } from '../src/qflow.js';
+import { HttpServerNode } from '../src/nodes/http_server.js';
+import path from 'path'; // Import path module
+
+// --- In-Memory "Database" ---
+const users = [
+    { id: 1, name: 'Alice' },
+    { id: 2, name: 'Bob' }
+];
+let nextUserId = 3;
+
+// --- API Logic Flows ---
+
+// Flow to handle GET /api/users
+class ListUsersFlow extends AsyncNode {
+    async execAsync() {
+        console.log('[API] Responding with all users.');
+        return { statusCode: 200, body: users };
     }
+}
+const listUsersFlow = new AsyncFlow(new ListUsersFlow());
 
-    // --- Route 2: POST /workflows ---
-    if (path === '/workflows' && method === 'POST') {
-        const { id } = payload;
-        // In a real app, you would trigger a workflow based on the ID
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ message: `Triggering workflow ${id}` }));
+// Flow to handle GET /api/users/:id
+class GetUserFlow extends AsyncNode {
+    async execAsync(prepRes, shared) {
+        const userId = parseInt(shared.request.params.id, 10);
+        const user = users.find(u => u.id === userId);
+        console.log(`[API] Searching for user with ID: ${userId}`);
+
+        if (user) {
+            return { statusCode: 200, body: user };
+        } else {
+            return { statusCode: 404, body: { error: 'User not found' } };
+        }
     }
+}
+const getUserFlow = new AsyncFlow(new GetUserFlow());
 
-    // --- Route 3: GET /users/:id (with path parameters) ---
-    const userMatch = path.match(/^\/users\/([a-zA-Z0-9]+)$/);
-    if (userMatch && method === 'GET') {
-        const userId = userMatch[1]; // Extract the user ID from the path
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ message: `Fetching data for user ${userId}` }));
+// Flow to handle POST /api/users
+class CreateUserFlow extends AsyncNode {
+    async execAsync(prepRes, shared) {
+        const { name } = shared.request.body;
+        if (!name) {
+            return { statusCode: 400, body: { error: 'Name is required' } };
+        }
+        const newUser = { id: nextUserId++, name };
+        users.push(newUser);
+        console.log('[API] Created new user:', newUser);
+        return { statusCode: 201, body: newUser };
     }
+}
+const createUserFlow = new AsyncFlow(new CreateUserFlow());
 
-    // --- Route 4: GET /search (with query parameters) ---
-    if (path === '/search' && method === 'GET') {
-        const searchTerm = query.q; // Access the 'q' query parameter
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ message: `You searched for: ${searchTerm}` }));
+
+// --- Server Setup ---
+
+// 1. Define the routes for our User API
+const apiRoutes = {
+    '/api/users': {
+        'GET': listUsersFlow,
+        'POST': createUserFlow
+    },
+    '/api/users/:id': {
+        'GET': getUserFlow
     }
-
-    // --- Default 404 Not Found ---
-    // This is the catch-all if no other routes match.
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ error: 'Not Found' }));
 };
 
-routerFlow.start(routerNode);
+// 2. Create a flow to start the server
+(async () => {
+    const serverNode = new HttpServerNode();
+    serverNode.setParams({
+        port: 3001,
+        routes: apiRoutes,
+        staticDir: path.join(process.cwd(), 'public'), // Serve files from the 'public' directory
+        cors: { origin: '*' } // Allow all origins for the example
+    });
 
-export const server = new HttpServerNode();
-server.setParams({
-    port: 3000,
-    flow: routerFlow,
-    waitForFlow: false // Set to false so we can control the response in the node
-});
+    const serverFlow = new AsyncFlow(serverNode);
 
-console.log('Multi-route server running at http://localhost:3000/');
-console.log('Try the following endpoints:');
-console.log('  curl http://localhost:3000/status');
-console.log('  curl -X POST -H "Content-Type: application/json" -d \'{"id":"2"}\' http://localhost:3000/workflows');
-console.log('  curl http://localhost:3000/users/123');
-console.log('  curl "http://localhost:3000/search?q=hello+world"');
+    try {
+        // This will start the server and keep the process running
+        await serverFlow.runAsync({});
+        console.log('API server and static file server is running on http://localhost:3001. Press Ctrl+C to stop.');
+    } catch (error) {
+        console.error('Failed to start server:', error);
+    }
+})();
+```
+
+### Testing the API and Static Files
+
+You can test this server with `curl` in another terminal:
+
+**Get the static `index.html` file:**
+```sh
+curl http://localhost:3001/index.html
+```
+
+**Get all users (dynamic API route):**
+```sh
+curl http://localhost:3001/api/users
+```
+
+**Get user with ID 1 (dynamic API route):**
+```sh
+curl http://localhost:3001/api/users/1
+```
+
+**Create a new user named "Charlie" (dynamic API route):**
+```sh
+curl -X POST -H "Content-Type: application/json" -d '{"name": "Charlie"}' http://localhost:3001/api/users
 ```
