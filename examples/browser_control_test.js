@@ -10,7 +10,7 @@ import { DisplayImageNode } from '../src/nodes/display_image.js';
   const gotoSite = new BrowserControlNode();
   gotoSite.setParams({
     action: 'goto',
-    url: 'https://www.google.com/search?q=qflow+github',
+    url: 'https://duckduckgo.com/?q=npm+fractal-solutions%2Fqflow',
   });
 
   // 2. Take a screenshot
@@ -33,9 +33,9 @@ import { DisplayImageNode } from '../src/nodes/display_image.js';
   });
 
   // Chain the nodes
-  gotoSite.next(screenshot);
-  screenshot.next(displayImage);
-  displayImage.next(closeBrowser);
+  gotoSite.next(screenshot)
+	  .next(displayImage)
+	  .next(closeBrowser);
 
   // Create and run the flow
   const browserFlow = new AsyncFlow(gotoSite);
