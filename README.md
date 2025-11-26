@@ -6,6 +6,7 @@
 
 *   **Modular & Extensible:** Easily define custom nodes and compose them into complex, reusable flows.
 *   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution models.
+*   **Observability:** Monitor workflows with a built-in event system that emits detailed lifecycle events for flows and nodes.
 *   **Shared State Management:** Pass and manipulate data across nodes using a central, mutable `shared` object.
 *   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
 *   **Agents:** Built upon the `qflow` core functionality are plug and play agents with extensive tool integrations available.
@@ -82,6 +83,24 @@ A `Flow` orchestrates the execution of a sequence of `Node`s. It defines the ove
 
 **Batch Flows (`BatchFlow`, `AsyncBatchFlow`, `AsyncParallelBatchFlow`)**
 These specialized flows are designed to process collections of items. They run a sub-flow for each item in the batch. `AsyncParallelBatchFlow` is particularly useful for concurrently processing batch items, significantly speeding up operations.
+
+## Observability (Event System)
+
+`qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
+
+You can attach listeners to an `AsyncFlow` instance to subscribe to key lifecycle events.
+
+### Available Events
+
+*   `flow:start`: Emitted when the flow begins.
+    *   **Payload:** `{ flowId, startTime }`
+*   `flow:end`: Emitted when the flow finishes, either successfully or with an error.
+    *   **Payload:** `{ flowId, endTime, duration, status, error }`
+*   `node:start`: Emitted just before a node executes.
+    *   **Payload:** `{ flowId, nodeClass, startTime, params }`
+*   `node:end`: Emitted right after a node finishes.
+    *   **Payload:** `{ flowId, nodeClass, endTime, duration, status, result, error }`
+
 
 ## Basic Usage & Examples
 
@@ -246,8 +265,114 @@ await asyncFlow.runAsync({});
 
 See [documentation/examples.md](documentation/examples.md) for a full list of examples.
 
+### 5. Observability
+
+This example demonstrates how to use the built-in event system to monitor the execution of a flow.
+
+```javascript
+import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';
+
+const colors = {
+    reset: "\x1b[0m",
+    cyan: "\x1b[36m",
+    green: "\x1b[32m",
+    red: "\x1b[31m",
+    grey: "\x1b[90m"
+};
+function colorize(text, color) {
+    return `${color}${text}${colors.reset}`;
+}
+
+// A simple node that simulates some work
+class WorkNode extends AsyncNode {
+    async execAsync() {
+        const workTime = Math.random() * 100 + 50; // 50-150ms
+        await new Promise(resolve => setTimeout(resolve, workTime));
+        return { status: 'work_done' };
+    }
+}
+
+// A node that is designed to fail once before succeeding
+let failCount = 0;
+class SometimesFailsNode extends AsyncNode {
+    constructor() {
+        // Configure this node to allow 1 retry (for a total of 2 attempts)
+        super(2, 0.1); 
+    }
+    async execAsync() {
+        if (failCount < 1) {
+            failCount++;
+            throw new Error('Simulating a transient error');
+        }
+        return { status: 'succeeded_after_failure' };
+    }
+}
+
+// 1. Define the workflow
+const startNode = new WorkNode();
+const middleNode = new SometimesFailsNode();
+const endNode = new WorkNode();
+
+startNode.next(middleNode);
+middleNode.next(endNode);
+
+// 2. Create the flow
+const myFlow = new AsyncFlow(startNode);
+
+// 3. Attach listeners for observability
+myFlow.on('flow:start', (payload) => {
+    const time = new Date(payload.startTime).toLocaleTimeString();
+    console.log(`\n${colorize(`[FLOW:START]`, colors.cyan)} ${payload.flowId} at ${time}`);
+});
+
+myFlow.on('node:start', (payload) => {
+    console.log(colorize(`  [NODE:START] ${payload.nodeClass}`, colors.grey));
+});
+
+myFlow.on('node:end', (payload) => {
+    const status = payload.status.toUpperCase();
+    const color = payload.status === 'success' ? colors.green : colors.red;
+    const statusStr = colorize(status.padEnd(7), color); // Pad for alignment
+    const duration = `${payload.duration.toFixed(2)}ms`.padStart(10);
+    console.log(`  [NODE:END]   ${payload.nodeClass.padEnd(18)} | Status: ${statusStr} | Duration: ${duration}`);
+    if (payload.error) {
+        console.log(colorize(`    └─ ERROR: ${payload.error.message}`, colors.red));
+    }
+});
+
+myFlow.on('flow:end', (payload) => {
+    const status = payload.status.toUpperCase();
+    const color = payload.status === 'success' ? colors.green : colors.red;
+    const statusStr = colorize(status.padEnd(7), color);
+    const duration = `${payload.duration.toFixed(2)}ms`;
+    console.log(`\n${colorize(`[FLOW:END]`, colors.cyan)}   ${payload.flowId} | Status: ${statusStr} | Duration: ${duration}`);
+    if (payload.error) {
+        console.log(colorize(`  └─ FLOW ERROR: ${payload.error.message}`, colors.red));
+    }
+});
+
+// 4. Run the flow
+await myFlow.runAsync({});
+
+// Expected output:
+//
+// [FLOW:START] <flow-id> at <time>
+//   [NODE:START] WorkNode
+//   [NODE:END]   WorkNode           | Status: SUCCESS | Duration:  XX.XXms
+//   [NODE:START] SometimesFailsNode
+//   [NODE:END]   SometimesFailsNode | Status: ERROR   | Duration:   X.XXms
+//     └─ ERROR: Simulating a transient error
+//   [NODE:START] SometimesFailsNode
+//   [NODE:END]   SometimesFailsNode | Status: SUCCESS | Duration:   X.XXms
+//   [NODE:START] WorkNode
+//   [NODE:END]   WorkNode           | Status: SUCCESS | Duration:  XX.XXms
+//
+// [FLOW:END]   <flow-id> | Status: SUCCESS | Duration: XXX.XXms
+```
+
 
 ## Agents
+
 
 For a detailed explanation of the agents, see the [Agents documentation](documentation/agents.md). The tools available to agents are documented in the [Tools documentation](documentation/integrated_nodes.md).
 
