@@ -30,8 +30,10 @@ class SometimesFailsNode extends AsyncNode {
     async execAsync() {
         if (failCount < 1) {
             failCount++;
+            console.log(colorize(`    [SometimesFailsNode] Attempt ${failCount}: Simulating a failure...`, colors.red));
             throw new Error('Simulating a transient error');
         }
+        console.log(colorize(`    [SometimesFailsNode] Attempt ${failCount + 1}: Succeeded after retry.`, colors.green));
         return { status: 'succeeded_after_failure' };
     }
 }
@@ -45,8 +47,8 @@ class SometimesFailsNode extends AsyncNode {
     const middleNode = new SometimesFailsNode();
     const endNode = new WorkNode();
 
-    startNode.next(middleNode);
-    middleNode.next(endNode);
+    startNode.next(middleNode)
+    	.next(endNode);
 
     // 2. Create the flow
     const myFlow = new AsyncFlow(startNode);
@@ -61,6 +63,10 @@ class SometimesFailsNode extends AsyncNode {
         console.log(colorize(`  [NODE:START] ${payload.nodeClass}`, colors.grey));
     });
 
+    myFlow.on('node:retry', (payload) => {
+        console.log(`${colorize(`    [NODE:RETRY] ${payload.nodeClass} | Attempt ${payload.attempt}/${payload.maxRetries} | Error: ${payload.error.message}`, colors.yellow)}`);
+    });
+
     myFlow.on('node:end', (payload) => {
         const status = payload.status.toUpperCase();
         const color = payload.status === 'success' ? colors.green : colors.red;
@@ -68,7 +74,7 @@ class SometimesFailsNode extends AsyncNode {
         const duration = `${payload.duration.toFixed(2)}ms`.padStart(10);
         console.log(`  [NODE:END]   ${payload.nodeClass.padEnd(18)} | Status: ${statusStr} | Duration: ${duration}`);
         if (payload.error) {
-            console.log(colorize(`    └─ ERROR: ${payload.error.message}`, colors.red));
+            console.log(colorize(`    └─ FINAL ERROR: ${payload.error.message}`, colors.red));
         }
     });
 
@@ -77,9 +83,9 @@ class SometimesFailsNode extends AsyncNode {
         const color = payload.status === 'success' ? colors.green : colors.red;
         const statusStr = colorize(status.padEnd(7), color);
         const duration = `${payload.duration.toFixed(2)}ms`;
-        console.log(`\n${colorize(`[FLOW:END]`, colors.cyan)}   ${payload.flowId} | Status: ${statusStr} | Duration: ${duration}`);
+        console.log(`\n${colorize(`[FLOW:END]`, colors.cyan)}   ${payload.flowId} | Status: ${statusStr} | Total Duration: ${duration}`);
         if (payload.error) {
-            console.log(colorize(`  └─ FLOW ERROR: ${payload.error.message}`, colors.red));
+            console.error(colorize(`  └─ FLOW ERROR: ${payload.error.message}`, colors.red));
         }
     });
 

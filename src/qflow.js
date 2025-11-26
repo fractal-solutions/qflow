@@ -147,15 +147,68 @@ class AsyncNode extends Node {
   }
   async postAsync(shared, prepRes, execRes) {}
 
-  async _exec(prepRes, shared) {
-    for (let i = 0; i < this.maxRetries; i++) {
-      try {
-        return await this.execAsync(prepRes, shared);
-      } catch (e) {
-        if (i === this.maxRetries - 1) return await this.execFallbackAsync(prepRes, e);
-        if (this.wait > 0) await new Promise(resolve => setTimeout(resolve, this.wait * 1000));
-      }
+  async _exec(prepRes, shared, observer = {}) {
+    const { emit, flowId } = observer;
+    const nodeClass = this.constructor.name;
+    const nodeStartTime = performance.now();
+
+    if (emit) {
+        emit('node:start', {
+            flowId,
+            nodeClass,
+            startTime: Date.now(),
+            params: this.params
+        });
     }
+
+    let finalResult;
+    let finalError = null;
+
+    try {
+        for (let i = 0; i < this.maxRetries; i++) {
+            try {
+                finalResult = await this.execAsync(prepRes, shared);
+                finalError = null; // Succeeded, clear any error from previous attempt
+                break; // Exit retry loop
+            } catch (e) {
+                finalError = e;
+                if (emit) {
+                    emit('node:retry', {
+                        flowId,
+                        nodeClass,
+                        attempt: i + 1,
+                        maxRetries: this.maxRetries,
+                        error: { message: e.message }
+                    });
+                }
+                if (i >= this.maxRetries - 1) {
+                    // On the last attempt, let fallback handle it.
+                    // The fallback is expected to throw if it cannot recover.
+                    finalResult = await this.execFallbackAsync(prepRes, e);
+                    finalError = null; // If fallback doesn't throw, it "succeeded" in recovering
+                }
+                if (this.wait > 0) await new Promise(resolve => setTimeout(resolve, this.wait * 1000));
+            }
+        }
+    } catch (e) {
+        finalError = e;
+        // Re-throw to stop the flow execution in _orchAsync
+        throw e;
+    } finally {
+        if (emit) {
+            const nodeEndTime = performance.now();
+            emit('node:end', {
+                flowId,
+                nodeClass,
+                endTime: Date.now(),
+                duration: nodeEndTime - nodeStartTime,
+                status: finalError ? 'error' : 'success',
+                error: finalError ? { message: finalError.message, stack: finalError.stack } : null,
+                result: finalResult
+            });
+        }
+    }
+    return finalResult;
   }
 
   async runAsync(shared) {
@@ -177,18 +230,18 @@ class AsyncNode extends Node {
 }
 
 class AsyncBatchNode extends AsyncNode {
-  async _exec(items) {
+  async _exec(items, shared, observer) {
     const results = [];
     for (const item of items) {
-      results.push(await super._exec(item));
+      results.push(await super._exec(item, shared, observer));
     }
     return results;
   }
 }
 
 class AsyncParallelBatchNode extends AsyncNode {
-  async _exec(items) {
-    return await Promise.all(items.map(item => super._exec(item)));
+  async _exec(items, shared, observer) {
+    return await Promise.all(items.map(item => super._exec(item, shared, observer)));
   }
 }
 
@@ -230,42 +283,12 @@ class AsyncFlow extends Flow {
 
     while (curr) {
       curr.setParams(p);
-
-      const nodeStartTime = performance.now();
-      const nodeClass = curr.constructor.name;
-      this.emit('node:start', {
-        flowId,
-        nodeClass,
-        startTime: Date.now(),
-        params: curr.params
-      });
-
-      let execRes;
-      let nodeStatus = 'success';
-      let nodeError = null;
-
-      try {
-        const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
-        execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared) : curr._exec(prepRes, shared);
-        lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes) : curr.post(shared, prepRes, execRes);
-        lastExecRes = execRes;
-      } catch (e) {
-        nodeStatus = 'error';
-        nodeError = e;
-        // Re-throw the error to be caught by the main flow runner
-        throw e;
-      } finally {
-        const nodeEndTime = performance.now();
-        this.emit('node:end', {
-          flowId,
-          nodeClass,
-          endTime: Date.now(),
-          duration: nodeEndTime - nodeStartTime,
-          status: nodeStatus,
-          error: nodeError ? { message: nodeError.message, stack: nodeError.stack } : null,
-          result: execRes
-        });
-      }
+      const observerContext = { emit: this.emit.bind(this), flowId };
+      
+      const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
+      const execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared, observerContext) : curr._exec(prepRes, shared);
+      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes) : curr.post(shared, prepRes, execRes);
+      lastExecRes = execRes;
       
       curr = this.getNextNode(curr, lastAction);
     }
@@ -278,7 +301,6 @@ class AsyncFlow extends Flow {
     this.emit('flow:start', { flowId, startTime: Date.now() });
 
     let result;
-    let flowStatus = 'success';
     let flowError = null;
 
     try {
@@ -286,7 +308,6 @@ class AsyncFlow extends Flow {
       result = await this._orchAsync(flowId, shared);
       return await this.postAsync(shared, prepRes, result);
     } catch (e) {
-      flowStatus = 'error';
       flowError = e;
       throw e; // Re-throw so the caller knows the flow failed
     } finally {
@@ -295,7 +316,7 @@ class AsyncFlow extends Flow {
         flowId,
         endTime: Date.now(),
         duration: flowEndTime - flowStartTime,
-        status: flowStatus,
+        status: flowError ? 'error' : 'success',
         error: flowError ? { message: flowError.message, stack: flowError.stack } : null,
       });
     }
@@ -315,9 +336,6 @@ class AsyncBatchFlow extends AsyncFlow {
     const prepResults = await this.prepAsync(shared) || [];
     const results = [];
     for (const bp of prepResults) {
-      // Note: This doesn't emit flow:start/end for each batch item,
-      // but nodes within the batch will emit their events.
-      // This could be enhanced if per-batch-item flow events are needed.
       results.push(await this._orchAsync(crypto.randomUUID(), shared, { ...this.params, ...bp }));
     }
     return await this.postAsync(shared, prepResults, results);
@@ -330,7 +348,6 @@ class AsyncParallelBatchFlow extends AsyncFlow {
     const results = await Promise.all(prepResults.map(bp => {
       const newStartNode = new this.startNode.constructor();
       Object.assign(newStartNode.successors, this.startNode.successors);
-      // As with AsyncBatchFlow, this doesn't emit flow-level events per parallel execution.
       return this._orchAsync(crypto.randomUUID(), shared, { ...this.params, ...bp }, newStartNode);
     }));
     return await this.postAsync(shared, prepResults, results);
