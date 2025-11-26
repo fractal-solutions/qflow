@@ -169,15 +169,15 @@ const createItemFlow = new AsyncFlow(new CreateItemFlow());
         }
     })();
 
-    createStaticDir.next(createStaticFile);
-    createStaticFile.next(serverNode);
-    serverNode.next(delayNode);
-    delayNode.next(testGetRoot);
-    testGetRoot.next(testGetUser);
-    testGetUser.next(testPostItem);
-    testPostItem.next(testGetStaticFile);
-    testGetStaticFile.next(stopServerNode);
-    stopServerNode.next(cleanupNode);
+    createStaticDir.next(createStaticFile)
+	    .next(serverNode)
+	    .next(delayNode)
+	    .next(testGetRoot)
+	    .next(testGetUser)
+	    .next(testPostItem)
+	    .next(testGetStaticFile)
+	    .next(stopServerNode)
+	    .next(cleanupNode);
 
     // 5. Create and run the main flow
     const mainFlow = new AsyncFlow(createStaticDir);
