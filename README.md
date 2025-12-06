@@ -84,26 +84,6 @@ A `Flow` orchestrates the execution of a sequence of `Node`s. It defines the ove
 **Batch Flows (`BatchFlow`, `AsyncBatchFlow`, `AsyncParallelBatchFlow`)**
 These specialized flows are designed to process collections of items. They run a sub-flow for each item in the batch. `AsyncParallelBatchFlow` is particularly useful for concurrently processing batch items, significantly speeding up operations.
 
-## Observability (Event System)
-
-`qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
-
-You can attach listeners to an `AsyncFlow` instance to subscribe to key lifecycle events.
-
-### Available Events
-
-*   `flow:start`: Emitted when the flow begins.
-    *   **Payload:** `{ flowId, startTime }`
-*   `flow:end`: Emitted when the flow finishes, either successfully or with an error.
-    *   **Payload:** `{ flowId, endTime, duration, status, error }`
-*   `node:start`: Emitted just before a node executes.
-    *   **Payload:** `{ flowId, nodeClass, startTime, params }`
-*   `node:end`: Emitted right after a node finishes.
-    *   **Payload:** `{ flowId, nodeClass, endTime, duration, status, result, error }`
-
-
-
-
 
 ## Basic Usage & Examples
 
@@ -268,7 +248,23 @@ await asyncFlow.runAsync({});
 
 See [documentation/examples.md](documentation/examples.md) for a full list of examples.
 
-### 5. Observability
+## Observability (Event System)
+
+`qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
+
+You can attach listeners to an `AsyncFlow` instance to subscribe to key lifecycle events.
+
+### Available Events
+
+*   `flow:start`: Emitted when the flow begins.
+    *   **Payload:** `{ flowId, startTime }`
+*   `flow:end`: Emitted when the flow finishes, either successfully or with an error.
+    *   **Payload:** `{ flowId, endTime, duration, status, error }`
+*   `node:start`: Emitted just before a node executes.
+    *   **Payload:** `{ flowId, nodeClass, startTime, params }`
+*   `node:end`: Emitted right after a node finishes.
+    *   **Payload:** `{ flowId, nodeClass, endTime, duration, status, result, error }`
+
 
 This example demonstrates how to use the built-in event system to monitor the execution of a flow.
 
