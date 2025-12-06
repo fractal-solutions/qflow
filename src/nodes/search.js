@@ -1,5 +1,6 @@
 import { AsyncNode } from '../qflow.js';
 import * as cheerio from 'cheerio';
+import { log } from '../logger.js';
 
 /**
  * Performs a web search using DuckDuckGo's HTML-only interface.
@@ -17,7 +18,7 @@ export class DuckDuckGoSearchNode extends AsyncNode {
     }
 
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    console.log(`[DuckDuckGo] Searching for: "${query}"`);
+    log(`[DuckDuckGo] Searching for: "${query}"`, this.params.logging);
 
     const response = await fetch(url);
 
@@ -70,7 +71,7 @@ export class GoogleSearchNode extends AsyncNode {
     }
 
     const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodeURIComponent(query)}`;
-    console.log(`[Google Search] Searching for: "${query}"`);
+    log(`[Google Search] Searching for: "${query}"`, this.params.logging);
 
     const response = await fetch(url);
 

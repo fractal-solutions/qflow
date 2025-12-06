@@ -1,6 +1,7 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
 // You would need to install the 'node-cron' library: npm install node-cron
 import * as cron from 'node-cron';
+import { log } from '../logger.js';
 
 export class SchedulerNode extends AsyncNode {
   // Static map to hold all active scheduled tasks
@@ -37,13 +38,13 @@ export class SchedulerNode extends AsyncNode {
         const existingTask = SchedulerNode.activeTasks.get(id);
         existingTask.stop();
         SchedulerNode.activeTasks.delete(id);
-        console.log(`[SchedulerNode] Stopped existing task with ID: ${id}`);
+        log(`[SchedulerNode] Stopped existing task with ID: ${id}`, this.params.logging);
       }
 
       let task;
       if (typeof schedule === 'string') { // Cron string
         task = cron.schedule(schedule, async () => {
-          console.log(`[SchedulerNode] Scheduled cron task triggered for ID: ${id}`);
+          log(`[SchedulerNode] Scheduled cron task triggered for ID: ${id}`, this.params.logging);
           try {
             // If flow is a string, assume it's a flow name from a global registry
             // This would require the SchedulerNode to have access to the flowRegistry
@@ -51,33 +52,33 @@ export class SchedulerNode extends AsyncNode {
             const flowInstance = flow; // Assuming flow is an AsyncFlow instance
             const taskShared = { ...flowParams };
             const result = await flowInstance.runAsync(taskShared);
-            console.log(`[SchedulerNode] Scheduled flow (ID: ${id}) completed successfully. Result:`, result);
+            log(`[SchedulerNode] Scheduled flow (ID: ${id}) completed successfully. Result: ${JSON.stringify(result)}`, this.params.logging);
           } catch (e) {
-            console.error(`[SchedulerNode] Scheduled flow (ID: ${id}) failed:`, e);
+            log(`[SchedulerNode] Scheduled flow (ID: ${id}) failed: ${e.message}`, this.params.logging, { type: 'error' });
           }
         }, {
           scheduled: true,
           timezone: 'America/New_York' // Example timezone
         });
-        console.log(`[SchedulerNode] Started cron job (ID: ${id}) with schedule: ${schedule}`);
+        log(`[SchedulerNode] Started cron job (ID: ${id}) with schedule: ${schedule}`, this.params.logging);
         SchedulerNode.activeTasks.set(id, task);
         return { status: 'scheduled', type: 'cron', schedule: schedule, id: id };
       } else if (typeof schedule === 'number') { // Milliseconds for setTimeout
         const timerId = setTimeout(async () => {
-          console.log(`[SchedulerNode] Scheduled one-time task triggered for ID: ${id}`);
+          log(`[SchedulerNode] Scheduled one-time task triggered for ID: ${id}`, this.params.logging);
           try {
             const flowInstance = flow; // Assuming flow is an AsyncFlow instance
             const taskShared = { ...flowParams };
             const result = await flowInstance.runAsync(taskShared);
-            console.log(`[SchedulerNode] Scheduled flow (ID: ${id}) completed successfully. Result:`, result);
+            log(`[SchedulerNode] Scheduled flow (ID: ${id}) completed successfully. Result: ${JSON.stringify(result)}`, this.params.logging);
           } catch (e) {
-            console.error(`[SchedulerNode] Scheduled flow (ID: ${id}) failed:`, e);
+            log(`[SchedulerNode] Scheduled flow (ID: ${id}) failed: ${e.message}`, this.params.logging, { type: 'error' });
           } finally {
             SchedulerNode.activeTasks.delete(id); // Remove one-time task after execution
           }
         }, schedule);
         task = { id: id, stop: () => clearTimeout(timerId) }; // Simple wrapper for setTimeout
-        console.log(`[SchedulerNode] Started one-time task (ID: ${id}) in ${schedule}ms`);
+        log(`[SchedulerNode] Started one-time task (ID: ${id}) in ${schedule}ms`, this.params.logging);
         SchedulerNode.activeTasks.set(id, task);
         return { status: 'scheduled', type: 'timeout', schedule: schedule, id: id };
       } else {
@@ -91,10 +92,10 @@ export class SchedulerNode extends AsyncNode {
         const taskToStop = SchedulerNode.activeTasks.get(id);
         taskToStop.stop();
         SchedulerNode.activeTasks.delete(id);
-        console.log(`[SchedulerNode] Stopped task with ID: ${id}`);
+        log(`[SchedulerNode] Stopped task with ID: ${id}`, this.params.logging);
         return { status: 'stopped', id: id };
       } else {
-        console.warn(`[SchedulerNode] No active task found with ID: ${id}`);
+        log(`[SchedulerNode] No active task found with ID: ${id}`, this.params.logging, { type: 'warn' });
         return { status: 'not_found', id: id };
       }
     }

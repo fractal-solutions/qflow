@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 const API_BASE = 'https://hacker-news.firebaseio.com/v0';
 
@@ -11,7 +12,7 @@ const API_BASE = 'https://hacker-news.firebaseio.com/v0';
 export class GetTopStoriesNode extends AsyncNode {
   async execAsync(prepRes, shared) {
     const { limit = 10 } = this.params;
-    console.log(`[HackerNews] Fetching top ${limit} stories...`);
+    log(`[HackerNews] Fetching top ${limit} stories...`, this.params.logging);
 
     const response = await fetch(`${API_BASE}/topstories.json`);
     if (!response.ok) {
@@ -21,7 +22,7 @@ export class GetTopStoriesNode extends AsyncNode {
     const storyIds = await response.json();
     const limitedIds = storyIds.slice(0, limit);
 
-    console.log(`[HackerNews] Found ${limitedIds.length} stories.`);
+    log(`[HackerNews] Found ${limitedIds.length} stories.`, this.params.logging);
     shared.storyIds = limitedIds;
     return 'default';
   }
@@ -40,7 +41,7 @@ export class GetItemNode extends AsyncNode {
       throw new Error('Item ID is required for GetItemNode.');
     }
 
-    console.log(`[HackerNews] Fetching item ${id}...`);
+    log(`[HackerNews] Fetching item ${id}...`, this.params.logging);
 
     const response = await fetch(`${API_BASE}/item/${id}.json`);
     if (!response.ok) {
@@ -48,8 +49,8 @@ export class GetItemNode extends AsyncNode {
     }
 
     const item = await response.json();
-    console.log(`[HackerNews] Fetched item title: ${item.title}`);
-    console.log(`[HackerNews] Fetched item: ${item.url}`);
+    log(`[HackerNews] Fetched item title: ${item.title}`, this.params.logging);
+    log(`[HackerNews] Fetched item: ${item.url}`, this.params.logging);
     return item;
   }
 }

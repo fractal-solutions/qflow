@@ -2,6 +2,7 @@ import { AsyncNode, AsyncFlow } from '../qflow.js';
 import http from 'http';
 import { URL } from 'url'; // Node.js built-in
 import crypto from 'crypto'; // Node.js built-in
+import { log } from '../logger.js';
 export class WebHookNode extends AsyncNode {
     constructor(maxRetries = 1, wait = 0) {
         super(maxRetries, wait);
@@ -27,7 +28,7 @@ export class WebHookNode extends AsyncNode {
         this.sharedSecret = sharedSecret;
         // Ensure server is not already running
         if (this.server && this.server.listening) {
-            console.warn(`[WebHookNode] Server already listening on port ${port}. Reusing existing server.`);
+            log(`[WebHookNode] Server already listening on port ${port}. Reusing existing server.`, this.params.logging, { type: 'warn' });
             return { status: 'server_already_running', port, path };
         }
         this.server = http.createServer(async (req, res) => {
@@ -43,7 +44,7 @@ export class WebHookNode extends AsyncNode {
                         payload = JSON.parse(body);
                     }
                     catch (e) {
-                        console.error('[WebHookNode] Failed to parse webhook body as JSON:', e);
+                        log('[WebHookNode] Failed to parse webhook body as JSON:', this.params.logging, { type: 'error' });
                         res.writeHead(400, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
                         return;
@@ -52,7 +53,7 @@ export class WebHookNode extends AsyncNode {
                     if (this.sharedSecret) {
                         const signature = req.headers['x-hub-signature-256'] || req.headers['x-webhook-signature']; // Common headers
                         if (!signature) {
-                            console.warn('[WebHookNode] Webhook received without signature, but sharedSecret is configured.');
+                            log('[WebHookNode] Webhook received without signature, but sharedSecret is configured.', this.params.logging, { type: 'warn' });
                             res.writeHead(401, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ error: 'Missing signature' }));
                             return;
@@ -61,34 +62,34 @@ export class WebHookNode extends AsyncNode {
                         hmac.update(body);
                         const digest = `sha256=${hmac.digest('hex')}`; // Format might vary (e.g., 'v1=...')
                         if (digest !== signature) { // Simple comparison, real-world might need more robust parsing
-                            console.warn('[WebHookNode] Webhook signature mismatch. Request rejected.');
+                            log('[WebHookNode] Webhook signature mismatch. Request rejected.', this.params.logging, { type: 'warn' });
                             res.writeHead(403, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ error: 'Invalid signature' }));
                             return;
                         }
-                        console.log('[WebHookNode] Webhook signature verified.');
+                        log('[WebHookNode] Webhook signature verified.', this.params.logging);
                     }
-                    console.log(`[WebHookNode] Webhook received on ${this.webhookPath}. Triggering flow...`);
+                    log(`[WebHookNode] Webhook received on ${this.webhookPath}. Triggering flow...`, this.params.logging);
                     const triggeredFlowShared = { webhook: { headers: req.headers, payload: payload, method: req.method, path: requestUrl.pathname } };
 
                     if (this.params.waitForFlow) {
                         try {
                             const flowResult = await this.flowToTrigger.runAsync(triggeredFlowShared);
-                            console.log('[WebHookNode] Triggered flow completed successfully:', flowResult);
+                            log('[WebHookNode] Triggered flow completed successfully:', this.params.logging);
                             res.writeHead(this.params.responseStatus || 200, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify(flowResult));
                         } catch (flowError) {
-                            console.error('[WebHookNode] Triggered flow failed:', flowError);
+                            log('[WebHookNode] Triggered flow failed:', this.params.logging, { type: 'error' });
                             res.writeHead(500, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ error: 'Flow execution failed' }));
                         }
                     } else {
                         this.flowToTrigger.runAsync(triggeredFlowShared)
                             .then(flowResult => {
-                            console.log('[WebHookNode] Triggered flow completed successfully:', flowResult);
+                            log('[WebHookNode] Triggered flow completed successfully:', this.params.logging);
                         })
                             .catch(flowError => {
-                            console.error('[WebHookNode] Triggered flow failed:', flowError);
+                            log('[WebHookNode] Triggered flow failed:', this.params.logging, { type: 'error' });
                         });
                         // Send response back to webhook sender
                         res.writeHead(this.params.responseStatus || 200, { 'Content-Type': 'application/json' });
@@ -103,7 +104,7 @@ export class WebHookNode extends AsyncNode {
         });
         await new Promise(resolve => {
             this.server.listen(port, () => {
-                console.log(`[WebHookNode] Listening for webhooks on http://localhost:${port}${this.webhookPath}`);
+                log(`[WebHookNode] Listening for webhooks on http://localhost:${port}${this.webhookPath}`, this.params.logging);
                 resolve();
             });
         });

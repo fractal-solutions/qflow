@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 const API_BASE = 'https://api.stripe.com/v1';
 
@@ -20,7 +21,7 @@ export class CreateChargeNode extends AsyncNode {
       throw new Error('Missing required parameters: apiKey, amount, currency, source');
     }
 
-    console.log(`[Stripe] Creating charge for ${amount} ${currency}...`);
+    log(`[Stripe] Creating charge for ${amount} ${currency}...`, this.params.logging);
 
     const response = await fetch(`${API_BASE}/charges`, {
       method: 'POST',
@@ -42,7 +43,7 @@ export class CreateChargeNode extends AsyncNode {
     }
 
     const charge = await response.json();
-    console.log(`[Stripe] Successfully created charge ${charge.id}`);
+    log(`[Stripe] Successfully created charge ${charge.id}`, this.params.logging);
     return charge;
   }
 }
@@ -61,7 +62,7 @@ export class GetBalanceNode extends AsyncNode {
       throw new Error('Missing required parameter: apiKey');
     }
 
-    console.log('[Stripe] Getting account balance...');
+    log('[Stripe] Getting account balance...', this.params.logging);
 
     const response = await fetch(`${API_BASE}/balance`, {
       headers: {
@@ -75,7 +76,7 @@ export class GetBalanceNode extends AsyncNode {
     }
 
     const balance = await response.json();
-    console.log('[Stripe] Successfully retrieved account balance.');
+    log('[Stripe] Successfully retrieved account balance.', this.params.logging);
     return balance;
   }
 }

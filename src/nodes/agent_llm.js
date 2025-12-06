@@ -1,4 +1,5 @@
 import { DeepSeekLLMNode, OpenAILLMNode, GeminiLLMNode, OllamaLLMNode, HuggingFaceLLMNode } from './llm.js';
+import { log } from '../logger.js';
 
 /**
  * A specialized DeepSeekLLMNode for use within the AgentNode.
@@ -27,7 +28,7 @@ export class AgentDeepSeekLLMNode extends DeepSeekLLMNode {
       throw new Error(`AgentDeepSeekLLMNode: Invalid prompt format. Expected stringified JSON array of messages. Error: ${e.message}`);
     }
 
-    console.log(`[DeepSeek] Sending prompt for "${keyword || 'agent_reasoning'}"...`);
+    log(`[DeepSeek] Sending prompt for "${keyword || 'agent_reasoning'}"...`, this.params.logging);
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
@@ -55,7 +56,7 @@ export class AgentDeepSeekLLMNode extends DeepSeekLLMNode {
     }
     
     const llmResponse = data.choices[0].message.content.trim();
-    console.log(`[DeepSeek] Received response for "${keyword || 'agent_reasoning'}".`);
+    log(`[DeepSeek] Received response for "${keyword || 'agent_reasoning'}".`, this.params.logging);
     return llmResponse; // Return the actual content
   }
 
@@ -99,7 +100,7 @@ export class AgentOpenAILLMNode extends OpenAILLMNode {
       throw new Error(`AgentOpenAILLMNode: Invalid prompt format. Expected stringified JSON array of messages. Error: ${e.message}`);
     }
 
-    console.log(`[OpenAI] Sending prompt for "${keyword || 'agent_reasoning'}"...`);
+    log(`[OpenAI] Sending prompt for "${keyword || 'agent_reasoning'}"...`, this.params.logging);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -126,7 +127,7 @@ export class AgentOpenAILLMNode extends OpenAILLMNode {
     }
     
     const llmResponse = data.choices[0].message.content.trim();
-    console.log(`[OpenAI] Received response for "${keyword || 'agent_reasoning'}".`);
+    log(`[OpenAI] Received response for "${keyword || 'agent_reasoning'}".`, this.params.logging);
     return llmResponse; // Return the actual content
   }
 
@@ -150,7 +151,7 @@ export class AgentGeminiLLMNode extends GeminiLLMNode {
       throw new Error('Google Gemini API Key is required.');
     }
 
-    console.log(`[AgentGemini] Sending prompt to Gemini...`);
+    log(`[AgentGemini] Sending prompt to Gemini...`, this.params.logging);
 
     try {
       const contents = messages.map(msg => ({
@@ -193,10 +194,10 @@ export class AgentGeminiLLMNode extends GeminiLLMNode {
 
       const data = await response.json();
       const llmResponse = data.candidates[0].content.parts[0].text.trim();
-      console.log(`[AgentGemini] Received response from Gemini.`);
+      log(`[AgentGemini] Received response from Gemini.`, this.params.logging);
       return llmResponse;
     } catch (error) {
-      console.error('AgentGeminiLLMNode: Error during API call:', error);
+      log('AgentGeminiLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }
@@ -224,7 +225,7 @@ export class AgentOllamaLLMNode extends OllamaLLMNode {
       throw new Error('Prompt is required for AgentOllamaLLMNode.');
     }
 
-    console.log(`[AgentOllama] Sending prompt to ${model} at ${baseUrl}...`);
+    log(`[AgentOllama] Sending prompt to ${model} at ${baseUrl}...`, this.params.logging);
 
     try {
       const response = await fetch(`${baseUrl}/api/generate`, {
@@ -246,10 +247,10 @@ export class AgentOllamaLLMNode extends OllamaLLMNode {
 
       const data = await response.json();
       const llmResponse = data.response.trim();
-      console.log(`[AgentOllama] Received response from ${model}.`);
+      log(`[AgentOllama] Received response from ${model}.`, this.params.logging);
       return llmResponse;
     } catch (error) {
-      console.error('AgentOllamaLLMNode: Error during API call:', error);
+      log('AgentOllamaLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }
@@ -294,7 +295,7 @@ export class AgentHuggingFaceLLMNode extends HuggingFaceLLMNode {
       max_tokens: max_new_tokens || 500,
     });
 
-    console.log(`[AgentHuggingFace] Sending prompt to ${model} at ${url}...`);
+    log(`[AgentHuggingFace] Sending prompt to ${model} at ${url}...`, this.params.logging);
 
     try {
       const response = await fetch(url, {
@@ -326,10 +327,10 @@ export class AgentHuggingFaceLLMNode extends HuggingFaceLLMNode {
         throw new Error('Invalid or unexpected response structure from Hugging Face API.');
       }
 
-      console.log(`[AgentHuggingFace] Received response from ${model}.`);
+      log(`[AgentHuggingFace] Received response from ${model}.`, this.params.logging);
       return data; // Return the full data object for AgentNode to parse
     } catch (error) {
-      console.error('AgentHuggingFaceLLMNode: Error during API call:', error);
+      log('AgentHuggingFaceLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }

@@ -102,6 +102,9 @@ You can attach listeners to an `AsyncFlow` instance to subscribe to key lifecycl
     *   **Payload:** `{ flowId, nodeClass, endTime, duration, status, result, error }`
 
 
+
+
+
 ## Basic Usage & Examples
 
 ### 1. Simple Node
@@ -369,6 +372,177 @@ await myFlow.runAsync({});
 //
 // [FLOW:END]   <flow-id> | Status: SUCCESS | Duration: XXX.XXms
 ```
+
+
+
+
+
+## Logging
+
+`qflow` provides a simple yet powerful logging mechanism that gives you per-node control over how and where log messages are sent.
+
+### Basic Usage
+
+By default, all built-in nodes will log to the console. You don't need to configure anything for this to work.
+
+### Per-Node Logging Configuration
+
+To customize the logging for a specific node, you can pass a `logging` object in its parameters. This gives you fine-grained control over the logging behavior of each node in your flow.
+
+```javascript
+import { HttpRequestNode } from '@fractal-solutions/qflow/nodes';
+
+const httpNode = new HttpRequestNode();
+
+// This node will log to the console by default
+httpNode.setParams({
+  url: 'https://api.example.com/data'
+});
+
+// This node will log to a file
+const anotherHttpNode = new HttpRequestNode();
+anotherHttpNode.setParams({
+  url: 'https://api.example.com/other-data',
+  logging: {
+    method: 'file',
+    params: { filePath: './logs/http.log' }
+  }
+});
+```
+
+### Logging Methods
+
+The following logging methods are available out of the box:
+
+*   **`console` (default):** Logs messages to the console.
+*   **`file`:** Appends log messages to a file.
+    *   **params:** `{ filePath: string }`
+*   **`event`:** Emits log messages through an event emitter.
+    *   **params:** `{ emitter: EventEmitter }`
+*   **`remote`:** Sends log messages to a remote server via a POST request.
+    *   **params:** `{ url: string }`
+
+### Examples
+
+#### Logging to a File
+
+```javascript
+import { CodeInterpreterNode } from '@fractal-solutions/qflow/nodes';
+
+const codeNode = new CodeInterpreterNode();
+codeNode.setParams({
+  code: 'print("Hello from Python!")',
+  logging: {
+    method: 'file',
+    params: { filePath: './logs/code-interpreter.log' }
+  }
+});
+```
+
+#### Logging to an Event Emitter
+
+This is useful for integrating `qflow`'s logging with your application's event system.
+
+```javascript
+import { EventEmitter } from 'events';
+import { MemoryNode } from '@fractal-solutions/qflow/nodes';
+
+const myEmitter = new EventEmitter();
+myEmitter.on('log', (logEntry) => {
+  console.log('Received log event:', logEntry);
+});
+
+const memoryNode = new MemoryNode();
+memoryNode.setParams({
+  action: 'store',
+  content: 'This is a test memory.',
+  logging: {
+    method: 'event',
+    params: { emitter: myEmitter }
+  }
+});
+```
+
+#### Disabling Logging for a Node
+
+You can disable logging for a specific node by setting the `type` to `none`.
+
+```javascript
+const silentHttpNode = new HttpRequestNode();
+silentHttpNode.setParams({
+  url: 'https://api.example.com/silent',
+  logging: {
+    type: 'none'
+  }
+});
+```
+
+### Global Log Level
+
+You can set a global log level to control the verbosity of all logs in your application. Only messages with a severity level equal to or higher than the current log level will be processed.
+
+```javascript
+import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';
+
+// Set the global log level to INFO. 
+// This will show INFO, WARN, and ERROR messages, but hide DEBUG messages.
+setLogLevel(LogLevel.INFO);
+```
+
+The available log levels are, in order of severity:
+
+*   `LogLevel.DEBUG`: Detailed information, useful for debugging.
+*   `LogLevel.INFO`: General information about the application's state.
+*   `LogLevel.WARN`: Indicates a potential problem that does not prevent the application from running.
+*   `LogLevel.ERROR`: Indicates a serious error that prevented a specific operation from completing.
+*   `LogLevel.NONE`: Disables all logging.
+
+### Making Your Custom Nodes Loggable
+
+You can make your own custom nodes loggable by following the same pattern as the built-in nodes.
+
+1.  **Import the `log` function:**
+    ```javascript
+    import { log } from '@fractal-solutions/qflow/logger';
+    ```
+
+2.  **Call the `log` function:** In your node's methods, call the `log` function and pass `this.params.logging` as the second argument. This will allow users of your node to configure its logging behavior.
+
+Here is an example of a custom node that implements loggable behavior:
+
+```javascript
+import { AsyncNode } from '@fractal-solutions/qflow';
+import { log } from '@fractal-solutions/qflow/logger';
+
+class MyCustomNode extends AsyncNode {
+  async execAsync() {
+    log('Starting execution of MyCustomNode', this.params.logging);
+    // ... your node's logic ...
+
+    log('Finished execution of MyCustomNode', this.params.logging);
+
+    return 'default';
+  }
+}
+
+// --- User of your node can now configure logging ---
+
+const myNode = new MyCustomNode();
+
+// This will log to the console (default)
+myNode.setParams({ /* ... */ });
+
+// This will log to a file
+const anotherNode = new MyCustomNode();
+anotherNode.setParams({
+  /* ... */,
+  logging: {
+    method: 'file',
+    params: { filePath: './my-custom-node.log' }
+  }
+});
+```
+
 
 
 ## Agents

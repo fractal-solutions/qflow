@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 /**
  * A flexible node for making generic HTTP requests to any REST API.
@@ -47,7 +48,7 @@ export class HttpRequestNode extends AsyncNode {
       }
     }
 
-    console.log(`[HTTP] ${method} ${url}`);
+    log(`[HTTP] ${method} ${url}`, this.params.logging);
     const response = await fetch(url, fetchOptions);
 
     const responseBody = await this.parseResponseBody(response);

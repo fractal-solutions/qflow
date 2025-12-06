@@ -1,5 +1,6 @@
 import { AsyncNode } from '../qflow.js';
 import { DeepSeekLLMNode } from './llm.js'; // Assuming DeepSeekLLMNode for summarization
+import { log } from '../logger.js';
 
 /**
  * Summarizes a given text using an LLM.
@@ -19,14 +20,14 @@ export class SummarizeNode extends AsyncNode {
       throw new Error('SummarizeNode requires an `llmNode` instance for summarization.');
     }
 
-    console.log(`[Summarize] Summarizing text (length: ${text.length})...`);
+    log(`[Summarize] Summarizing text (length: ${text.length})...`, this.params.logging);
 
     const prompt = `Please summarize the following text concisely, focusing on key information relevant to an agent's task. Keep the summary under 500 words:\n\n${text}`;
 
     llmNode.setParams({ prompt: prompt, keyword: 'summarization' });
     const summary = await llmNode.runAsync({});
 
-    console.log(`[Summarize] Summary generated (length: ${summary.length}).`);
+    log(`[Summarize] Summary generated (length: ${summary.length}).`, this.params.logging);
     return summary;
   }
 

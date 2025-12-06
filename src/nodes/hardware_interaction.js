@@ -2,6 +2,7 @@ import { AsyncNode } from '../qflow.js';
 // You would need to install the 'serialport' library: npm install serialport
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline'; // For reading line-by-line
+import { log } from '../logger.js';
 
 export class HardwareInteractionNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -56,7 +57,7 @@ export class HardwareInteractionNode extends AsyncNode {
             this.port.on('open', resolve);
             this.port.on('error', reject);
           });
-          console.log(`[HardwareInteractionNode] Serial port ${portPath} opened.`);
+          log(`[HardwareInteractionNode] Serial port ${portPath} opened.`, this.params.logging);
 
           if (action === 'write') {
             if (dataToWrite === undefined) {
@@ -91,7 +92,7 @@ export class HardwareInteractionNode extends AsyncNode {
         } finally {
           if (this.port && this.port.isOpen) {
             await new Promise(resolve => this.port.close(resolve));
-            console.log(`[HardwareInteractionNode] Serial port ${portPath} closed.`);
+            log(`[HardwareInteractionNode] Serial port ${portPath} closed.`, this.params.logging);
           }
         }
         break;

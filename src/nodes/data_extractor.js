@@ -1,5 +1,6 @@
 import { AsyncNode } from '../qflow.js';
 import * as cheerio from 'cheerio';
+import { log } from '../logger.js';
 
 export class DataExtractorNode extends AsyncNode {
   async execAsync() {
@@ -19,7 +20,7 @@ export class DataExtractorNode extends AsyncNode {
         if (!selector) {
           throw new Error('HTML extraction requires a `selector`.');
         }
-        console.log(`[DataExtractor] Extracting HTML with selector: ${selector}`);
+        log(`[DataExtractor] Extracting HTML with selector: ${selector}`, this.params.logging);
         const $ = cheerio.load(input);
         result = $(selector).map((i, el) => $(el).text()).get();
         break;
@@ -28,7 +29,7 @@ export class DataExtractorNode extends AsyncNode {
         if (!jsonPath) {
           throw new Error('JSON extraction requires a `jsonPath`.');
         }
-        console.log(`[DataExtractor] Extracting JSON with path: ${jsonPath}`);
+        log(`[DataExtractor] Extracting JSON with path: ${jsonPath}`, this.params.logging);
         try {
           const data = JSON.parse(input);
           // Simple JSON path implementation (dot notation and array indexing)
@@ -52,7 +53,7 @@ export class DataExtractorNode extends AsyncNode {
         if (!regex) {
           throw new Error('Text extraction requires a `regex`.');
         }
-        console.log(`[DataExtractor] Extracting text with regex: ${regex}`);
+        log(`[DataExtractor] Extracting text with regex: ${regex}`, this.params.logging);
         const re = new RegExp(regex, 'g');
         const matches = [];
         let match;
@@ -73,7 +74,7 @@ export class DataExtractorNode extends AsyncNode {
         throw new Error('Unsupported extraction type.');
     }
 
-    console.log(`[DataExtractor] Extraction complete. Result: ${JSON.stringify(result).substring(0, 100)}...`);
+    log(`[DataExtractor] Extraction complete. Result: ${JSON.stringify(result).substring(0, 100)}...`, this.params.logging);
     return result;
   }
 

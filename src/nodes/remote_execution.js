@@ -1,6 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 // You would need to install the 'ssh2' library: npm install ssh2
 import { Client } from 'ssh2';
+import { log } from '../logger.js';
 
 export class RemoteExecutionNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -39,7 +40,7 @@ export class RemoteExecutionNode extends AsyncNode {
     try {
       await new Promise((resolve, reject) => {
         conn.on('ready', () => {
-          console.log(`[RemoteExecutionNode] Connected to ${username}@${host}:${port}`);
+          log(`[RemoteExecutionNode] Connected to ${username}@${host}:${port}`, this.params.logging);
           resolve();
         }).on('error', (err) => {
           reject(new Error(`SSH connection error: ${err.message}`));
@@ -85,7 +86,7 @@ export class RemoteExecutionNode extends AsyncNode {
     } finally {
       if (conn && conn.connected) {
         conn.end();
-        console.log(`[RemoteExecutionNode] Disconnected from ${host}`);
+        log(`[RemoteExecutionNode] Disconnected from ${host}`, this.params.logging);
       }
     }
 

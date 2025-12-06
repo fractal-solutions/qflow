@@ -2,6 +2,7 @@ import { AsyncNode, AsyncFlow } from '../qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { EmbeddingNode } from './embedding.js';
+import { log } from '../logger.js';
 
 // Utility function for cosine similarity
 function cosineSimilarity(vecA, vecB) {
@@ -74,17 +75,17 @@ export class SemanticMemoryNode extends AsyncNode {
 
         // Save updated index
         await fs.writeFile(this.indexFilePath, JSON.stringify(this.memoryIndex, null, 2), 'utf-8');
-        console.log(`[SemanticMemory] Stored memory: ${memoryId}`);
+        log(`[SemanticMemory] Stored memory: ${memoryId}`, this.params.logging);
         return { status: 'stored', id: memoryId };
 
       case 'retrieve':
         if (!query) {
           throw new Error('Retrieve action requires a `query`.');
         }
-        console.log(`[SemanticMemory] Retrieving memories for query: "${query}"...`);
+        log(`[SemanticMemory] Retrieving memories for query: "${query}"...`, this.params.logging);
 
         if (Object.keys(this.memoryIndex).length === 0) {
-          console.log('[SemanticMemory] No memories stored. Returning empty.');
+          log('[SemanticMemory] No memories stored. Returning empty.', this.params.logging);
           return [];
         }
 
@@ -110,7 +111,7 @@ export class SemanticMemoryNode extends AsyncNode {
         similarities.sort((a, b) => b.similarity - a.similarity);
         const topResults = similarities.slice(0, this.params.topK || 5);
 
-        console.log(`[SemanticMemory] Retrieved ${topResults.length} semantic memories.`);
+        log(`[SemanticMemory] Retrieved ${topResults.length} semantic memories.`, this.params.logging);
         return topResults;
 
       default:

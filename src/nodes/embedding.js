@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 export class EmbeddingNode extends AsyncNode {
   constructor(maxRetries = 3, wait = 2) {
@@ -18,7 +19,7 @@ export class EmbeddingNode extends AsyncNode {
       prompt: text,
     };
 
-    console.log(`[EmbeddingNode] Generating embedding for text (model: ${model}) at ${baseUrl}...`);
+    log(`[EmbeddingNode] Generating embedding for text (model: ${model}) at ${baseUrl}...`, this.params.logging);
 
     try {
       const response = await fetch(url, {
@@ -39,7 +40,7 @@ export class EmbeddingNode extends AsyncNode {
         throw new Error('Ollama embedding API response missing embedding.');
       }
 
-      console.log(`[EmbeddingNode] Embedding generated successfully.`);
+      log(`[EmbeddingNode] Embedding generated successfully.`, this.params.logging);
       return { embedding: data.embedding };
 
     } catch (error) {

@@ -3,6 +3,7 @@ import { ShellCommandNode } from './index.js'; // Assuming ShellCommandNode is a
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
+import { log } from '../logger.js';
 
 export class ImageGalleryNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -45,7 +46,7 @@ export class ImageGalleryNode extends AsyncNode {
         imageHtml += `  <p>${imageName}</p>\n`;
         imageHtml += `</div>\n`;
       } catch (e) {
-        console.warn(`[ImageGalleryNode] Could not copy image ${imagePath}: ${e.message}. Skipping.`);
+        log(`[ImageGalleryNode] Could not copy image ${imagePath}: ${e.message}. Skipping.`, this.params.logging, { type: 'warn' });
       }
     }
 
@@ -96,7 +97,7 @@ export class ImageGalleryNode extends AsyncNode {
 `;
 
     await fs.writeFile(htmlFilePath, htmlContent);
-    console.log(`[ImageGalleryNode] Generated HTML gallery at: ${htmlFilePath}`);
+    log(`[ImageGalleryNode] Generated HTML gallery at: ${htmlFilePath}`, this.params.logging);
 
     // Open the HTML file in the default web browser
     const openBrowserCommand = os.platform() === 'darwin' ? `open "${htmlFilePath}"` :
@@ -106,7 +107,7 @@ export class ImageGalleryNode extends AsyncNode {
     const shellNode = new ShellCommandNode();
     shellNode.setParams({ command: openBrowserCommand });
     await new AsyncFlow(shellNode).runAsync({});
-    console.log(`[ImageGalleryNode] Opened gallery in browser.`);
+    log(`[ImageGalleryNode] Opened gallery in browser.`, this.params.logging);
 
     return { status: 'gallery_displayed', htmlFilePath: htmlFilePath, imageCount: imagePaths.length };
   }

@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 // --- Reusable LLM Node for DeepSeek ---
 
@@ -23,7 +24,7 @@ export class DeepSeekLLMNode extends AsyncNode {
       throw new Error("DeepSeek API Key is not configured.");
     }
 
-    console.log(`[DeepSeek] Sending prompt for \"${keyword}\"...`);
+    log(`[DeepSeek] Sending prompt for "${keyword}"...`, this.params.logging);
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
@@ -50,7 +51,7 @@ export class DeepSeekLLMNode extends AsyncNode {
     }
     
     const llmResponse = data.choices[0].message.content.trim();
-    console.log(`[DeepSeek] Received response for \"${keyword}\".`);
+    log(`[DeepSeek] Received response for "${keyword}".`, this.params.logging);
     return llmResponse; // Return the actual content
   }
 }
@@ -66,7 +67,7 @@ export class OpenAILLMNode extends AsyncNode {
       throw new Error('OpenAI API Key is required.');
     }
 
-    console.log(`OpenAILLMNode: Sending prompt to OpenAI: \"${prompt.substring(0, 50)}\"...`);
+    log(`OpenAILLMNode: Sending prompt to OpenAI: "${prompt.substring(0, 50)}"...`, this.params.logging);
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -89,10 +90,10 @@ export class OpenAILLMNode extends AsyncNode {
 
       const data = await response.json();
       const llmResponse = data.choices[0].message.content.trim();
-      console.log(`OpenAILLMNode: Received response: \"${llmResponse.substring(0, 50)}\"...`);
+      log(`OpenAILLMNode: Received response: "${llmResponse.substring(0, 50)}"...`, this.params.logging);
       return llmResponse; // Return the LLM's response
     } catch (error) {
-      console.error('OpenAILLMNode: Error during API call:', error);
+      log('OpenAILLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error; // Re-throw to trigger qflow's retry/fallback
     }
   }
@@ -109,7 +110,7 @@ export class GeminiLLMNode extends AsyncNode {
       throw new Error('Google Gemini API Key is required.');
     }
 
-    console.log(`GeminiLLMNode: Sending prompt to Gemini: "${prompt.substring(0, 50)}"...`);
+    log(`GeminiLLMNode: Sending prompt to Gemini: "${prompt.substring(0, 50)}"...`, this.params.logging);
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
@@ -129,10 +130,10 @@ export class GeminiLLMNode extends AsyncNode {
 
       const data = await response.json();
       const llmResponse = data.candidates[0].content.parts[0].text.trim();
-      console.log(`GeminiLLMNode: Received response: "${llmResponse.substring(0, 50)}"...`);
+      log(`GeminiLLMNode: Received response: "${llmResponse.substring(0, 50)}"...`, this.params.logging);
       return llmResponse; // Return the LLM's response
     } catch (error) {
-      console.error('GeminiLLMNode: Error during API call:', error);
+      log('GeminiLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error; // Re-throw to trigger qflow's retry/fallback
     }
   }
@@ -156,7 +157,7 @@ export class OllamaLLMNode extends AsyncNode {
       throw new Error('Prompt is required for OllamaLLMNode.');
     }
 
-    console.log(`[Ollama] Sending prompt to ${model} at ${baseUrl}: "${prompt.substring(0, 50)}"...`);
+    log(`[Ollama] Sending prompt to ${model} at ${baseUrl}: "${prompt.substring(0, 50)}"...`, this.params.logging);
 
     try {
       const response = await fetch(`${baseUrl}/api/generate`, {
@@ -178,10 +179,10 @@ export class OllamaLLMNode extends AsyncNode {
 
       const data = await response.json();
       const llmResponse = data.response.trim();
-      console.log(`[Ollama] Received response from ${model}: "${llmResponse.substring(0, 50)}"...`);
+      log(`[Ollama] Received response from ${model}: "${llmResponse.substring(0, 50)}"...`, this.params.logging);
       return llmResponse;
     } catch (error) {
-      console.error('OllamaLLMNode: Error during API call:', error);
+      log('OllamaLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }
@@ -219,7 +220,7 @@ export class HuggingFaceLLMNode extends AsyncNode {
       // Add other OpenAI-compatible parameters as needed
     });
 
-    console.log(`[HuggingFace] Sending prompt to ${model} at ${baseUrl}...`);
+    log(`[HuggingFace] Sending prompt to ${model} at ${baseUrl}...`, this.params.logging);
 
     try {
       const response = await fetch(url, {
@@ -239,10 +240,10 @@ export class HuggingFaceLLMNode extends AsyncNode {
       }
 
       const llmResponse = data.choices[0].message.content.trim();
-      console.log(`[HuggingFace] Received response from ${model}.`);
+      log(`[HuggingFace] Received response from ${model}.`, this.params.logging);
       return llmResponse;
     } catch (error) {
-      console.error('HuggingFaceLLMNode: Error during API call:', error);
+      log('HuggingFaceLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }

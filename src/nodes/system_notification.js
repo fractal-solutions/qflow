@@ -1,6 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 import { exec } from 'child_process';
 import os from 'os';
+import { log } from '../logger.js';
 
 export class SystemNotificationNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -36,18 +37,18 @@ export class SystemNotificationNode extends AsyncNode {
         throw new Error(`Unsupported platform for SystemNotificationNode: ${platform}`);
     }
 
-    console.log(`[SystemNotificationNode] Executing: ${command}`);
+    log(`[SystemNotificationNode] Executing: ${command}`, this.params.logging);
 
     return new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error(`SystemNotificationNode error: ${error.message}`);
+          log(`SystemNotificationNode error: ${error.message}`, this.params.logging, { type: 'error' });
           return reject(error);
         }
         if (stderr) {
-          console.warn(`SystemNotificationNode stderr: ${stderr}`);
+          log(`SystemNotificationNode stderr: ${stderr}`, this.params.logging, { type: 'warn' });
         }
-        console.log(`Notification displayed: "${message}"`);
+        log(`Notification displayed: "${message}"`, this.params.logging);
         resolve({ message, title, stdout, stderr });
       });
     });

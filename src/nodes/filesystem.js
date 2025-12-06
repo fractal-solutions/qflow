@@ -2,6 +2,7 @@
 import { AsyncNode } from '../qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { log } from '../logger.js';
 
 /**
  * Reads a file from the file system.
@@ -17,9 +18,9 @@ export class ReadFileNode extends AsyncNode {
       throw new Error('Missing required parameter: filePath');
     }
 
-    console.log(`[FileSystem] Reading file: ${filePath}`);
+    log(`[FileSystem] Reading file: ${filePath}`, this.params.logging);
     const content = await fs.readFile(filePath, 'utf-8');
-    console.log(`[FileSystem] Successfully read file: ${filePath}`);
+    log(`[FileSystem] Successfully read file: ${filePath}`, this.params.logging);
     return content;
   }
 
@@ -44,10 +45,10 @@ export class WriteFileNode extends AsyncNode {
       throw new Error('Missing required parameters: filePath, content');
     }
 
-    console.log(`[FileSystem] Writing to file: ${filePath}`);
+    log(`[FileSystem] Writing to file: ${filePath}`, this.params.logging);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, content, 'utf-8');
-    console.log(`[FileSystem] Successfully wrote to file: ${filePath}`);
+    log(`[FileSystem] Successfully wrote to file: ${filePath}`, this.params.logging);
     return 'default';
   }
 }
@@ -67,10 +68,10 @@ export class AppendFileNode extends AsyncNode {
       throw new Error('Missing required parameters: filePath, content');
     }
 
-    console.log(`[FileSystem] Appending to file: ${filePath}`);
+    log(`[FileSystem] Appending to file: ${filePath}`, this.params.logging);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.appendFile(filePath, content, 'utf-8');
-    console.log(`[FileSystem] Successfully appended to file: ${filePath}`);
+    log(`[FileSystem] Successfully appended to file: ${filePath}`, this.params.logging);
     return 'default';
   }
 }
@@ -89,9 +90,9 @@ export class ListDirectoryNode extends AsyncNode {
       throw new Error('Missing required parameter: directoryPath');
     }
 
-    console.log(`[FileSystem] Listing directory: ${directoryPath}`);
+    log(`[FileSystem] Listing directory: ${directoryPath}`, this.params.logging);
     const files = await fs.readdir(directoryPath);
-    console.log(`[FileSystem] Successfully listed directory: ${directoryPath}`);
+    log(`[FileSystem] Successfully listed directory: ${directoryPath}`, this.params.logging);
     return files;
   }
 

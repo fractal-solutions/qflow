@@ -1,6 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 import { exec } from 'child_process';
 import os from 'os';
+import { log } from '../logger.js';
 
 export class DisplayImageNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -34,18 +35,18 @@ export class DisplayImageNode extends AsyncNode {
         throw new Error(`Unsupported platform for DisplayImageNode: ${platform}`);
     }
 
-    console.log(`[DisplayImageNode] Executing: ${command}`);
+    log(`[DisplayImageNode] Executing: ${command}`, this.params.logging);
 
     return new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error(`DisplayImageNode error: ${error.message}`);
+          log(`DisplayImageNode error: ${error.message}`, this.params.logging, { type: 'error' });
           return reject(error);
         }
         if (stderr) {
-          console.warn(`DisplayImageNode stderr: ${stderr}`);
+          log(`DisplayImageNode stderr: ${stderr}`, this.params.logging, { type: 'warn' });
         }
-        console.log(`Image opened: ${imagePath}`);
+        log(`Image opened: ${imagePath}`, this.params.logging);
         resolve({ imagePath, stdout, stderr });
       });
     });

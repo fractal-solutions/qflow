@@ -4,6 +4,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
+import { log } from '../logger.js';
 
 let nodeChildProcess = null;
 if (!process.versions.bun) {
@@ -35,8 +36,8 @@ export class CodeInterpreterNode extends AsyncNode {
     const tempFilePath = path.join(tempDir, tempFileName);
     const interpreterCommand = interpreterPath || 'python';
 
-    console.log(`[CodeInterpreter] Proposed execution: ${interpreterCommand} ${tempFilePath}`);
-    if (!requireConfirmation) console.log(`[CodeInterpreter] Code to execute:\n${syntaxHighlight(code)}`);
+    log(`Executing code with interpreter: ${interpreterCommand}`, this.params.logging);
+    if (!requireConfirmation) log(`Code to execute:\n${code}`, this.params.logging);
 
     if (requireConfirmation) {
       const confirmNode = new UserInputNode();
@@ -125,7 +126,7 @@ export class CodeInterpreterNode extends AsyncNode {
       return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode };
 
     } finally {
-      await fs.unlink(tempFilePath).catch(e => console.error(`Failed to delete temp file ${tempFilePath}:`, e));
+      await fs.unlink(tempFilePath).catch(e => log(`Failed to delete temp file ${tempFilePath}:`, this.params.logging, { type: 'error' }));
     }
   }
 

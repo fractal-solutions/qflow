@@ -3,6 +3,7 @@ import { ShellCommandNode } from './index.js'; // Assuming ShellCommandNode is a
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
+import { log } from '../logger.js';
 
 export class MultimediaProcessingNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -68,7 +69,7 @@ export class MultimediaProcessingNode extends AsyncNode {
         throw new Error(`Unsupported action: ${action}`);
     }
 
-    console.log(`[MultimediaProcessingNode] Executing: ${ffmpegCommand}`);
+    log(`[MultimediaProcessingNode] Executing: ${ffmpegCommand}`, this.params.logging);
 
     const shellNode = new ShellCommandNode();
     shellNode.setParams({ command: ffmpegCommand });
@@ -76,7 +77,7 @@ export class MultimediaProcessingNode extends AsyncNode {
     try {
       const result = await new AsyncFlow(shellNode).runAsync({});
       if (result.stderr) {
-        console.warn(`[MultimediaProcessingNode] ffmpeg warnings/errors: ${result.stderr}`);
+        log(`[MultimediaProcessingNode] ffmpeg warnings/errors: ${result.stderr}`, this.params.logging, { type: 'warn' });
       }
       return { status: 'success', action: action, outputPath: outputPath, stdout: result.stdout, stderr: result.stderr };
     } catch (e) {

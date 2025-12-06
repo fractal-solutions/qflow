@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 const API_BASE = 'https://api.github.com';
 
@@ -20,7 +21,7 @@ export class CreateIssueNode extends AsyncNode {
       throw new Error('Missing required parameters: token, owner, repo, title');
     }
 
-    console.log(`[GitHub] Creating issue "${title}" in ${owner}/${repo}...`);
+    log(`[GitHub] Creating issue "${title}" in ${owner}/${repo}...`, this.params.logging);
 
     const response = await fetch(`${API_BASE}/repos/${owner}/${repo}/issues`, {
       method: 'POST',
@@ -37,7 +38,7 @@ export class CreateIssueNode extends AsyncNode {
     }
 
     const issue = await response.json();
-    console.log(`[GitHub] Successfully created issue #${issue.number}`);
+    log(`[GitHub] Successfully created issue #${issue.number}`, this.params.logging);
     return issue;
   }
 
@@ -69,7 +70,7 @@ export class GetIssueNode extends AsyncNode {
       throw new Error('Missing required parameters: token, owner, repo, issue_number');
     }
 
-    console.log(`[GitHub] Getting issue #${issue_number} from ${owner}/${repo}...`);
+    log(`[GitHub] Getting issue #${issue_number} from ${owner}/${repo}...`, this.params.logging);
 
     const response = await fetch(`${API_BASE}/repos/${owner}/${repo}/issues/${issue_number}`, {
       headers: {
@@ -83,7 +84,7 @@ export class GetIssueNode extends AsyncNode {
     }
 
     const issue = await response.json();
-    console.log(`[GitHub] Successfully retrieved issue #${issue.number}`);
+    log(`[GitHub] Successfully retrieved issue #${issue.number}`, this.params.logging);
     return issue;
   }
 }

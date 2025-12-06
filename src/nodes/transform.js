@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 export class TransformNode extends AsyncNode {
   async execAsync() {
@@ -20,7 +21,7 @@ export class TransformNode extends AsyncNode {
 
     try {
       const result = func(input);
-      console.log(`[TransformNode] Transformation complete. Result: ${JSON.stringify(result).substring(0, 100)}...`);
+      log(`[TransformNode] Transformation complete. Result: ${JSON.stringify(result).substring(0, 100)}...`, this.params.logging);
       return result;
     } catch (e) {
       throw new Error(`Error during transformation execution: ${e.message}`);

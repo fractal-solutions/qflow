@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 export class OpenRouterLLMNode extends AsyncNode {
   constructor(maxRetries = 3, wait = 2) {
@@ -30,7 +31,7 @@ export class OpenRouterLLMNode extends AsyncNode {
       headers['X-Title'] = siteTitle;
     }
 
-    console.log(`[OpenRouter] Sending prompt to ${model}...`);
+    log(`[OpenRouter] Sending prompt to ${model}...`, this.params.logging);
 
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -53,10 +54,10 @@ export class OpenRouterLLMNode extends AsyncNode {
       }
 
       const llmResponse = data.choices[0].message.content.trim();
-      console.log(`[OpenRouter] Received response from ${model}.`);
+      log(`[OpenRouter] Received response from ${model}.`, this.params.logging);
       return llmResponse;
     } catch (error) {
-      console.error('OpenRouterLLMNode: Error during API call:', error);
+      log('OpenRouterLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }
@@ -99,7 +100,7 @@ export class AgentOpenRouterLLMNode extends OpenRouterLLMNode {
       headers['X-Title'] = siteTitle;
     }
 
-    console.log(`[AgentOpenRouter] Sending prompt to ${model}...`);
+    log(`[AgentOpenRouter] Sending prompt to ${model}...`, this.params.logging);
 
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -122,10 +123,10 @@ export class AgentOpenRouterLLMNode extends OpenRouterLLMNode {
       }
 
       const llmResponse = data.choices[0].message.content.trim();
-      console.log(`[AgentOpenRouter] Received response from ${model}.`);
+      log(`[AgentOpenRouter] Received response from ${model}.`, this.params.logging);
       return llmResponse; // Return the actual content
     } catch (error) {
-      console.error('AgentOpenRouterLLMNode: Error during API call:', error);
+      log('AgentOpenRouterLLMNode: Error during API call:', this.params.logging, { type: 'error' });
       throw error;
     }
   }

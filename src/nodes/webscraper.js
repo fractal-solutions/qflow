@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 /**
  * Fetches the HTML content of a given URL.
@@ -14,7 +15,7 @@ export class ScrapeURLNode extends AsyncNode {
       throw new Error('URL is required for ScrapeURLNode.');
     }
 
-    console.log(`[WebScraper] Scraping URL: ${url}...`);
+    log(`[WebScraper] Scraping URL: ${url}...`, this.params.logging);
 
     const response = await fetch(url);
 
@@ -23,7 +24,7 @@ export class ScrapeURLNode extends AsyncNode {
     }
 
     const html = await response.text();
-    console.log(`[WebScraper] Successfully scraped URL: ${url}`);
+    log(`[WebScraper] Successfully scraped URL: ${url}`, this.params.logging);
     return html;
   }
 
@@ -32,7 +33,7 @@ export class ScrapeURLNode extends AsyncNode {
     const MAX_HTML_LENGTH = 4000; 
     shared.webScrapedContent = execRes.substring(0, MAX_HTML_LENGTH);
     if (execRes.length > MAX_HTML_LENGTH) {
-      console.warn(`[WebScraper] Truncated HTML content from ${execRes.length} to ${MAX_HTML_LENGTH} characters.`);
+      log(`[WebScraper] Truncated HTML content from ${execRes.length} to ${MAX_HTML_LENGTH} characters.`, this.params.logging, { type: 'warn' });
     }
     return shared.webScrapedContent;
   }

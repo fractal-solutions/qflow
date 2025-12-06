@@ -1,6 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 import { exec } from 'child_process';
 import os from 'os';
+import { log } from '../logger.js';
 
 export class InteractiveInputNode extends AsyncNode {
   constructor(maxRetries = 1, wait = 0) {
@@ -46,13 +47,13 @@ export class InteractiveInputNode extends AsyncNode {
         throw new Error(`Unsupported platform for InteractiveInputNode: ${platform}`);
     }
 
-    console.log(`[InteractiveInputNode] Executing: ${command}`);
+    log(`[InteractiveInputNode] Executing: ${command}`, this.params.logging);
 
     return new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
           // User cancelled the dialog or tool not found
-          console.error(`InteractiveInputNode error: ${error.message}`);
+          log(`InteractiveInputNode error: ${error.message}`, this.params.logging, { type: 'error' });
           // Differentiate between user cancellation and actual error
           if (error.code === 1 && platform === 'linux' && error.message.includes('zenity')) {
             // Zenity returns 1 on cancel
@@ -64,10 +65,10 @@ export class InteractiveInputNode extends AsyncNode {
           return reject(error);
         }
         if (stderr) {
-          console.warn(`InteractiveInputNode stderr: ${stderr}`);
+          log(`InteractiveInputNode stderr: ${stderr}`, this.params.logging, { type: 'warn' });
         }
         const userInput = stdout.trim();
-        console.log(`User input received: "${userInput}"`);
+        log(`User input received: "${userInput}"`, this.params.logging);
         resolve(userInput);
       });
     });
