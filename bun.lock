@@ -1,26 +1,28 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "qflow",
       "dependencies": {
         "ajv": "^8.17.1",
         "ajv-formats": "^3.0.1",
-        "chalk": "^5.5.0",
-        "cheerio": "^1.0.0-rc.12",
+        "chalk": "^5.6.2",
+        "cheerio": "^1.1.2",
         "node-cron": "^4.2.1",
-        "playwright": "^1.45.0",
+        "playwright": "^1.55.0",
         "serialport": "^13.0.0",
-        "simple-git": "^3.25.0",
-        "ssh2": "^1.16.0",
-        "ws": "^8.18.0",
+        "simple-git": "^3.28.0",
+        "ssh2": "^1.17.0",
+        "webview-bun": "^2.4.0",
+        "ws": "^8.18.3",
         "xlsx": "^0.18.5",
       },
       "devDependencies": {
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5",
+        "typescript": "^5.9.2",
       },
     },
   },
@@ -168,6 +170,8 @@
     "undici": ["undici@7.13.0", "", {}, "sha512-l+zSMssRqrzDcb3fjMkjjLGmuiiK2pMIcV++mJaAc9vhjSGpvM7h43QgP+OAMb1GImHmbPyG2tBXeuyG5iY4gA=="],
 
     "undici-types": ["undici-types@7.10.0", "", {}, "sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag=="],
+
+    "webview-bun": ["webview-bun@2.4.0", "", {}, "sha512-0+ugnQlcUHmuW+iLeb+Lzb8rGUJh7WEdXvNsuvaVEXT3EagK380XdD7heVJu0Ek/mNxMY3G2JM142YRQ1hDUGQ=="],
 
     "whatwg-encoding": ["whatwg-encoding@3.1.1", "", { "dependencies": { "iconv-lite": "0.6.3" } }, "sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ=="],
 

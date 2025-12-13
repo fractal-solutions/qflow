@@ -20,7 +20,8 @@
   ],
   "scripts": {
     "test": "bun test",
-    "build": "tsc --project tsconfig.build.json"
+    "build": "tsc --project tsconfig.build.json",
+    "postinstall": "bun scripts/postinstall.js"
   },
   "keywords": [
     "workflow",
@@ -51,6 +52,7 @@
     "serialport": "^13.0.0",
     "simple-git": "^3.28.0",
     "ssh2": "^1.17.0",
+    "webview-bun": "^2.4.0",
     "ws": "^8.18.3",
     "xlsx": "^0.18.5"
   },

@@ -1,0 +1,75 @@
+<html>
+    <head>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body { font-family: 'Orbitron', sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto; }
+        h1 { color: #333; text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #555; }
+        input[type="text"], input[type="email"], input[type="number"] {
+          width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;
+        }
+        button {
+          background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
+          width: 100%;
+        }
+        button:hover { background-color: #0056b3; }
+        .error { color: red; font-size: 0.9em; margin-top: -10px; margin-bottom: 10px; }
+        .success { color: green; font-size: 1em; text-align: center; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Register</h1>
+        <div id="messages"></div>
+        <form id="registrationForm">
+          <label for="name">Name:</label>
+          <input type="text" id="name" name="name" value="" required>
+          <div id="nameError" class="error"></div>
+
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" value="" required>
+          <div id="emailError" class="error"></div>
+
+          <label for="age">Age:</label>
+          <input type="number" id="age" name="age" value="" required>
+          <div id="ageError" class="error"></div>
+
+          <button type="button" onclick="submitForm()">Register</button>
+        </form>
+      </div>
+
+      <script>
+        function submitForm() {
+          const name = document.getElementById('name').value;
+          const email = document.getElementById('email').value;
+          const age = parseInt(document.getElementById('age').value, 10);
+          const formData = { name, email, age };
+          // Send data back to qflow
+          qflow(JSON.stringify(formData));
+        }
+
+        // Function to receive and display messages from qflow
+        function displayMessage(type, message, field = null) {
+          const messagesDiv = document.getElementById('messages');
+          if (field) {
+            const errorDiv = document.getElementById(field + 'Error');
+            if (errorDiv) {
+              errorDiv.textContent = message;
+              errorDiv.style.display = message ? 'block' : 'none';
+            }
+          } else {
+            messagesDiv.innerHTML = `<p class="${type}">${message}</p>`;
+          }
+        }
+
+        // Clear all error messages
+        function clearErrors() {
+          document.getElementById('nameError').textContent = '';
+          document.getElementById('emailError').textContent = '';
+          document.getElementById('ageError').textContent = '';
+          document.getElementById('messages').innerHTML = '';
+        }
+      </script>
+    </body>
+    </html>

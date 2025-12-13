@@ -248,6 +248,20 @@ await asyncFlow.runAsync({});
 
 See [documentation/examples.md](documentation/examples.md) for a full list of examples.
 
+## Advanced Examples
+
+### Interactive Webview Form with Validation
+
+This example demonstrates how to create a persistent interactive webview for a multi-field form, perform data validation using `DataValidationNode`, and provide dynamic feedback to the user within the webview.
+
+See [examples/advanced_interactive_webview_form.js](examples/advanced_interactive_webview_form.js) for the full example.
+
+### Webview Data Visualization
+
+This example demonstrates how to generate data within a qflow, create dynamic HTML content with embedded JavaScript (using Chart.js) for data visualization, and display this visualization in a `WebviewNode`.
+
+See [examples/webview_data_visualization.js](examples/webview_data_visualization.js) for the full example.
+
 ## Observability (Event System)
 
 `qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
@@ -588,6 +602,8 @@ Here's a comprehensive list of integrated nodes available in qflow, along with a
 *   **[WebSocketsNode](documentation/nodes/websockets.md)**: Provides real-time, two-way communication with web services.
 *   **[WebhookNode](documentation/nodes/webhook.md)**: Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.
 *   **[HttpServerNode](documentation/nodes/http_server.md)**: Creates a web server and handles HTTP requests by triggering a qflow flow.
+*   **[InteractiveWebviewNode](documentation/nodes/interactive_webview.md)**: Displays an interactive webview window for notifications, dialogs, or user input.
+*   **[WebviewNode](documentation/nodes/webview.md)**: Displays a webview window with custom HTML content.
 
 ### Flow Control
 
