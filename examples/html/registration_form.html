@@ -40,18 +40,18 @@
       </div>
 
       <script>
+        // This function is called from the button click
         function submitForm() {
           const name = document.getElementById('name').value;
           const email = document.getElementById('email').value;
           const age = parseInt(document.getElementById('age').value, 10);
           const formData = { name, email, age };
-          // Send data back to qflow
+          // Send data back to qflow. The 'qflow' function is bound by the InteractiveWebviewNode.
           qflow(JSON.stringify(formData));
         }
 
-        // Function to receive and display messages from qflow
+        // This function is called by the qflow node to display messages
         function displayMessage(type, message, field = null) {
-          const messagesDiv = document.getElementById('messages');
           if (field) {
             const errorDiv = document.getElementById(field + 'Error');
             if (errorDiv) {
@@ -59,11 +59,12 @@
               errorDiv.style.display = message ? 'block' : 'none';
             }
           } else {
+            const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = `<p class="${type}">${message}</p>`;
           }
         }
 
-        // Clear all error messages
+        // This function is called by the qflow node to clear all error messages
         function clearErrors() {
           document.getElementById('nameError').textContent = '';
           document.getElementById('emailError').textContent = '';

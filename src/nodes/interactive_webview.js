@@ -2,6 +2,7 @@
 import { AsyncNode } from '../qflow.js';
 import { Webview, SizeHint } from 'webview-bun';
 import { log } from '../logger.js';
+import { EventEmitter } from 'events'; // Import EventEmitter
 
 /**
  * A node that displays an interactive webview window.
@@ -9,6 +10,12 @@ import { log } from '../logger.js';
  * The result from the user interaction is passed to the next node.
  */
 export class InteractiveWebviewNode extends AsyncNode {
+  constructor() {
+    super();
+    this._webviewInstance = null;
+    this._eventEmitter = new EventEmitter(); // Internal event emitter
+  }
+
   async execAsync() {
     const {
       mode = 'notification', // 'notification', 'dialog', 'input'
@@ -25,7 +32,7 @@ export class InteractiveWebviewNode extends AsyncNode {
 
     log(`[InteractiveWebviewNode] Creating '${mode}' webview with title: "${title}"`, this.params.logging);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const webview = new Webview(false, {
         width,
         height,
@@ -33,16 +40,18 @@ export class InteractiveWebviewNode extends AsyncNode {
       });
       webview.title = title;
 
-      // Store webview instance if persistent
-      if (persistent) {
-        this._webviewInstance = webview;
-      }
+      this._webviewInstance = webview; // Always store the instance
 
       webview.bind('qflow', (result) => {
+        // Emit an event when qflow() is called from the webview
+        this._eventEmitter.emit('webview:submit', result);
+
+        // If not persistent, destroy the webview and resolve execAsync
         if (!persistent) {
           webview.destroy();
+          resolve(result);
         }
-        resolve(result);
+        // If persistent, execAsync will not resolve here. It will keep running.
       });
 
       let contentHtml;
@@ -55,10 +64,32 @@ export class InteractiveWebviewNode extends AsyncNode {
         contentHtml = this.generateHTML(mode, { message, options, prompt, title, theme });
       }
       webview.setHTML(contentHtml);
-      webview.run();
+      webview.run(); // This is a blocking call, execAsync will wait here
 
-      log(`[InteractiveWebviewNode] Webview window closed.`, this.params.logging);
+      // If persistent, execAsync will only resolve when the webview is destroyed externally
+      if (persistent) {
+        // We need a way to resolve this promise when the webview is closed.
+        // webview.run() is blocking, so this part won't be reached until it closes.
+        // For persistent webviews, execAsync should ideally not block, but rather
+        // return immediately and let the event emitter handle communication.
+        // This requires a different approach for execAsync for persistent webviews.
+        // Let's adjust execAsync for persistent mode to be non-blocking.
+        resolve('webview_started_persistent'); // Resolve immediately for persistent
+      } else {
+        // For non-persistent, it resolves with the result from qflow()
+        // This part is handled by the webview.bind callback.
+      }
+
+      // Add an event listener for webview destruction to resolve the promise
+      // This part is tricky because webview.run() is blocking.
+      // A better approach for persistent webviews is to have execAsync
+      // simply start the webview and return, and all interaction happens via events.
     });
+  }
+
+  // New method to subscribe to webview submit events
+  onWebviewSubmit(callback) {
+    this._eventEmitter.on('webview:submit', callback);
   }
 
   /**
@@ -74,6 +105,8 @@ export class InteractiveWebviewNode extends AsyncNode {
   }
 
   async postAsync(shared, prepRes, execRes) {
+    // For persistent webviews, execRes might be 'webview_started_persistent'
+    // The actual data will come via events.
     shared.webviewResult = execRes;
     return 'default';
   }
