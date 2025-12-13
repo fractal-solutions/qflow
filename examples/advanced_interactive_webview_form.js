@@ -35,99 +35,72 @@ async function runAdvancedInteractiveWebviewForm() {
   const initialHtml = await fs.readFile(htmlFilePath, 'utf-8');
 
   // 1. Node to display the form and capture input
-  const formWebviewNode = new InteractiveWebviewNode();
-  formWebviewNode.setParams({
-    mode: 'custom',
-    title: 'User Registration Form',
-    width: 600,
-    height: 450,
-    theme: 'light',
-    persistent: true, // Keep webview open for feedback
-    html: initialHtml,
-  });
+  // This node will be re-instantiated if validation fails to open a new webview
+  const createFormWebviewNode = () => {
+    const node = new InteractiveWebviewNode();
+    node.setParams({
+      mode: 'custom',
+      title: 'User Registration Form',
+      width: 600,
+      height: 450,
+      theme: 'light',
+      persistent: false, // Webview closes after submission
+      html: initialHtml,
+    });
+    return node;
+  };
 
   // 2. Node to validate the form data
-  const validateDataNode = new DataValidationNode();
-  validateDataNode.setParams({ schema: userSchema });
+  const validateData = new DataValidationNode();
+  validateData.setParams({ schema: userSchema });
 
-  // Use a custom node to handle the event-driven interaction
-  class FormHandlerNode extends AsyncNode {
-    constructor(webviewNode, validationNode) {
+  // 3. Node to process the form data and validation result
+  class FormProcessorNode extends AsyncNode {
+    constructor(validationNode) {
       super();
-      this.webviewNode = webviewNode;
       this.validationNode = validationNode;
-      this.formSubmittedPromise = null;
-      this.resolveFormSubmitted = null;
-    }
-
-    async prepAsync(shared) {
-      // Subscribe to webview submit events only once
-      if (!this.webviewNode._eventEmitter.listenerCount('webview:submit')) {
-        this.webviewNode.onWebviewSubmit(async (formDataJson) => {
-          const formData = JSON.parse(formDataJson);
-          console.log('Received form data from webview:', formData);
-
-          // Validate the data
-          this.validationNode.setParams({ data: formData });
-          const validationResult = await new AsyncFlow(this.validationNode).runAsync({});
-
-          if (!validationResult.isValid) {
-            // Send errors back to the webview
-            this.webviewNode.sendToWebview('clearErrors();');
-            validationResult.errors.forEach(err => {
-              const field = err.instancePath.substring(1) || err.params.missingProperty;
-              this.webviewNode.sendToWebview(`displayMessage('error', '${err.message}', '${field}');`);
-            });
-            this.webviewNode.sendToWebview(`displayMessage('error', 'Please correct the errors above.');`);
-            // Do not resolve the promise, keep waiting for another submission
-          } else {
-            // Data is valid
-            console.log('Form data is valid:', formData);
-            shared.validatedFormData = formData; // Store validated data in shared state
-            this.webviewNode.sendToWebview('clearErrors();');
-            this.webviewNode.sendToWebview(`displayMessage('success', 'Registration successful for ${formData.name}!');`);
-            
-            // Resolve the promise to allow the flow to continue
-            if (this.resolveFormSubmitted) {
-              this.resolveFormSubmitted(formData);
-            }
-          }
-        });
-      }
     }
 
     async execAsync(prepRes, shared) {
-      // This node will wait until the form is successfully submitted and validated
-      this.formSubmittedPromise = new Promise(resolve => {
-        this.resolveFormSubmitted = resolve;
-      });
-      return await this.formSubmittedPromise;
-    }
+      const formData = JSON.parse(shared.webviewResult); // Data from webview
+      
+      this.validationNode.setParams({ data: formData });
+      const validationResult = await new AsyncFlow(this.validationNode).runAsync({});
 
-    async postAsync(shared, prepRes, execRes) {
-      shared.finalFormData = execRes; // Store the final validated data
-      return 'default';
+      if (!validationResult.isValid) {
+        console.log('Validation failed:', validationResult.errors);
+        // In this blocking model, we can't send feedback to the *same* webview.
+        // The webview has already closed. We'll log errors and re-display.
+        shared.validationErrors = validationResult.errors;
+        return 'validation_failed'; // Transition to re-display form
+      } else {
+        // Data is valid
+        console.log('Form data is valid:', formData);
+        shared.validatedFormData = formData; // Store validated data in shared state
+        return 'validation_succeeded'; // Transition to end flow or next step
+      }
     }
   }
-  const formHandlerNode = new FormHandlerNode(formWebviewNode, validateDataNode);
+  const formProcessorNode = new FormProcessorNode(validateData);
 
-  // Define the flow:
-  // 1. Start the webview (it will run in the background)
-  // 2. The FormHandlerNode will wait for a successful submission from the webview
-  formWebviewNode.next(formHandlerNode);
+  // Define the flow
+  // The flow will loop, creating a new webview each time validation fails.
+  const flow = new AsyncFlow(createFormWebviewNode());
 
-  const mainFlow = new AsyncFlow(formWebviewNode);
+  // Connect the initial form display to the processor
+  flow.startNode.next(formProcessorNode, 'default');
+
+  // If validation fails, loop back to create a new form webview
+  formProcessorNode.next(createFormWebviewNode(), 'validation_failed');
+
+  // If validation succeeds, the flow ends (or goes to another node)
+  // formProcessorNode.next(someOtherNode, 'validation_succeeded');
 
   try {
-    await mainFlow.runAsync({});
-    console.log('Advanced Interactive Webview Form Demo Finished. Final Data:', mainFlow.shared.finalFormData);
+    await flow.runAsync({});
+    console.log('Advanced Interactive Webview Form Demo Finished. Final Data:', flow.shared.validatedFormData);
   } catch (error) {
     console.error('Advanced Interactive Webview Form Demo Failed:', error);
-  } finally {
-    // Ensure webview is destroyed when the flow finishes or errors
-    if (formWebviewNode._webviewInstance && formWebviewNode._webviewInstance.unsafeHandle) {
-      formWebviewNode._webviewInstance.destroy();
-    }
   }
 }
 
