@@ -26,6 +26,7 @@ export class InteractiveWebviewNode extends AsyncNode {
       theme = 'light', // 'light', 'dark'
       persistent = false, // New parameter for persistent webview
       html = '', // New parameter for custom HTML content
+      multilineInput = false, // New parameter for multi-line input
     } = this.params;
 
     log(`[InteractiveWebviewNode] Creating '${mode}' webview with title: "${title}"`, this.params.logging);
@@ -57,7 +58,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         }
         contentHtml = html;
       } else {
-        contentHtml = this.generateHTML(mode, { message, options, prompt, title, theme });
+        contentHtml = this.generateHTML(mode, { message, options, prompt, title, theme, multilineInput });
       }
       webview.setHTML(contentHtml);
       webview.run(); // This is a blocking call
@@ -92,7 +93,7 @@ export class InteractiveWebviewNode extends AsyncNode {
   }
 
   generateHTML(mode, params) {
-    const { message, options, prompt, title, theme } = params;
+    const { message, options, prompt, title, theme, multilineInput } = params;
 
     const lightTheme = `
       @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -110,7 +111,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         color: var(--text-color);
         margin: 0;
         padding: 1px;
-        overflow: hidden;
+        overflow: auto;
         user-select: none;
       }
       .container {
@@ -148,6 +149,8 @@ export class InteractiveWebviewNode extends AsyncNode {
       }
       .button-group {
         display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap */
+        justify-content: center; /* Center buttons */
         gap: 1rem;
         margin-top: 1rem;
       }
@@ -167,7 +170,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         background-color: #0056b3;
         border-color: #0056b3;
       }
-      input {
+      input, textarea { /* Apply styles to textarea as well */
         background-color: #ffffff;
         border: 1px solid var(--border-color);
         color: var(--text-color);
@@ -177,7 +180,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         font-size: 1rem;
         margin-bottom: 1rem;
       }
-      input:focus {
+      input:focus, textarea:focus {
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 8px var(--shadow-color);
@@ -200,7 +203,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         color: var(--text-color);
         margin: 0;
         padding: 1px;
-        overflow: hidden;
+        overflow: auto; /* Allow scrolling */
         user-select: none;
       }
       .container {
@@ -240,6 +243,8 @@ export class InteractiveWebviewNode extends AsyncNode {
       }
       .button-group {
         display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap */
+        justify-content: center; /* Center buttons */
         gap: 1rem;
         margin-top: 1rem;
       }
@@ -261,7 +266,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         color: var(--bg-color);
         box-shadow: 0 0 20px var(--shadow-color);
       }
-      input {
+      input, textarea { /* Apply styles to textarea as well */
         background-color: #00000030;
         border: 1px solid var(--border-color);
         color: var(--text-color);
@@ -271,7 +276,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         font-size: 1rem;
         margin-bottom: 1rem;
       }
-      input:focus {
+      input:focus, textarea:focus {
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 10px var(--shadow-color);
@@ -289,9 +294,12 @@ export class InteractiveWebviewNode extends AsyncNode {
         `;
         break;
       case 'input':
+        const inputElement = multilineInput ?
+          `<textarea id="userInput" rows="10" style="width: 80%;"></textarea>` :
+          `<input type="text" id="userInput" onkeydown="if(event.key==='Enter') document.getElementById('submitBtn').click()"/>`;
         contentHtml = `
           <h1>${prompt}</h1>
-          <input type="text" id="userInput" autofocus onkeydown="if(event.key==='Enter') document.getElementById('submitBtn').click()"/>
+          ${inputElement}
           <button id="submitBtn" onclick="qflow(document.getElementById('userInput').value)">Submit</button>
         `;
         break;

@@ -12,6 +12,7 @@ The `InteractiveWebviewNode` is a versatile node that allows for user interactio
 *   `width` (number, optional): The width of the webview window. Defaults to `400`.
 *   `height` (number, optional): The height of the webview window. Defaults to `220`.
 *   `theme` (string, optional): The theme of the webview. Can be `'light'` or `'dark'`. Defaults to `'light'`.
+*   `multilineInput` (boolean, optional): If `true` and `mode` is `'input'`, displays a multi-line textarea instead of a single-line input field. Defaults to `false`.
 
 ## Output
 
