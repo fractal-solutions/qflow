@@ -1,8 +1,8 @@
-import { AsyncNode, AsyncFlow } from '@/qflow.js';
+import { AsyncNode, AsyncFlow } from '../qflow.js';
 import http from 'http';
 import { URL } from 'url'; // Node.js built-in
 import crypto from 'crypto'; // Node.js built-in
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 export class WebHookNode extends AsyncNode {
   static getToolDefinition() {
     return {

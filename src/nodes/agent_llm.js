@@ -1,5 +1,5 @@
 import { DeepSeekLLMNode, OpenAILLMNode, GeminiLLMNode, OllamaLLMNode, HuggingFaceLLMNode } from './llm.js';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 /**
  * A specialized DeepSeekLLMNode for use within the AgentNode.

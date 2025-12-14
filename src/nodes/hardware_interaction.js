@@ -1,4 +1,4 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 // You would need to install the 'serialport' library: npm install serialport
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline'; // For reading line-by-line

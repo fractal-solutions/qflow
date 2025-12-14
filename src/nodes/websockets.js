@@ -1,5 +1,5 @@
 
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import WebSocket from 'ws';
 
 export class WebSocketsNode extends AsyncNode {

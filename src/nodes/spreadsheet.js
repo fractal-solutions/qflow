@@ -1,4 +1,4 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import * as XLSX from 'xlsx'; // npm install xlsx

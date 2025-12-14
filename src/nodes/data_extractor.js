@@ -1,6 +1,6 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import * as cheerio from 'cheerio';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 export class DataExtractorNode extends AsyncNode {
   static getToolDefinition() {

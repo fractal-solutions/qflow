@@ -1,7 +1,7 @@
 
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { Webview, SizeHint } from 'webview-bun';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 /**
  * A node that displays an interactive webview window.

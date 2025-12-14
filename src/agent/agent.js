@@ -1,7 +1,7 @@
-import { AsyncNode, AsyncFlow, Flow } from '@/qflow.js';
-import { UserInputNode } from '@/nodes';
+import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
+import { UserInputNode } from '../nodes';
 import { getToolDefinitions } from './tools.js';
-import { SummarizeNode } from '@/nodes/summarize.js';
+import { SummarizeNode } from '../nodes/summarize.js';
 import { logger } from './logger.js';
 
 export class AgentNode extends AsyncNode {

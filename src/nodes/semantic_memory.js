@@ -1,8 +1,8 @@
-import { AsyncNode, AsyncFlow } from '@/qflow.js';
+import { AsyncNode, AsyncFlow } from '../qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { EmbeddingNode } from './embedding.js';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 // Utility function for cosine similarity
 function cosineSimilarity(vecA, vecB) {

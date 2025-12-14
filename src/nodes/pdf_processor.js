@@ -1,4 +1,4 @@
-import { AsyncNode, AsyncFlow } from '@/qflow.js';
+import { AsyncNode, AsyncFlow } from '../qflow.js';
 import { ShellCommandNode, ReadFileNode } from './index.js'; // Assuming these are in the same nodes directory
 import path from 'path';
 import os from 'os';

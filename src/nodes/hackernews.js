@@ -1,5 +1,5 @@
-import { AsyncNode } from '@/qflow.js';
-import { log } from '@/logger.js';
+import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 const API_BASE = 'https://hacker-news.firebaseio.com/v0';
 

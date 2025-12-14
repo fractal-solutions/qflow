@@ -1,9 +1,9 @@
-import { AsyncNode, AsyncFlow } from '@/qflow.js';
+import { AsyncNode, AsyncFlow } from '../qflow.js';
 import { ShellCommandNode } from './index.js'; // Assuming ShellCommandNode is available
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 export class MultimediaProcessingNode extends AsyncNode {
   static getToolDefinition() {

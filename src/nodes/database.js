@@ -1,4 +1,4 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { SQL } from 'bun';
 import { Database as SQLiteDatabase } from 'bun:sqlite';
 

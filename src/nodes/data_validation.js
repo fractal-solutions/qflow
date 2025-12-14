@@ -1,4 +1,4 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { promises as fs } from 'fs';
 import Ajv from 'ajv'; // npm install ajv
 import addFormats from 'ajv-formats'; // npm install ajv-formats

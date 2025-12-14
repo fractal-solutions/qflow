@@ -1,5 +1,5 @@
-import { AsyncNode } from '@/qflow.js';
-import { log } from '@/logger.js';
+import { AsyncNode } from '../qflow.js';
+import { log } from '../logger.js';
 
 export class EmbeddingNode extends AsyncNode {
   static getToolDefinition() {

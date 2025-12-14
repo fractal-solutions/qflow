@@ -1,6 +1,6 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { DeepSeekLLMNode } from './llm.js'; // Assuming DeepSeekLLMNode for summarization
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 /**
  * Summarizes a given text using an LLM.

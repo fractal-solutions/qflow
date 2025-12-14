@@ -1,4 +1,4 @@
-import { AsyncNode } from '@/qflow.js';
+import { AsyncNode } from '../qflow.js';
 import { exec } from 'child_process';
 import os from 'os';
 import { log } from '../logger.js';
