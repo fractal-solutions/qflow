@@ -135,7 +135,7 @@ async function runLongFormatTest() {
     title: 'Programming Language Selection',
     theme: 'light',
     width: 600,
-    height: 450,
+    height: 480,
   });
 
   const enterProjectDescription = new InteractiveWebviewNode();
