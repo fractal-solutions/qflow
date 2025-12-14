@@ -2,6 +2,39 @@ import { AsyncNode } from '../qflow.js';
 import { log } from '../logger.js';
 
 export class OpenRouterLLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "openrouter_llm_reasoning",
+      description: "Generates human-like text, reasons, and plans via OpenRouter. Not for external actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          model: {
+            type: "string",
+            description: "The OpenRouter model ID (e.g., 'openai/gpt-4o', 'mistralai/mistral-7b-instruct')."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your OpenRouter API key."
+          },
+          siteUrl: {
+            type: "string",
+            description: "Optional. Site URL for rankings on openrouter.ai."
+          },
+          siteTitle: {
+            type: "string",
+            description: "Optional. Site title for rankings on openrouter.ai."
+          }
+        },
+        required: ["prompt", "model", "apiKey"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 2) {
     super(maxRetries, wait);
   }

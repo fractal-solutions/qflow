@@ -4,6 +4,23 @@ import os from 'os';
 import { log } from '../logger.js';
 
 export class DisplayImageNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "display_image",
+      description: "Displays an image file using the system's default image viewer.",
+      parameters: {
+        type: "object",
+        properties: {
+          imagePath: {
+            type: "string",
+            description: "The absolute path to the image file to display."
+          }
+        },
+        required: ["imagePath"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

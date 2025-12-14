@@ -4,6 +4,40 @@ import * as cron from 'node-cron';
 import { log } from '../logger.js';
 
 export class SchedulerNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "scheduler",
+      description: "Schedules qflow flows for future or recurring execution using cron syntax or a delay.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["start", "stop"],
+            description: "The action to perform: 'start' a new schedule or 'stop' an existing one."
+          },
+          schedule: {
+            type: ["string", "number"],
+            description: "Required for 'start'. A cron string (e.g., '0 3 * * *') or a number in milliseconds for a one-time delay."
+          },
+          flow: {
+            type: "string", // This will be the name of a flow in the flowRegistry
+            description: "Required for 'start'. The name of the qflow AsyncFlow instance to trigger."
+          },
+          flowParams: {
+            type: "object",
+            description: "Optional. Parameters (shared object) to pass to the triggered flow's runAsync."
+          },
+          id: {
+            type: "string",
+            description: "Optional. A unique ID for the scheduled task (required for 'stop' action). If not provided for 'start', a random one will be generated."
+          }
+        },
+        required: ["action"]
+      }
+    };
+  }
+
   // Static map to hold all active scheduled tasks
   static activeTasks = new Map();
 

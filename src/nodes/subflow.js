@@ -1,6 +1,27 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
 
 export class SubFlowNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "sub_flow",
+      description: "Executes a sub-flow.",
+      parameters: {
+        type: "object",
+        properties: {
+          flow: {
+            type: "string",
+            description: "The name of the flow to execute, as registered in the flow registry."
+          },
+          shared: {
+            type: "object",
+            description: "The shared object to pass to the sub-flow."
+          }
+        },
+        required: ["flow"]
+      }
+    };
+  }
+
   async execAsync() {
     const { flow, shared } = this.params;
 

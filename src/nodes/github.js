@@ -14,6 +14,39 @@ const API_BASE = 'https://api.github.com';
  * @returns {Promise<object>} A promise that resolves to the created issue object.
  */
 export class CreateIssueNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "github_create_issue",
+      description: "Creates a new issue in a GitHub repository.",
+      parameters: {
+        type: "object",
+        properties: {
+          token: {
+            type: "string",
+            description: "The GitHub personal access token."
+          },
+          owner: {
+            type: "string",
+            description: "The owner of the repository."
+          },
+          repo: {
+            type: "string",
+            description: "The name of the repository."
+          },
+          title: {
+            type: "string",
+            description: "The title of the issue."
+          },
+          body: {
+            type: "string",
+            description: "Optional. The body of the issue."
+          }
+        },
+        required: ["token", "owner", "repo", "title"]
+      }
+    };
+  }
+
   async execAsync() {
     const { token, owner, repo, title, body } = this.params;
 
@@ -58,6 +91,35 @@ export class CreateIssueNode extends AsyncNode {
  * @returns {Promise<object>} A promise that resolves to the issue object.
  */
 export class GetIssueNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "github_get_issue",
+      description: "Retrieves an issue from a GitHub repository.",
+      parameters: {
+        type: "object",
+        properties: {
+          token: {
+            type: "string",
+            description: "The GitHub personal access token."
+          },
+          owner: {
+            type: "string",
+            description: "The owner of the repository."
+          },
+          repo: {
+            type: "string",
+            description: "The name of the repository."
+          },
+          issue_number: {
+            type: "number",
+            description: "The number of the issue to retrieve."
+          }
+        },
+        required: ["token", "owner", "repo", "issue_number"]
+      }
+    };
+  }
+
   async prepAsync(shared) {
     // Retrieve the issue number from the shared object
     this.params.issue_number = shared.createdIssue?.number;

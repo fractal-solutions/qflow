@@ -5,6 +5,40 @@ import { ReadlineParser } from '@serialport/parser-readline'; // For reading lin
 import { log } from '../logger.js';
 
 export class HardwareInteractionNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "hardware_interaction",
+      description: "Communicates with local hardware via serial port (UART).",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["write", "read_line", "list_ports"],
+            description: "The action to perform: 'write' data, 'read_line' from port, or 'list_ports' available."
+          },
+          portPath: {
+            type: "string",
+            description: "Required for 'write'/'read_line'. The path to the serial port (e.g., '/dev/ttyUSB0', 'COM1')."
+          },
+          baudRate: {
+            type: "number",
+            description: "Optional. The baud rate for serial communication. Defaults to 9600."
+          },
+          dataToWrite: {
+            type: "string",
+            description: "Required for 'write'. The data string to send to the serial port."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Timeout in milliseconds for 'read_line' action. Defaults to 5000."
+          }
+        },
+        required: ["action"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
     this.port = null;

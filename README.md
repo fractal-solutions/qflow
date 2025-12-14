@@ -557,8 +557,84 @@ anotherNode.setParams({
 
 ## Agents
 
-
 For a detailed explanation of the agents, see the [Agents documentation](documentation/agents.md). The tools available to agents are documented in the [Tools documentation](documentation/integrated_nodes.md).
+
+### Extending Agents with Custom Tools
+
+`qflow` agents can be extended with custom tools by defining your own Node classes and making them discoverable. This allows agents to leverage any custom logic or external integrations you build.
+
+#### 1. Creating a Custom Tool Node
+
+To create a custom node that can be used as a tool by an agent, your node class must:
+*   Extend `AsyncNode`.
+*   Implement a `static getToolDefinition()` method that returns a JSON Schema object describing the tool's name, description, and parameters.
+
+Here's an example of a simple custom node that an agent could use as a tool:
+
+```javascript
+// my_nodes/MyCustomToolNode.js
+import { AsyncNode } from '@fractal-solutions/qflow';
+
+export class MyCustomToolNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "my_custom_tool",
+      description: "A custom tool that greets the user with a personalized message.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "The name of the person to greet."
+          },
+          greeting: {
+            type: "string",
+            description: "Optional. The greeting message. Defaults to 'Hello'."
+          }
+        },
+        required: ["name"]
+      }
+    };
+  }
+
+  async execAsync() {
+    const { name, greeting = 'Hello' } = this.params;
+    const message = `${greeting}, ${name}! Welcome to your custom tool.`;
+    console.log(message);
+    return { message: message };
+  }
+
+  async postAsync(shared, prepRes, execRes) {
+    shared.customToolOutput = execRes.message;
+    return 'default';
+  }
+}
+```
+
+#### 2. Making Custom Tools Discoverable
+
+To make your custom tool nodes available to `qflow` agents, you need to specify their paths in a `qflow.config.js` file in your project's root directory.
+
+First, create a `qflow.config.js` file if you don't have one:
+
+```javascript
+// qflow.config.js
+/**
+ * @type {import('./src/types').QFlowConfig}
+ */
+const qflowConfig = {
+  customNodePaths: [
+    './my_nodes/MyCustomToolNode.js', // Path to your custom node file
+    // Add more paths for other custom nodes
+  ],
+};
+
+export default qflowConfig;
+```
+
+The `customNodePaths` array should contain paths to your custom node files, relative to your project's root directory. `qflow` will automatically load these files, discover any `AsyncNode` classes with a `static getToolDefinition()` method, and register them as available tools for your agents.
+
+Once configured, your agents will be able to "see" and utilize `my_custom_tool` just like any built-in tool, allowing for powerful and flexible agentic workflows tailored to your specific needs.
 
 ## Integrated Nodes and their Examples
 

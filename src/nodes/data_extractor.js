@@ -3,6 +3,44 @@ import * as cheerio from 'cheerio';
 import { log } from '../logger.js';
 
 export class DataExtractorNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "data_extractor",
+      description: "Extracts structured data from HTML, JSON, or text.",
+      parameters: {
+        type: "object",
+        properties: {
+          input: {
+            type: "string",
+            description: "The content string from which to extract data."
+          },
+          type: {
+            type: "string",
+            enum: ["html", "json", "text"],
+            description: "The type of content to extract from (html, json, or text)."
+          },
+          selector: {
+            type: "string",
+            description: "Required for 'html' type. A CSS selector to target elements."
+          },
+          jsonPath: {
+            type: "string",
+            description: "Required for 'json' type. A dot-notation path to extract data (e.g., 'data.items[0].name')."
+          },
+          regex: {
+            type: "string",
+            description: "Required for 'text' type. A regular expression to match and extract data."
+          },
+          group: {
+            type: "number",
+            description: "Optional for 'text' type. The capturing group index to return from the regex match."
+          }
+        },
+        required: ["input", "type"]
+      }
+    };
+  }
+
   async execAsync() {
     const { input, type, selector, jsonPath, regex, group } = this.params;
 

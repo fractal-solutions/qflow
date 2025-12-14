@@ -9,6 +9,66 @@ import { log } from '../logger.js';
  * The result from the user interaction is passed to the next node.
  */
 export class InteractiveWebviewNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "interactive_webview",
+      description: "Displays an interactive webview window for notifications, dialogs, or user input.",
+      parameters: {
+        type: "object",
+        properties: {
+          mode: {
+            type: "string",
+            enum: ["notification", "dialog", "input", "custom"],
+            description: "The mode of the webview: 'notification' (message with close button), 'dialog' (message with options), 'input' (message with text input), or 'custom' (full HTML control)."
+          },
+          message: {
+            type: "string",
+            description: "Required for 'notification' and 'dialog' modes. The message to display."
+          },
+          options: {
+            type: "array",
+            items: { type: "string" },
+            description: "Required for 'dialog' mode. An array of strings for the buttons."
+          },
+          prompt: {
+            type: "string",
+            description: "Required for 'input' mode. The prompt message for the user."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the webview window. Defaults to 'Qflow'."
+          },
+          width: {
+            type: "number",
+            description: "Optional. The width of the webview window. Defaults to 400."
+          },
+          height: {
+            type: "number",
+            description: "Optional. The height of the webview window. Defaults to 220."
+          },
+          theme: {
+            type: "string",
+            enum: ["light", "dark"],
+            description: "Optional. The theme for the webview. Defaults to 'light'."
+          },
+          persistent: {
+            type: "boolean",
+            description: "Optional. If true, the webview remains open after interaction. Defaults to false."
+          },
+          html: {
+            type: "string",
+            description: "Required for 'custom' mode. The full HTML content to display in the webview."
+          },
+          multilineInput: {
+            type: "boolean",
+            description: "Optional. If true, the input field in 'input' mode will be a multiline textarea. Defaults to false."
+          }
+        },
+        required: ["mode"]
+      }
+    };
+  }
+
   constructor() {
     super();
     this._webviewInstance = null; // Store webview instance for sendToWebview

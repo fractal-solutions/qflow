@@ -10,6 +10,27 @@ import { log } from '../logger.js';
  * @returns {Promise<string>} A promise that resolves to the summarized text.
  */
 export class SummarizeNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "summarize_text",
+      description: "Summarizes a given text using an LLM.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The text content to summarize."
+          },
+          // Note: llmNode itself cannot be directly passed as a tool parameter in JSON schema.
+          // The agent would need to be configured with a default summarization LLM,
+          // or the tool definition would need to specify parameters for an LLM to be instantiated.
+          // For now, we'll omit llmNode from the tool definition, assuming it's handled internally by the agent.
+        },
+        required: ["text"]
+      }
+    };
+  }
+
   async execAsync() {
     const { text, llmNode } = this.params;
 

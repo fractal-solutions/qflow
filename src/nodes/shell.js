@@ -9,6 +9,23 @@ import { exec } from 'child_process';
  * @returns {Promise<object>} A promise that resolves to an object containing the stdout and stderr of the command.
  */
 export class ShellCommandNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "shell_command",
+      description: "Executes shell commands. When running long running processes like npm run dev or bun run dev, add an ampersand (&) to the end to run in the background eg. 'npm run dev &'",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "The full shell command to execute (e.g., 'ls -l', 'npm install cheerio')."
+          }
+        },
+        required: ["command"]
+      }
+    };
+  }
+
   async execAsync() {
     const { command } = this.params;
 

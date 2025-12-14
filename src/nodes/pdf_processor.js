@@ -5,6 +5,44 @@ import os from 'os';
 import { promises as fs } from 'fs';
 
 export class PDFProcessorNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "pdf_processor",
+      description: "Extracts text or images from PDF documents.",
+      parameters: {
+        type: "object",
+        properties: {
+          filePath: {
+            type: "string",
+            description: "The absolute path to the PDF file."
+          },
+          action: {
+            type: "string",
+            enum: ["extract_text", "extract_images"],
+            description: "The action to perform: 'extract_text' or 'extract_images'."
+          },
+          outputDir: {
+            type: "string",
+            description: "Optional. Directory to save extracted files. If not provided, a temporary directory will be used."
+          },
+          pageRange: {
+            type: "object",
+            properties: {
+              start: { type: "number" },
+              end: { type: "number" }
+            },
+            description: "Optional. Page range to process (e.g., {start: 1, end: 5})."
+          },
+          password: {
+            type: "string",
+            description: "Optional. Password for encrypted PDFs."
+          }
+        },
+        required: ["filePath", "action"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

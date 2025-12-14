@@ -4,6 +4,60 @@ import path from 'path';
 import * as XLSX from 'xlsx'; // npm install xlsx
 
 export class SpreadsheetNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "spreadsheet",
+      description: "Reads from and writes to spreadsheet files (.xlsx, .xls, .csv) with advanced manipulation.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["read", "write", "list_sheets", "read_range", "write_range", "append_rows", "delete_rows", "insert_rows", "add_sheet", "delete_sheet", "rename_sheet", "format_cells"],
+            description: "The action to perform."
+          },
+          filePath: {
+            type: "string",
+            description: "The absolute path to the spreadsheet file."
+          },
+          sheetName: {
+            type: "string",
+            description: "Required for .xlsx/.xls files and sheet-specific actions. The name of the sheet."
+          },
+          data: {
+            type: "array",
+            description: "Required for 'write', 'write_range', 'append_rows'. The data to write (array of arrays or array of objects)."
+          },
+          headerRow: {
+            type: "boolean",
+            description: "Optional. True if the first row is a header. Defaults to true."
+          },
+          range: {
+            type: "string",
+            description: "Required for 'read_range', 'write_range', 'format_cells'. A1 notation (e.g., 'Sheet1!A1:C10')."
+          },
+          startRow: {
+            type: "number",
+            description: "Required for 'delete_rows', 'insert_rows'. The 1-indexed starting row."
+          },
+          numRows: {
+            type: "number",
+            description: "Required for 'delete_rows', 'insert_rows'. The number of rows to delete/insert."
+          },
+          newSheetName: {
+            type: "string",
+            description: "Required for 'add_sheet', 'rename_sheet'. The name of the new sheet."
+          },
+          formats: {
+            type: "object",
+            description: "Required for 'format_cells'. Formatting options (conceptual, basic XLSX.js has limited styling)."
+          }
+        },
+        required: ["action", "filePath"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

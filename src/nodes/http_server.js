@@ -25,10 +25,44 @@ function getMimeType(filePath) {
 }
 
 export class HttpServerNode extends AsyncNode {
-    constructor() {
-        super();
-        this.server = null;
-    }
+  static getToolDefinition() {
+    return {
+      name: "http_server",
+      description: "Creates a web server and handles HTTP requests by triggering qflow flows.",
+      parameters: {
+        type: "object",
+        properties: {
+          port: {
+            type: "number",
+            description: "Optional. The port number to listen on. Defaults to 3000."
+          },
+          routes: {
+            type: "object",
+            description: "An object defining API routes. Keys are route paths (e.g., '/api/data', '/users/:id'), values are objects mapping HTTP methods (GET, POST, etc.) to the name of a qflow AsyncFlow instance to trigger. Example: { '/api/data': { 'GET': 'myGetDataFlow' } }."
+          },
+          staticDir: {
+            type: "string",
+            description: "Optional. The absolute path to a directory to serve static files from."
+          },
+          cors: {
+            type: "object",
+            properties: {
+              origin: { type: "string" },
+              methods: { type: "string" },
+              headers: { type: "string" }
+            },
+            description: "Optional. CORS configuration for the server."
+          }
+        },
+        required: [] // Port has a default, routes/staticDir are optional for a basic server
+      }
+    };
+  }
+
+  constructor() {
+    super();
+    this.server = null;
+  }
 
     // Helper to find a matching route and extract params
     findMatchingRoute(routes, method, path) {

@@ -1,6 +1,27 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
 
 export class IteratorNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "iterator",
+      description: "Iterates items, executes sub-flow for each.",
+      parameters: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            description: "The list of items to iterate over."
+          },
+          flow: {
+            type: "string",
+            description: "The name of the flow to execute for each item, as registered in the flow registry."
+          }
+        },
+        required: ["items", "flow"]
+      }
+    };
+  }
+
   async execAsync() {
     const { items, flow } = this.params;
 

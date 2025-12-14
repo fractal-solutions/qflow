@@ -4,6 +4,31 @@ import os from 'os';
 import { log } from '../logger.js';
 
 export class InteractiveInputNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "interactive_input",
+      description: "Prompts the user for input via a GUI popup (cross-platform).",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The message to display in the input dialog."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the input dialog. Defaults to 'QFlow Input'."
+          },
+          defaultValue: {
+            type: "string",
+            description: "Optional. The default value to pre-fill in the input field."
+          }
+        },
+        required: ["prompt"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

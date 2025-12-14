@@ -24,6 +24,36 @@ function syntaxHighlight(code) {
 }
 
 export class CodeInterpreterNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "code_interpreter",
+      description: "Executes Python code (requires user confirmation).",
+      parameters: {
+        type: "object",
+        properties: {
+          code: {
+            type: "string",
+            description: "The Python code snippet to execute."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Maximum execution time in milliseconds. Defaults to 30000 (30 seconds)."
+          },
+          args: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional. Command-line arguments to pass to the script."
+          },
+          requireConfirmation: {
+            type: "boolean",
+            description: "Optional. If true, the user will be prompted for confirmation before executing the code. Defaults to true."
+          }
+        },
+        required: ["code"]
+      }
+    };
+  }
+
   async execAsync() {
     const { code, timeout = 30000, args = [], requireConfirmation = true, interpreterPath } = this.params;
 

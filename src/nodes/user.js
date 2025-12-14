@@ -9,6 +9,23 @@ import readline from 'readline';
  * @returns {Promise<string>} A promise that resolves to the user's input.
  */
 export class UserInputNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "user_input",
+      description: "Prompts user for input.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The message to display to the user."
+          }
+        },
+        required: ["prompt"]
+      }
+    };
+  }
+
   async execAsync() {
     const { prompt } = this.params;
 

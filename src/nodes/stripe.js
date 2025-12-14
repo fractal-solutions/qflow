@@ -14,6 +14,39 @@ const API_BASE = 'https://api.stripe.com/v1';
  * @returns {Promise<object>} A promise that resolves to the created charge object.
  */
 export class CreateChargeNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "stripe_create_charge",
+      description: "Creates a new charge in Stripe.",
+      parameters: {
+        type: "object",
+        properties: {
+          apiKey: {
+            type: "string",
+            description: "The Stripe secret key."
+          },
+          amount: {
+            type: "number",
+            description: "The amount to charge, in cents."
+          },
+          currency: {
+            type: "string",
+            description: "The currency of the charge (e.g., 'usd')."
+          },
+          source: {
+            type: "string",
+            description: "The source of the charge (e.g., a token or card ID)."
+          },
+          description: {
+            type: "string",
+            description: "Optional. The description of the charge."
+          }
+        },
+        required: ["apiKey", "amount", "currency", "source"]
+      }
+    };
+  }
+
   async execAsync() {
     const { apiKey, amount, currency, source, description } = this.params;
 
@@ -55,6 +88,23 @@ export class CreateChargeNode extends AsyncNode {
  * @returns {Promise<object>} A promise that resolves to the balance object.
  */
 export class GetBalanceNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "stripe_get_balance",
+      description: "Retrieves the current account balance from Stripe.",
+      parameters: {
+        type: "object",
+        properties: {
+          apiKey: {
+            type: "string",
+            description: "The Stripe secret key."
+          }
+        },
+        required: ["apiKey"]
+      }
+    };
+  }
+
   async execAsync() {
     const { apiKey } = this.params;
 

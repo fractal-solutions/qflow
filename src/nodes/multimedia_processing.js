@@ -6,6 +6,56 @@ import { promises as fs } from 'fs';
 import { log } from '../logger.js';
 
 export class MultimediaProcessingNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "multimedia_processing",
+      description: "Performs various multimedia operations on audio and video files using ffmpeg.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["convert", "trim", "extract_audio", "extract_frame", "custom"],
+            description: "The multimedia operation to perform."
+          },
+          inputPath: {
+            type: "string",
+            description: "Path to the input multimedia file."
+          },
+          outputPath: {
+            type: "string",
+            description: "Path for the output file."
+          },
+          format: {
+            type: "string",
+            description: "Required for 'convert' and 'extract_audio'. The output format (e.g., 'mp4', 'mp3', 'gif', 'wav')."
+          },
+          startTime: {
+            type: "string",
+            description: "Required for 'trim'. Start time in HH:MM:SS or seconds (e.g., '00:00:10', '10')."
+          },
+          duration: {
+            type: "string",
+            description: "Required for 'trim'. Duration in HH:MM:SS or seconds (e.g., '00:00:05', '5')."
+          },
+          resolution: {
+            type: "string",
+            description: "Optional for video 'convert'. Resolution (e.g., '1280x720')."
+          },
+          frameTime: {
+            type: "string",
+            description: "Required for 'extract_frame'. Time to extract frame from in HH:MM:SS or seconds (e.g., '00:00:05')."
+          },
+          ffmpegArgs: {
+            type: "string",
+            description: "Required for 'custom'. Raw ffmpeg arguments to execute directly."
+          }
+        },
+        required: ["action", "inputPath", "outputPath"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

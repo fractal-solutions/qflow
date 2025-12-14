@@ -12,6 +12,35 @@ import { log } from '../logger.js';
  * @param {number} [params.height=600] - The height of the webview window.
  */
 export class WebviewNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "webview",
+      description: "Displays a webview window with custom HTML content.",
+      parameters: {
+        type: "object",
+        properties: {
+          html: {
+            type: "string",
+            description: "The HTML content to display in the webview."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the webview window. Defaults to 'Qflow Webview'."
+          },
+          width: {
+            type: "number",
+            description: "Optional. The width of the webview window. Defaults to 800."
+          },
+          height: {
+            type: "number",
+            description: "Optional. The height of the webview window. Defaults to 600."
+          }
+        },
+        required: ["html"]
+      }
+    };
+  }
+
   async execAsync() {
     const { html, title = 'Qflow Webview', width = 800, height = 600 } = this.params;
 

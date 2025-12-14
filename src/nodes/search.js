@@ -10,6 +10,23 @@ import { log } from '../logger.js';
  * @returns {Promise<object[]>} A promise that resolves to an array of search result objects.
  */
 export class DuckDuckGoSearchNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "duckduckgo_search",
+      description: "Performs web searches via DuckDuckGo.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The search query."
+          }
+        },
+        required: ["query"]
+      }
+    };
+  }
+
   async execAsync() {
     const { query } = this.params;
 
@@ -63,6 +80,31 @@ export class DuckDuckGoSearchNode extends AsyncNode {
  * @returns {Promise<object[]>} A promise that resolves to an array of search result objects.
  */
 export class GoogleSearchNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "google_search",
+      description: "Performs web searches via Google Custom Search (requires API key).",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The search query."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your Google API Key."
+          },
+          cseId: {
+            type: "string",
+            description: "Your Custom Search Engine ID."
+          }
+        },
+        required: ["query", "apiKey", "cseId"]
+      }
+    };
+  }
+
   async execAsync() {
     const { query, apiKey, cseId } = this.params;
 

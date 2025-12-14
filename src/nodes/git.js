@@ -3,6 +3,51 @@ import { AsyncNode } from '../qflow.js';
 import simpleGit from 'simple-git';
 
 export class GitNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "git",
+      description: "Performs Git operations like clone, add, commit, and push.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["clone", "init", "add", "commit", "push", "pull", "status"],
+            description: "The Git action to perform."
+          },
+          repoPath: {
+            type: "string",
+            description: "The local path to the repository."
+          },
+          remoteUrl: {
+            type: "string",
+            description: "The URL of the remote repository (for 'clone' action)."
+          },
+          files: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "An array of file paths to add to the staging area (for 'add' action)."
+          },
+          message: {
+            type: "string",
+            description: "The commit message (for 'commit' action)."
+          },
+          branch: {
+            type: "string",
+            description: "The branch to push to or pull from."
+          },
+          remote: {
+            type: "string",
+            description: "The name of the remote (e.g., 'origin')."
+          }
+        },
+        required: ["action"]
+      }
+    };
+  }
+
   async execAsync() {
     const {
       action,

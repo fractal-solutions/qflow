@@ -78,6 +78,34 @@ class OpenStreetMapProvider {
 }
 
 export class GISNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "gis",
+      description: "Performs Geographic Information System (GIS) operations like geocoding and reverse geocoding.",
+      parameters: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: ["geocode", "reverseGeocode"],
+            description: "The GIS operation to perform: 'geocode' (address to coordinates) or 'reverseGeocode' (coordinates to address)."
+          },
+          provider: {
+            type: "string",
+            enum: ["google", "openstreetmap"],
+            default: "openstreetmap",
+            description: "The GIS service provider to use. Defaults to 'openstreetmap' (free, open-source)."
+          },
+          params: {
+            type: "object",
+            description: "Parameters specific to the operation. For 'geocode', requires { address: string }. For 'reverseGeocode', requires { lat: number, lng: number }."
+          }
+        },
+        required: ["operation", "params"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 1) {
     super(maxRetries, wait);
     this.providers = {

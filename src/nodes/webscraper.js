@@ -8,6 +8,23 @@ import { log } from '../logger.js';
  * @returns {Promise<string>} A promise that resolves to the HTML content of the page.
  */
 export class ScrapeURLNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "web_scraper",
+      description: "Fetches HTML content from a URL. Use with 'data_extractor' for specifics.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The URL to scrape."
+          }
+        },
+        required: ["url"]
+      }
+    };
+  }
+
   async execAsync() {
     const { url } = this.params;
 

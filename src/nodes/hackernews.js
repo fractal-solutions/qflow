@@ -10,6 +10,23 @@ const API_BASE = 'https://hacker-news.firebaseio.com/v0';
  * @returns {Promise<number[]>} A promise that resolves to an array of story IDs.
  */
 export class GetTopStoriesNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "hackernews_get_top_stories",
+      description: "Fetches the top story IDs from the Hacker News API.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: {
+            type: "number",
+            description: "Optional. The maximum number of story IDs to return. Defaults to 10."
+          }
+        },
+        required: []
+      }
+    };
+  }
+
   async execAsync(prepRes, shared) {
     const { limit = 10 } = this.params;
     log(`[HackerNews] Fetching top ${limit} stories...`, this.params.logging);
@@ -35,6 +52,23 @@ export class GetTopStoriesNode extends AsyncNode {
  * @returns {Promise<object>} A promise that resolves to the item details.
  */
 export class GetItemNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "hackernews_get_item",
+      description: "Fetches the details of a specific item from the Hacker News API.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: {
+            type: "number",
+            description: "The ID of the item to fetch."
+          }
+        },
+        required: ["id"]
+      }
+    };
+  }
+
   async execAsync() {
     const { id } = this.params;
     if (!id) {

@@ -16,6 +16,60 @@ import { log } from '../logger.js';
  * @returns {Promise<object>} A promise that resolves to a structured object containing the status, headers, and body of the response.
  */
 export class HttpRequestNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "http_request",
+      description: "Makes HTTP requests.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The full URL of the API endpoint."
+          },
+          method: {
+            type: "string",
+            enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+            default: "GET",
+            description: "The HTTP method to use."
+          },
+          headers: {
+            type: "object",
+            description: "Custom headers for the request (key-value pairs)."
+          },
+          body: {
+            type: "object", // Can be any type, but object is common for JSON
+            description: "The request payload. If an object, it will be stringified as JSON."
+          },
+          auth: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["bearer", "basic"],
+                description: "The type of authentication."
+              },
+              token: {
+                type: "string",
+                description: "The bearer token."
+              },
+              username: {
+                type: "string",
+                description: "The username for basic auth."
+              },
+              password: {
+                type: "string",
+                description: "The password for basic auth."
+              }
+            },
+            description: "Authentication configuration."
+          }
+        },
+        required: ["url"]
+      }
+    };
+  }
+
   async execAsync() {
     const { url, method = 'GET', headers = {}, body, auth } = this.params;
 

@@ -3,6 +3,40 @@ import { AsyncNode } from '../qflow.js';
 import { chromium, firefox, webkit } from 'playwright';
 
 export class BrowserControlNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "browser_control",
+      description: "Controls a web browser to navigate pages, interact with elements, and take screenshots.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["goto", "click", "type", "screenshot", "close"],
+            description: "The browser action to perform."
+          },
+          url: {
+            type: "string",
+            description: "The URL to navigate to (for 'goto' action)."
+          },
+          selector: {
+            type: "string",
+            description: "A CSS selector to target an element (for 'click' and 'type' actions)."
+          },
+          text: {
+            type: "string",
+            description: "The text to type into an input field (for 'type' action)."
+          },
+          path: {
+            type: "string",
+            description: "The file path to save a screenshot (for 'screenshot' action)."
+          }
+        },
+        required: ["action"]
+      }
+    };
+  }
+
   async execAsync(prepRes, shared) {
     const {
       action,

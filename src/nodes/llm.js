@@ -4,6 +4,39 @@ import { log } from '../logger.js';
 // --- Reusable LLM Node for DeepSeek ---
 
 export class DeepSeekLLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "deepseek_llm",
+      description: "Interacts with the DeepSeek API to generate text.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your DeepSeek API Key."
+          },
+          model: {
+            type: "string",
+            description: "Optional. The DeepSeek model to use. Defaults to 'deepseek-chat'."
+          },
+          max_tokens: {
+            type: "number",
+            description: "Optional. The maximum number of tokens to generate. Defaults to 2048."
+          },
+          temperature: {
+            type: "number",
+            description: "Optional. Controls randomness. Defaults to 0.7."
+          }
+        },
+        required: ["prompt", "apiKey"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 2) {
     super(maxRetries, wait);
   }
@@ -57,6 +90,39 @@ export class DeepSeekLLMNode extends AsyncNode {
 }
 
 export class OpenAILLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "openai_llm",
+      description: "Interacts with the OpenAI API to generate text.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your OpenAI API Key."
+          },
+          model: {
+            type: "string",
+            description: "Optional. The OpenAI model to use. Defaults to 'gpt-3.5-turbo'."
+          },
+          max_tokens: {
+            type: "number",
+            description: "Optional. The maximum number of tokens to generate. Defaults to 150."
+          },
+          temperature: {
+            type: "number",
+            description: "Optional. Controls randomness. Defaults to 0.7."
+          }
+        },
+        required: ["prompt", "apiKey"]
+      }
+    };
+  }
+
   async execAsync() {
     const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
 
@@ -100,6 +166,35 @@ export class OpenAILLMNode extends AsyncNode {
 }
 
 export class GeminiLLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "gemini_llm",
+      description: "Interacts with the Google Gemini API to generate text.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          apiKey: {
+            type: "string",
+            description: "Your Google Gemini API Key."
+          },
+          model: {
+            type: "string",
+            description: "Optional. The Gemini model to use. Defaults to 'gemini-pro'."
+          },
+          temperature: {
+            type: "number",
+            description: "Optional. Controls randomness. Defaults to 0.7."
+          }
+        },
+        required: ["prompt", "apiKey"]
+      }
+    };
+  }
+
   async execAsync() {
     const { prompt, apiKey } = this.params; // prompt and apiKey passed via node params
 
@@ -140,6 +235,31 @@ export class GeminiLLMNode extends AsyncNode {
 }
 
 export class OllamaLLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "ollama_llm_reasoning",
+      description: "Generates human-like text, reasons, and plans locally via Ollama. Not for external actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the local Ollama language model."
+          },
+          model: {
+            type: "string",
+            description: "The Ollama model name to use (e.g., 'llama2', 'gemma:2b'). Defaults to 'llama2'."
+          },
+          baseUrl: {
+            type: "string",
+            description: "The base URL of the Ollama API (e.g., 'http://localhost:11434'). Defaults to 'http://localhost:11434'."
+          }
+        },
+        required: ["prompt"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 2) {
     super(maxRetries, wait);
   }
@@ -189,6 +309,43 @@ export class OllamaLLMNode extends AsyncNode {
 }
 
 export class HuggingFaceLLMNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "huggingface_llm_reasoning",
+      description: "Generates human-like text, reasons, and plans. Not for external actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The prompt or question to send to the language model."
+          },
+          model: {
+            type: "string",
+            description: "The Hugging Face model ID (e.g., 'HuggingFaceH4/zephyr-7b-beta', 'openai/gpt-oss-20b:novita')."
+          },
+          hfToken: {
+            type: "string",
+            description: "Your Hugging Face API token."
+          },
+          temperature: {
+            type: "number",
+            description: "Optional. Controls randomness. Defaults to 0.7."
+          },
+          max_new_tokens: {
+            type: "number",
+            description: "Optional. Maximum number of tokens to generate. Defaults to 500."
+          },
+          baseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Hugging Face router API. Defaults to 'https://router.huggingface.co/v1'."
+          }
+        },
+        required: ["prompt", "model", "hfToken"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 2) {
     super(maxRetries, wait);
   }

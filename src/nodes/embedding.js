@@ -2,6 +2,31 @@ import { AsyncNode } from '../qflow.js';
 import { log } from '../logger.js';
 
 export class EmbeddingNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "generate_embedding",
+      description: "Generates vector embeddings for text (requires Ollama).",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The text string to generate an embedding for."
+          },
+          model: {
+            type: "string",
+            description: "Optional. The Ollama embedding model name to use (e.g., 'nomic-embed-text'). Defaults to 'nomic-embed-text'."
+          },
+          baseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Ollama API (e.g., 'http://localhost:11434'). Defaults to 'http://localhost:11434'."
+          }
+        },
+        required: ["text"]
+      }
+    };
+  }
+
   constructor(maxRetries = 3, wait = 2) {
     super(maxRetries, wait);
   }

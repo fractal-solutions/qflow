@@ -4,6 +4,36 @@ import Ajv from 'ajv'; // npm install ajv
 import addFormats from 'ajv-formats'; // npm install ajv-formats
 
 export class DataValidationNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "data_validation",
+      description: "Validates structured data against a JSON Schema.",
+      parameters: {
+        type: "object",
+        properties: {
+          data: {
+            type: "object", // Can be any JSON-compatible type
+            description: "The data to be validated."
+          },
+          schema: {
+            type: "object",
+            description: "The JSON Schema object directly."
+          },
+          schemaPath: {
+            type: "string",
+            description: "Optional. Path to a JSON Schema file. If provided, 'schema' parameter is ignored."
+          },
+          action: {
+            type: "string",
+            enum: ["validate"],
+            description: "The action to perform. Currently only 'validate' is supported."
+          }
+        },
+        required: ["data"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
     this.ajv = new Ajv({ allErrors: true, verbose: true }); // Configure AJV for detailed errors

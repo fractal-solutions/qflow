@@ -4,6 +4,31 @@ import os from 'os';
 import { log } from '../logger.js';
 
 export class SystemNotificationNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "system_notification",
+      description: "Displays a system-level notification across OSs.",
+      parameters: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: "The main message content of the notification."
+          },
+          title: {
+            type: "string",
+            description: "Optional. The title of the notification. Defaults to 'QFlow Notification'."
+          },
+          icon: {
+            type: "string",
+            description: "Optional. Path to an icon file or a system icon name (Linux specific). Ignored on macOS/Windows."
+          }
+        },
+        required: ["message"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

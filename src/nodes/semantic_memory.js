@@ -21,6 +21,56 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 export class SemanticMemoryNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "semantic_memory_node",
+      description: "Stores and retrieves text memories via semantic search (requires Ollama).",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["store", "retrieve"],
+            description: "The action to perform: 'store' a new memory or 'retrieve' existing ones."
+          },
+          content: {
+            type: "string",
+            description: "Required for 'store' action. The text content of the memory to store."
+          },
+          query: {
+            type: "string",
+            description: "Required for 'retrieve' action. The text query for semantic search."
+          },
+          id: {
+            type: "string",
+            description: "Optional for 'store' action. A unique identifier for the memory. If not provided, one will be generated."
+          },
+          metadata: {
+            type: "object",
+            description: "Optional for 'store' action. Key-value pairs to store alongside the memory."
+          },
+          memoryPath: {
+            type: "string",
+            description: "Optional. The directory path where memories and the index are stored. Defaults to './semantic_memories'."
+          },
+          embeddingModel: {
+            type: "string",
+            description: "Optional. The Ollama embedding model name to use (e.g., 'nomic-embed-text'). Defaults to 'nomic-embed-text'."
+          },
+          embeddingBaseUrl: {
+            type: "string",
+            description: "Optional. The base URL of the Ollama API for embeddings. Defaults to 'http://localhost:11434'."
+          },
+          topK: {
+            type: "number",
+            description: "Optional for 'retrieve' action. The number of top similar results to retrieve. Defaults to 5."
+          }
+        },
+        required: ["action"]
+      }
+    };
+  }
+
   constructor() {
     super();
     this.memoryIndex = {}; // In-memory index: { id: { content: string, embedding: number[], metadata: object } }

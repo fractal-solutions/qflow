@@ -75,6 +75,36 @@ class GoogleCloudTTSProvider {
 
 
 export class SpeechSynthesisNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "speech_synthesis",
+      description: "Converts text to spoken audio using OS capabilities or cloud APIs.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The text to convert to speech."
+          },
+          provider: {
+            type: "string",
+            enum: ["macos", "linux", "windows", "google"],
+            description: "Optional. The speech synthesis provider to use. Defaults to OS-specific. 'google' requires GOOGLE_TTS_API_KEY."
+          },
+          voice: {
+            type: "string",
+            description: "Optional. The specific voice to use (e.g., 'Alex' for macOS, 'en-us' for espeak, 'en-US-Wavenet-D' for Google)."
+          },
+          outputFilePath: {
+            type: "string",
+            description: "Optional. If provided, saves the audio to this file path instead of playing it directly."
+          }
+        },
+        required: ["text"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
     this.providers = {

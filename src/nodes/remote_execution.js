@@ -4,6 +4,56 @@ import { Client } from 'ssh2';
 import { log } from '../logger.js';
 
 export class RemoteExecutionNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "remote_execution",
+      description: "Executes commands on remote machines via SSH.",
+      parameters: {
+        type: "object",
+        properties: {
+          host: {
+            type: "string",
+            description: "The hostname or IP address of the remote machine."
+          },
+          port: {
+            type: "number",
+            description: "Optional. The SSH port. Defaults to 22."
+          },
+          username: {
+            type: "string",
+            description: "The username for SSH authentication."
+          },
+          password: {
+            type: "string",
+            description: "Optional. The password for SSH authentication (use with caution, prefer privateKey)."
+          },
+          privateKey: {
+            type: "string",
+            description: "Optional. The content of the private SSH key or its absolute path."
+          },
+          passphrase: {
+            type: "string",
+            description: "Optional. The passphrase for an encrypted private key."
+          },
+          action: {
+            type: "string",
+            enum: ["execute_command"],
+            description: "The action to perform. Currently only 'execute_command' is supported."
+          },
+          command: {
+            type: "string",
+            description: "The command string to execute on the remote machine."
+          },
+          timeout: {
+            type: "number",
+            description: "Optional. Timeout in milliseconds for the command execution. Defaults to 30000 (30 seconds)."
+          }
+        },
+        required: ["host", "username", "action", "command"]
+      }
+    };
+  }
+
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
   }

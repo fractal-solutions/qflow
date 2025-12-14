@@ -2,6 +2,27 @@ import { AsyncNode } from '../qflow.js';
 import { log } from '../logger.js';
 
 export class TransformNode extends AsyncNode {
+  static getToolDefinition() {
+    return {
+      name: "transform_node",
+      description: "Transforms data using a JavaScript function.",
+      parameters: {
+        type: "object",
+        properties: {
+          input: {
+            type: "object", // Can be any type of data
+            description: "The data to be transformed."
+          },
+          transformFunction: {
+            type: "string",
+            description: "A JavaScript function string (e.g., '(data) => data.map(item => item.name)') that takes 'data' as an argument and returns the transformed result."
+          }
+        },
+        required: ["input", "transformFunction"]
+      }
+    };
+  }
+
   async execAsync() {
     const { input, transformFunction } = this.params;
 

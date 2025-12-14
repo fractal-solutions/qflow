@@ -4,13 +4,50 @@ import { URL } from 'url'; // Node.js built-in
 import crypto from 'crypto'; // Node.js built-in
 import { log } from '../logger.js';
 export class WebHookNode extends AsyncNode {
-    constructor(maxRetries = 1, wait = 0) {
-        super(maxRetries, wait);
-        this.server = null;
-        this.flowToTrigger = null;
-        this.webhookPath = null;
-        this.sharedSecret = null;
-    }
+  static getToolDefinition() {
+    return {
+      name: "webhook",
+      description: "Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.",
+      parameters: {
+        type: "object",
+        properties: {
+          port: {
+            type: "number",
+            description: "Optional. The port number to listen on. Defaults to 3000."
+          },
+          path: {
+            type: "string",
+            description: "Optional. The URL path for the webhook endpoint. Defaults to '/webhook'."
+          },
+          flow: {
+            type: "string", // This will be the name of a flow in the flowRegistry
+            description: "The name of the qflow AsyncFlow instance to trigger when a webhook is received."
+          },
+          sharedSecret: {
+            type: "string",
+            description: "Optional. A shared secret for HMAC verification of incoming webhooks."
+          },
+          responseStatus: {
+            type: "number",
+            description: "Optional. The HTTP status code to send back to the webhook sender. Defaults to 200."
+          },
+          responseBody: {
+            type: "object",
+            description: "Optional. The JSON body to send back to the webhook sender. Defaults to { status: 'received' }."
+          }
+        },
+        required: ["flow"]
+      }
+    };
+  }
+
+  constructor(maxRetries = 1, wait = 0) {
+    super(maxRetries, wait);
+    this.server = null;
+    this.flowToTrigger = null;
+    this.webhookPath = null;
+    this.sharedSecret = null;
+  }
     async execAsync() {
         const { port = 3000, // Port to listen on
         path = '/webhook', // URL path for the webhook
