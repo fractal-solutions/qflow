@@ -262,6 +262,81 @@ This example demonstrates how to generate data within a qflow, create dynamic HT
 
 See [examples/webview_data_visualization.js](examples/webview_data_visualization.js) for the full example.
 
+
+
+## Integrated Nodes and their Examples
+
+Here's a comprehensive list of integrated nodes available in qflow, along with a brief description and a link to their detailed documentation.
+
+### Data
+
+*   **[CodeInterpreterNode](documentation/nodes/code_interpreter.md)**: Executes Python code snippets.
+*   **[DataExtractorNode](documentation/nodes/data_extractor.md)**: Extracts structured data from HTML, JSON, or plain text.
+*   **[DatabaseNode](documentation/nodes/database.md)**: Provides a powerful and flexible way to interact with SQL databases.
+*   **[EmbeddingNode](documentation/nodes/embedding.md)**: Generates vector embeddings for text (requires Ollama).
+*   **[MemoryNode](documentation/nodes/memory.md)**: Stores and retrieves text memories (keyword-based).
+*   **[SemanticMemoryNode](documentation/nodes/semantic_memory.md)**: Stores and retrieves text memories via semantic search (requires Ollama).
+*   **[TransformNode](documentation/nodes/transform.md)**: Transforms input data using a provided JavaScript function.
+*   **[PDFProcessorNode](documentation/nodes/pdf_processor.md)**: Extracts text or images from PDF documents.
+*   **[SpreadsheetNode](documentation/nodes/spreadsheet.md)**: Reads from and writes to spreadsheet files (.xlsx, .xls, .csv) with advanced manipulation.
+*   **[DataValidationNode](documentation/nodes/data_validation.md)**: Validates structured data against a JSON Schema.
+
+### System
+
+*   **[ShellCommandNode](documentation/nodes/shell_command.md)**: Executes shell commands.
+*   **[ReadFileNode](documentation/nodes/read_file.md)**: Reads the content of a specified file.
+*   **[WriteFileNode](documentation/nodes/write_file.md)**: Writes content to a specified file.
+*   **[AppendFileNode](documentation/nodes/append_file.md)**: Appends content to an existing file.
+*   **[ListDirectoryNode](documentation/nodes/list_directory.md)**: Lists the files and subdirectories within a specified directory.
+*   **[SystemNotificationNode](documentation/nodes/system_notification.md)**: Displays a system-level notification across OSs.
+*   **[DisplayImageNode](documentation/nodes/display_image.md)**: Displays an image file using the system's default image viewer.
+*   **[HardwareInteractionNode](documentation/nodes/hardware_interaction.md)**: Communicates with local hardware via serial port (UART).
+*   **[ImageGalleryNode](documentation/nodes/image_gallery.md)**: Generates an HTML gallery from multiple image files and opens it in a web browser.
+*   **[SpeechSynthesisNode](documentation/nodes/speech_synthesis.md)**: Converts text to spoken audio using OS capabilities or cloud APIs.
+*   **[MultimediaProcessingNode](documentation/nodes/multimedia_processing.md)**: Performs various multimedia operations on audio and video files using ffmpeg.
+*   **[RemoteExecutionNode](documentation/nodes/remote_execution.md)**: Executes commands on remote machines via SSH.
+
+### Web
+
+*   **[HttpRequestNode](documentation/nodes/http_request.md)**: Makes a generic HTTP request to any URL.
+*   **[WebScraperNode](documentation/nodes/web_scraper.md)**: Fetches the HTML content of a given URL.
+*   **[DuckDuckGoSearchNode](documentation/nodes/duckduckgo_search.md)**: Performs a web search using DuckDuckGo.
+*   **[GoogleSearchNode](documentation/nodes/google_search.md)**: Performs a web search using the Google Custom Search API.
+*   **[BrowserControlNode](documentation/nodes/browser_control.md)**: Controls a web browser to navigate pages, interact with elements, and take screenshots.
+*   **[WebSocketsNode](documentation/nodes/websockets.md)**: Provides real-time, two-way communication with web services.
+*   **[WebhookNode](documentation/nodes/webhook.md)**: Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.
+*   **[HttpServerNode](documentation/nodes/http_server.md)**: Creates a web server and handles HTTP requests by triggering a qflow flow.
+*   **[InteractiveWebviewNode](documentation/nodes/interactive_webview.md)**: Displays an interactive webview window for notifications, dialogs, or user input.
+*   **[WebviewNode](documentation/nodes/webview.md)**: Displays a webview window with custom HTML content.
+
+### Flow Control
+
+*   **[SubFlowNode](documentation/nodes/sub_flow.md)**: Executes a sub-flow.
+*   **[IteratorNode](documentation/nodes/iterator.md)**: Iterates items, executes sub-flow for each.
+*   **[SchedulerNode](documentation/nodes/scheduler.md)**: Schedules qflow flows for future or recurring execution using cron syntax or a delay.
+
+### Other
+
+*   **[GitNode](documentation/nodes/git.md)**: Performs Git operations like clone, add, commit, and push.
+*   **[GISNode](documentation/nodes/gis.md)**: Performs Geographic Information System operations like geocoding and reverse geocoding.
+*   **[GitHubNode](documentation/nodes/github.md)**: Performs GitHub operations like creating and managing issues.
+*   **[HackerNewsNode](documentation/nodes/hackernews.md)**: Fetches top stories and item details from Hacker News.
+*   **[StripeNode](documentation/nodes/stripe.md)**: Performs Stripe operations like creating charges and retrieving account balances.
+
+### LLMs
+
+*   **[DeepSeekLLMNode](documentation/nodes/deepseek_llm.md)**: Interacts with the DeepSeek API.
+*   **[OpenAILLMNode](documentation/nodes/openai_llm.md)**: Interacts with the OpenAI API.
+*   **[GeminiLLMNode](documentation/nodes/gemini_llm.md)**: Interacts with the Google Gemini API.
+*   **[OllamaLLMNode](documentation/nodes/ollama_llm.md)**: Interacts with a local Ollama instance.
+*   **[HuggingFaceLLMNode](documentation/nodes/huggingface_llm.md)**: Interacts with the Hugging Face API.
+*   **[OpenRouterLLMNode](documentation/nodes/openrouter_llm.md)**: Interacts with the OpenRouter API.
+
+### Agent
+
+*   **[AgentNode](documentation/nodes/agent.md)**: The core of agentic behavior in qflow. It orchestrates tools and LLM reasoning to achieve complex goals.
+
+
 ## Observability (Event System)
 
 `qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
@@ -552,79 +627,6 @@ anotherNode.setParams({
   }
 });
 ```
-
-
-## Integrated Nodes and their Examples
-
-Here's a comprehensive list of integrated nodes available in qflow, along with a brief description and a link to their detailed documentation.
-
-### Data
-
-*   **[CodeInterpreterNode](documentation/nodes/code_interpreter.md)**: Executes Python code snippets.
-*   **[DataExtractorNode](documentation/nodes/data_extractor.md)**: Extracts structured data from HTML, JSON, or plain text.
-*   **[DatabaseNode](documentation/nodes/database.md)**: Provides a powerful and flexible way to interact with SQL databases.
-*   **[EmbeddingNode](documentation/nodes/embedding.md)**: Generates vector embeddings for text (requires Ollama).
-*   **[MemoryNode](documentation/nodes/memory.md)**: Stores and retrieves text memories (keyword-based).
-*   **[SemanticMemoryNode](documentation/nodes/semantic_memory.md)**: Stores and retrieves text memories via semantic search (requires Ollama).
-*   **[TransformNode](documentation/nodes/transform.md)**: Transforms input data using a provided JavaScript function.
-*   **[PDFProcessorNode](documentation/nodes/pdf_processor.md)**: Extracts text or images from PDF documents.
-*   **[SpreadsheetNode](documentation/nodes/spreadsheet.md)**: Reads from and writes to spreadsheet files (.xlsx, .xls, .csv) with advanced manipulation.
-*   **[DataValidationNode](documentation/nodes/data_validation.md)**: Validates structured data against a JSON Schema.
-
-### System
-
-*   **[ShellCommandNode](documentation/nodes/shell_command.md)**: Executes shell commands.
-*   **[ReadFileNode](documentation/nodes/read_file.md)**: Reads the content of a specified file.
-*   **[WriteFileNode](documentation/nodes/write_file.md)**: Writes content to a specified file.
-*   **[AppendFileNode](documentation/nodes/append_file.md)**: Appends content to an existing file.
-*   **[ListDirectoryNode](documentation/nodes/list_directory.md)**: Lists the files and subdirectories within a specified directory.
-*   **[SystemNotificationNode](documentation/nodes/system_notification.md)**: Displays a system-level notification across OSs.
-*   **[DisplayImageNode](documentation/nodes/display_image.md)**: Displays an image file using the system's default image viewer.
-*   **[HardwareInteractionNode](documentation/nodes/hardware_interaction.md)**: Communicates with local hardware via serial port (UART).
-*   **[ImageGalleryNode](documentation/nodes/image_gallery.md)**: Generates an HTML gallery from multiple image files and opens it in a web browser.
-*   **[SpeechSynthesisNode](documentation/nodes/speech_synthesis.md)**: Converts text to spoken audio using OS capabilities or cloud APIs.
-*   **[MultimediaProcessingNode](documentation/nodes/multimedia_processing.md)**: Performs various multimedia operations on audio and video files using ffmpeg.
-*   **[RemoteExecutionNode](documentation/nodes/remote_execution.md)**: Executes commands on remote machines via SSH.
-
-### Web
-
-*   **[HttpRequestNode](documentation/nodes/http_request.md)**: Makes a generic HTTP request to any URL.
-*   **[WebScraperNode](documentation/nodes/web_scraper.md)**: Fetches the HTML content of a given URL.
-*   **[DuckDuckGoSearchNode](documentation/nodes/duckduckgo_search.md)**: Performs a web search using DuckDuckGo.
-*   **[GoogleSearchNode](documentation/nodes/google_search.md)**: Performs a web search using the Google Custom Search API.
-*   **[BrowserControlNode](documentation/nodes/browser_control.md)**: Controls a web browser to navigate pages, interact with elements, and take screenshots.
-*   **[WebSocketsNode](documentation/nodes/websockets.md)**: Provides real-time, two-way communication with web services.
-*   **[WebhookNode](documentation/nodes/webhook.md)**: Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.
-*   **[HttpServerNode](documentation/nodes/http_server.md)**: Creates a web server and handles HTTP requests by triggering a qflow flow.
-*   **[InteractiveWebviewNode](documentation/nodes/interactive_webview.md)**: Displays an interactive webview window for notifications, dialogs, or user input.
-*   **[WebviewNode](documentation/nodes/webview.md)**: Displays a webview window with custom HTML content.
-
-### Flow Control
-
-*   **[SubFlowNode](documentation/nodes/sub_flow.md)**: Executes a sub-flow.
-*   **[IteratorNode](documentation/nodes/iterator.md)**: Iterates items, executes sub-flow for each.
-*   **[SchedulerNode](documentation/nodes/scheduler.md)**: Schedules qflow flows for future or recurring execution using cron syntax or a delay.
-
-### Other
-
-*   **[GitNode](documentation/nodes/git.md)**: Performs Git operations like clone, add, commit, and push.
-*   **[GISNode](documentation/nodes/gis.md)**: Performs Geographic Information System operations like geocoding and reverse geocoding.
-*   **[GitHubNode](documentation/nodes/github.md)**: Performs GitHub operations like creating and managing issues.
-*   **[HackerNewsNode](documentation/nodes/hackernews.md)**: Fetches top stories and item details from Hacker News.
-*   **[StripeNode](documentation/nodes/stripe.md)**: Performs Stripe operations like creating charges and retrieving account balances.
-
-### LLMs
-
-*   **[DeepSeekLLMNode](documentation/nodes/deepseek_llm.md)**: Interacts with the DeepSeek API.
-*   **[OpenAILLMNode](documentation/nodes/openai_llm.md)**: Interacts with the OpenAI API.
-*   **[GeminiLLMNode](documentation/nodes/gemini_llm.md)**: Interacts with the Google Gemini API.
-*   **[OllamaLLMNode](documentation/nodes/ollama_llm.md)**: Interacts with a local Ollama instance.
-*   **[HuggingFaceLLMNode](documentation/nodes/huggingface_llm.md)**: Interacts with the Hugging Face API.
-*   **[OpenRouterLLMNode](documentation/nodes/openrouter_llm.md)**: Interacts with the OpenRouter API.
-
-### Agent
-
-*   **[AgentNode](documentation/nodes/agent.md)**: The core of agentic behavior in qflow. It orchestrates tools and LLM reasoning to achieve complex goals.
 
 
 ## Agents
