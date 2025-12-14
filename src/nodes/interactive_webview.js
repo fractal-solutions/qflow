@@ -40,11 +40,11 @@ export class InteractiveWebviewNode extends AsyncNode {
           },
           width: {
             type: "number",
-            description: "Optional. The width of the webview window. Defaults to 400."
+            description: "Optional. The width of the webview window. Defaults to 400. Ensure it fits content well and is not too small."
           },
           height: {
             type: "number",
-            description: "Optional. The height of the webview window. Defaults to 220."
+            description: "Optional. The height of the webview window. Defaults to 220. Ensure it fits content well and is not too small."
           },
           theme: {
             type: "string",
@@ -64,7 +64,7 @@ export class InteractiveWebviewNode extends AsyncNode {
             description: "Optional. If true, the input field in 'input' mode will be a multiline textarea. Defaults to false."
           }
         },
-        required: ["mode"]
+        required: ["mode", "title"]
       }
     };
   }
