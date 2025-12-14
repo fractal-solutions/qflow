@@ -38,7 +38,7 @@ import { SummarizeNode } from '../nodes/summarize.js';
 import { HttpServerNode } from '../nodes/http_server.js';
 import { InteractiveWebviewNode } from '../nodes/interactive_webview.js';
 import { WebviewNode } from '../nodes/webview.js';
-import qflowConfig from '../../qflow.config.js'; // Import the config file
+import qflowConfig from '../qflow.config.js'; // Import the config file
 import path from 'path';
 import { fileURLToPath } from 'url';
 

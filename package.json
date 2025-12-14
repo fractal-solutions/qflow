@@ -16,7 +16,8 @@
   },
   "files": [
     "dist/",
-    "README.md"
+    "README.md",
+    "qflow.config.js"
   ],
   "scripts": {
     "test": "bun test",
