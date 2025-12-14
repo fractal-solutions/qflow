@@ -1,8 +1,8 @@
 
 import { BaseAgent } from './base_agent.js';
 import { logger } from './logger.js';
-import { AsyncNode, AsyncFlow, Flow } from '../qflow.js';
-import { UserInputNode } from '../nodes/index.js';
+import { AsyncNode, AsyncFlow, Flow } from '@/qflow.js';
+import { UserInputNode } from '@/nodes/index.js';
 
 export class LPAVRLAgent extends BaseAgent {
     async execAsync() {

@@ -1,4 +1,4 @@
-import { AsyncNode, AsyncFlow } from '../qflow.js';
+import { AsyncNode, AsyncFlow } from '@/qflow.js';
 
 export class SubFlowNode extends AsyncNode {
   static getToolDefinition() {

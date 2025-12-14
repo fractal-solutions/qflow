@@ -1,5 +1,5 @@
-import { AsyncNode } from '../qflow.js';
-import { log } from '../logger.js';
+import { AsyncNode } from '@/qflow.js';
+import { log } from '@/logger.js';
 
 /**
  * A flexible node for making generic HTTP requests to any REST API.

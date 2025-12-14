@@ -4,7 +4,6 @@
     "noEmit": false,
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "module": "ESNext"
   },
   "include": [

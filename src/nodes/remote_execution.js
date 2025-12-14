@@ -1,4 +1,4 @@
-import { AsyncNode } from '../qflow.js';
+import { AsyncNode } from '@/qflow.js';
 // You would need to install the 'ssh2' library: npm install ssh2
 import { Client } from 'ssh2';
 import { log } from '../logger.js';

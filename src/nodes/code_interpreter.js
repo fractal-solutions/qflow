@@ -1,10 +1,10 @@
-import { AsyncNode, AsyncFlow } from '../qflow.js';
+import { AsyncNode, AsyncFlow } from '@/qflow.js';
 import { UserInputNode } from './user.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
-import { log } from '../logger.js';
+import { log } from '@/logger.js';
 
 let nodeChildProcess = null;
 if (!process.versions.bun) {

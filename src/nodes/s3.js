@@ -1,5 +1,5 @@
 
-import { AsyncNode } from '../qflow.js';
+import { AsyncNode } from '@/qflow.js';
 import { S3Client } from 'bun';
 
 export class S3CloudStorageNode extends AsyncNode {

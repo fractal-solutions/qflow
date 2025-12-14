@@ -1,5 +1,5 @@
 
-import { AsyncNode } from '../qflow.js';
+import { AsyncNode } from '@/qflow.js';
 import { exec } from 'child_process';
 
 /**

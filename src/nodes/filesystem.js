@@ -1,8 +1,8 @@
 
-import { AsyncNode } from '../qflow.js';
+import { AsyncNode } from '@/qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { log } from '../logger.js';
+import { log } from '@/logger.js';
 
 /**
  * Reads a file from the file system.

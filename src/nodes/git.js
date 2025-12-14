@@ -1,5 +1,5 @@
 
-import { AsyncNode } from '../qflow.js';
+import { AsyncNode } from '@/qflow.js';
 import simpleGit from 'simple-git';
 
 export class GitNode extends AsyncNode {

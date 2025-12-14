@@ -1,10 +1,10 @@
-import { AsyncNode, AsyncFlow } from '../qflow.js';
+import { AsyncNode, AsyncFlow } from '@/qflow.js';
 import http from 'http';
 import { URL } from 'url';
 import path from 'path';
 import { promises as fsPromises } from 'fs';
 import fs from 'fs';
-import { log } from '../logger.js';
+import { log } from '@/logger.js';
 
 // Basic mime-type lookup to avoid adding new dependencies
 function getMimeType(filePath) {
