@@ -1,1 +1,0 @@
-Tool Demonstration Roadmap: 1) Create a test file with sample content 2) Read the file to verify creation 3) Make an HTTP request to a test API 4) Store the results in basic memory 5) Retrieve from memory to demonstrate search capabilities 6) Display system notification of completion
