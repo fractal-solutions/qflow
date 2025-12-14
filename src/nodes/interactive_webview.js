@@ -44,7 +44,7 @@ export class InteractiveWebviewNode extends AsyncNode {
           },
           height: {
             type: "number",
-            description: "Optional. The height of the webview window. Defaults to 220. Ensure it fits content well and is not too small."
+            description: "Optional. The height of the webview window. Defaults to 300. Ensure it fits content well and is not too small."
           },
           theme: {
             type: "string",
@@ -82,7 +82,7 @@ export class InteractiveWebviewNode extends AsyncNode {
       prompt = '', // for input mode
       title = 'Qflow',
       width = 400,
-      height = 220,
+      height = 300,
       theme = 'light', // 'light', 'dark'
       persistent = false, // New parameter for persistent webview
       html = '', // New parameter for custom HTML content
