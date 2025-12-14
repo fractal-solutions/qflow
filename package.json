@@ -20,7 +20,8 @@
   ],
   "scripts": {
     "test": "bun test",
-    "build": "tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "build": "bun run clean && tsc --project tsconfig.build.json",
     "postinstall": "bun scripts/postinstall.js"
   },
   "keywords": [

@@ -4,14 +4,19 @@
     "noEmit": false,
     "declaration": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "module": "ESNext"
   },
   "include": [
-    "src/**/*.js"
+    "src"
   ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "qflow.config.js",
+    "prompt_user.js",
+    "send_notification.js",
+    "scripts/postinstall.js"
   ]
 }
