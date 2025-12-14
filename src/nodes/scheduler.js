@@ -1,7 +1,7 @@
-import { AsyncNode, AsyncFlow } from '@/qflow.js';
+import { AsyncNode, AsyncFlow } from '../qflow.js';
 // You would need to install the 'node-cron' library: npm install node-cron
 import * as cron from 'node-cron';
-import { log } from '@/logger.js';
+import { log } from '../logger.js';
 
 export class SchedulerNode extends AsyncNode {
   static getToolDefinition() {
