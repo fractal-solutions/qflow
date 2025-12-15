@@ -1,6 +1,6 @@
 {
   "name": "@fractal-solutions/qflow",
-  "version": "1.0.78",
+  "version": "1.0.79",
   "description": "A lightweight and flexible JavaScript library for creating and managing workflows and agents.",
   "main": "dist/qflow.js",
   "types": "dist/qflow.d.ts",
