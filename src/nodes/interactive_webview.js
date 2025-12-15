@@ -19,7 +19,7 @@ export class InteractiveWebviewNode extends AsyncNode {
           mode: {
             type: "string",
             enum: ["notification", "dialog", "input", "custom", "custom-dialog", "custom-input"],
-            description: "The mode of the webview. Agents should generally default to 'custom-dialog' (custom HTML with dialog options), 'custom-input' (custom HTML with text input), or 'notification' (message with close button) for interactive tasks. For 'custom' mode, you provide the full HTML and JavaScript, and since it can only be closed by closing the window, the flow will hang upon webview closure, making 'custom' mode suitable primarily as a final action or when no return value is expected. Do NOT use `window.qflow.send()` or similar custom mechanisms. Other modes are 'dialog' (message with options), 'input' (message with text input)."
+            description: "The mode of the webview. Agents should default to using specifically 'custom-dialog' (custom HTML with dialog options), 'custom-input' (custom HTML with text input), or 'notification' (message with close button) for interactive tasks. In 'custom' mode (don't use much), you provide the full HTML and JavaScript, and since it can only be closed by closing the window, the flow will hang upon webview closure, making 'custom' mode suitable primarily as a final action or when no return value is expected. Do NOT use `window.qflow.send()` or similar custom mechanisms. Other modes are 'dialog' (message with options), 'input' (message with text input) - prefer custom-input and custom-dialog over these."
           },
           message: {
             type: "string",
