@@ -18,8 +18,8 @@ export class InteractiveWebviewNode extends AsyncNode {
         properties: {
           mode: {
             type: "string",
-            enum: ["custom-dialog", "custom-input", "notification", "dialog", "input", "custom"],
-            description: "The mode of the webview. Commonly used options include 'custom-dialog' (custom HTML with dialog options), 'custom-input' (custom HTML with text input), and 'notification' (message with close button). Other modes are 'dialog' (message with options), 'input' (message with text input), or 'custom' (full HTML control)."
+            enum: ["notification", "dialog", "input", "custom", "custom-dialog", "custom-input"],
+            description: "The mode of the webview. For 'custom-dialog' and 'custom-input' modes, the tool generates the interactive elements (buttons or input field) based on 'options' or 'multilineInput' parameters; the 'html' parameter is for additional display content only. For 'custom' mode, you provide the full HTML and JavaScript, and must call the globally available JavaScript function `qflow(result)` directly from your HTML/JavaScript to return data. Do NOT use `window.qflow.send()` or similar custom mechanisms. Other modes are 'notification' (message with close button), 'dialog' (message with options), 'input' (message with text input)."
           },
           message: {
             type: "string",
@@ -57,7 +57,7 @@ export class InteractiveWebviewNode extends AsyncNode {
           },
           html: {
             type: "string",
-            description: "Required for 'custom' mode. The full HTML content to display in the webview."
+            description: "Required for 'custom' mode. The full HTML content to display in the webview. For 'custom-dialog' and 'custom-input' modes, this HTML should be for display purposes only and should NOT contain interactive elements (like buttons or input fields) that attempt to return data to the flow, as these are handled by the tool's 'options' or 'multilineInput' parameters."
           },
           multilineInput: {
             type: "boolean",
