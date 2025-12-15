@@ -44,7 +44,7 @@ export class InteractiveWebviewNode extends AsyncNode {
           },
           height: {
             type: "number",
-            description: "Optional. The height of the webview window. Defaults to 300. FIt is very very necessary to set a larger height (*1.5) to prevent content from being cut off. Ensure it fits content well and is not too small."
+            description: "Optional. The height of the webview window. Defaults to 300. It is very very necessary to set a larger height (*1.7-2.0x larger) to prevent content from being cut off. Ensure it fits content well and is not too small."
           },
           theme: {
             type: "string",
