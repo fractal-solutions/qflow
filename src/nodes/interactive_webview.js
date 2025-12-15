@@ -18,8 +18,8 @@ export class InteractiveWebviewNode extends AsyncNode {
         properties: {
           mode: {
             type: "string",
-            enum: ["notification", "dialog", "input", "custom"],
-            description: "The mode of the webview: 'notification' (message with close button), 'dialog' (message with options), 'input' (message with text input), or 'custom' (full HTML control)."
+            enum: ["custom-dialog", "custom-input", "notification", "dialog", "input", "custom"],
+            description: "The mode of the webview. Commonly used options include 'custom-dialog' (custom HTML with dialog options), 'custom-input' (custom HTML with text input), and 'notification' (message with close button). Other modes are 'dialog' (message with options), 'input' (message with text input), or 'custom' (full HTML control)."
           },
           message: {
             type: "string",
@@ -44,7 +44,7 @@ export class InteractiveWebviewNode extends AsyncNode {
           },
           height: {
             type: "number",
-            description: "Optional. The height of the webview window. Defaults to 300. Ensure it fits content well and is not too small."
+            description: "Optional. The height of the webview window. Defaults to 300. For agent-generated content or elaborate custom HTML, it is often necessary to set a larger height to prevent content from being cut off. Ensure it fits content well and is not too small."
           },
           theme: {
             type: "string",
@@ -116,9 +116,25 @@ export class InteractiveWebviewNode extends AsyncNode {
         if (!html) {
           throw new Error('InteractiveWebviewNode in custom mode requires an `html` parameter.');
         }
-        contentHtml = html;
+        // Inject a helper function for custom HTML to send data back
+        const injectedScript = `
+          <script>
+            function sendResultToQflow(data) {
+              if (typeof qflow === 'function') {
+                qflow(data);
+              } else {
+                console.error("qflow function not available in webview context.");
+              }
+            }
+          </script>
+        `;
+        contentHtml = html.replace('</body>', `${injectedScript}</body>`);
+        if (!html.includes('</body>')) {
+          // Fallback if </body> tag is missing
+          contentHtml = `${html}${injectedScript}`;
+        }
       } else {
-        contentHtml = this.generateHTML(mode, { message, options, prompt, title, theme, multilineInput });
+        contentHtml = this.generateHTML(mode, { message, options, prompt, title, theme, multilineInput, html });
       }
       webview.setHTML(contentHtml);
       webview.run(); // This is a blocking call
@@ -153,7 +169,7 @@ export class InteractiveWebviewNode extends AsyncNode {
   }
 
   generateHTML(mode, params) {
-    const { message, options, prompt, title, theme, multilineInput } = params;
+    const { message, options, prompt, title, theme, multilineInput, html } = params;
 
     const lightTheme = `
       @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -344,29 +360,37 @@ export class InteractiveWebviewNode extends AsyncNode {
     `;
 
     let contentHtml = '';
+    let interactiveElements = '';
+    let mainContent = message || prompt || ''; // Default content if no custom HTML
+
+    if (mode === 'custom-dialog' || mode === 'custom-input') {
+      if (html) {
+        mainContent = html; // Use custom HTML if provided
+      }
+    }
+
     switch (mode) {
       case 'dialog':
-        contentHtml = `
-          <h1>${message}</h1>
+      case 'custom-dialog':
+        interactiveElements = `
           <div class="button-group">
             ${options.map(option => `<button onclick="qflow('${option}')">${option}</button>`).join('')}
           </div>
         `;
         break;
       case 'input':
+      case 'custom-input':
         const inputElement = multilineInput ?
-          `<textarea id="userInput" rows="10" style="width: 80%;"></textarea>` :
-          `<input type="text" id="userInput" onkeydown="if(event.key==='Enter') document.getElementById('submitBtn').click()"/>`;
-        contentHtml = `
-          <h1>${prompt}</h1>
+          `<textarea id="userInput" rows="10" style="margin-top: 20px;"></textarea>` :
+          `<input type="text" id="userInput" onkeydown="if(event.key==='Enter') document.getElementById('submitBtn').click()" style="margin-top: 20px;"/>`;
+        interactiveElements = `
           ${inputElement}
           <button id="submitBtn" onclick="qflow(document.getElementById('userInput').value)">Submit</button>
         `;
         break;
       case 'notification':
       default:
-        contentHtml = `
-          <h1>${message}</h1>
+        interactiveElements = `
           <div class="button-group">
             <button onclick="qflow('closed')">${theme === 'dark' ? 'Acknowledge' : 'Close'}</button>
           </div>
@@ -374,7 +398,7 @@ export class InteractiveWebviewNode extends AsyncNode {
         break;
     }
 
-    const container = `<div class="container"><div class="title-bar">${title}</div><div class="content">${contentHtml}</div></div>`;
+    const container = `<div class="container"><div class="title-bar">${title}</div><div class="content">${mode === 'custom-dialog' || mode === 'custom-input' ? mainContent : `<h1>${mainContent}</h1>`}${interactiveElements}</div></div>`;
 
     return `
       <html>
