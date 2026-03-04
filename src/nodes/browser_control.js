@@ -6,13 +6,13 @@ export class BrowserControlNode extends AsyncNode {
   static getToolDefinition() {
     return {
       name: "browser_control",
-      description: "Controls a web browser to navigate pages, interact with elements, and take screenshots.",
+      description: "Controls a Playwright browser to navigate pages, interact with elements, evaluate scripts, take screenshots, and close the session.",
       parameters: {
         type: "object",
         properties: {
           action: {
             type: "string",
-            enum: ["goto", "click", "type", "screenshot", "close"],
+            enum: ["goto", "click", "type", "screenshot", "evaluate", "close"],
             description: "The browser action to perform."
           },
           url: {
@@ -30,6 +30,19 @@ export class BrowserControlNode extends AsyncNode {
           path: {
             type: "string",
             description: "The file path to save a screenshot (for 'screenshot' action)."
+          },
+          script: {
+            type: "string",
+            description: "JavaScript expression or function body to evaluate in the page context (for 'evaluate' action)."
+          },
+          browserType: {
+            type: "string",
+            enum: ["chromium", "firefox", "webkit"],
+            description: "Browser engine to launch when no browser exists in shared state. Defaults to 'chromium'."
+          },
+          launchOptions: {
+            type: "object",
+            description: "Playwright launch options used when a new browser is created (e.g. { headless: true })."
           }
         },
         required: ["action"]
