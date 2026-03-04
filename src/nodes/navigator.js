@@ -3,6 +3,7 @@ import { log } from '../logger.js';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
+import os from 'os';
 
 function normalizeBaseUrl(baseUrl = 'http://localhost:9867') {
   return baseUrl.replace(/\/+$/, '');
@@ -26,6 +27,15 @@ function buildQuery(params = {}) {
 
 async function sleep(ms) {
   await new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export class NavigatorNode extends AsyncNode {
@@ -187,6 +197,10 @@ export class NavigatorNode extends AsyncNode {
           pollIntervalMs: {
             type: "number",
             description: "wait_instance_ready polling interval in milliseconds."
+          },
+          pinchtabBinaryPath: {
+            type: "string",
+            description: "Optional full path to PinchTab binary. If omitted, NavigatorNode attempts auto-detection."
           }
         },
         required: ["action"]
@@ -426,6 +440,12 @@ export class NavigatorNode extends AsyncNode {
       env.BRIDGE_PORT = String(port);
     }
 
+    const binaryPath = await this.resolvePinchTabBinaryPath();
+    if (binaryPath) {
+      env.PINCHTAB_BINARY_PATH = binaryPath;
+      log(`[NavigatorNode] Using PinchTab binary at ${binaryPath}`, this.params.logging);
+    }
+
     log(`[NavigatorNode] Starting PinchTab orchestrator on ${baseUrl}`, this.params.logging);
     await this.startPinchTabProcess(env);
 
@@ -474,6 +494,40 @@ export class NavigatorNode extends AsyncNode {
     };
   }
 
+  async resolvePinchTabBinaryPath() {
+    if (this.params.pinchtabBinaryPath) {
+      return this.params.pinchtabBinaryPath;
+    }
+
+    const home = os.homedir();
+    if (!home) return null;
+
+    const directPath = path.join(home, '.pinchtab', 'bin', 'pinchtab-linux-x64');
+    if (await fileExists(directPath)) {
+      return directPath;
+    }
+
+    const baseDir = path.join(home, '.pinchtab', 'bin');
+    let entries = [];
+    try {
+      entries = await fs.readdir(baseDir, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+
+    const versionDirs = entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
+
+    for (const versionDir of versionDirs) {
+      const x64Path = path.join(baseDir, versionDir, 'pinchtab-linux-x64');
+      if (await fileExists(x64Path)) return x64Path;
+
+      const amd64Path = path.join(baseDir, versionDir, 'pinchtab-linux-amd64');
+      if (await fileExists(amd64Path)) return amd64Path;
+    }
+
+    return null;
+  }
+
   async startPinchTabProcess(env) {
     await new Promise((resolve, reject) => {
       const proc = spawn('pinchtab', [], {
@@ -483,6 +537,15 @@ export class NavigatorNode extends AsyncNode {
       });
 
       let settled = false;
+      let exited = false;
+      let exitCode = null;
+      let exitSignal = null;
+
+      proc.once('exit', (code, signal) => {
+        exited = true;
+        exitCode = code;
+        exitSignal = signal;
+      });
 
       proc.once('error', (error) => {
         if (settled) return;
@@ -491,10 +554,17 @@ export class NavigatorNode extends AsyncNode {
       });
 
       proc.once('spawn', () => {
-        if (settled) return;
-        settled = true;
-        proc.unref();
-        resolve();
+        setTimeout(() => {
+          if (settled) return;
+          if (exited) {
+            settled = true;
+            reject(new Error(`'pinchtab' exited immediately (code: ${String(exitCode)}, signal: ${String(exitSignal)}).`));
+            return;
+          }
+          settled = true;
+          proc.unref();
+          resolve();
+        }, 350);
       });
     });
   }
