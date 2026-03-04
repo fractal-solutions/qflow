@@ -42,12 +42,22 @@ The `AgentNode` can be equipped with a variety of tools to perform a wide range 
     *   `auth`: Authentication configuration.
 *   **web_scraper**: Fetches the HTML content of a given URL.
     *   `url`: The URL to scrape.
-*   **browser_control**: Controls a web browser to navigate pages, interact with elements, and take screenshots.
+*   **browser_control**: Controls a Playwright browser to navigate pages, interact with elements, evaluate scripts, and take screenshots.
     *   `action`: The browser action to perform.
     *   `url`: The URL to navigate to (for 'goto' action).
     *   `selector`: A CSS selector to target an element (for 'click' and 'type' actions).
     *   `text`: The text to type into an input field (for 'type' action).
     *   `path`: The file path to save a screenshot (for 'screenshot' action).
+    *   `script`: JavaScript to run in the page context (for 'evaluate' action).
+    *   `browserType`: Browser engine (`chromium`, `firefox`, `webkit`).
+    *   `launchOptions`: Playwright launch options used when creating the browser.
+*   **navigator**: Controls a PinchTab orchestrator for advanced browser automation (profiles, instances, tabs, snapshot/text/actions, screenshots/PDF, locks, and fingerprints).
+    *   `action`: Navigator operation to run (e.g. `start_instance`, `open_tab`, `snapshot`, `action`, `pdf`, `lock_tab`).
+    *   `baseUrl`: PinchTab orchestrator URL (default `http://localhost:9867`).
+    *   `autoStartOrchestrator`: If true, auto-starts PinchTab when unreachable.
+    *   `instanceId`, `tabId`, `profileId`: IDs for instance/tab/profile scoped operations.
+    *   `url`, `interaction`, `interactions`, `expression`: Inputs for navigation, actions, and evaluate operations.
+    *   `snapshotOptions`, `screenshotOptions`, `pdfOptions`: Request options for structure/media extraction.
 
 ### Data & Code
 

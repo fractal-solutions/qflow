@@ -302,7 +302,8 @@ Here's a comprehensive list of integrated nodes available in qflow, along with a
 *   **[WebScraperNode](documentation/nodes/web_scraper.md)**: Fetches the HTML content of a given URL.
 *   **[DuckDuckGoSearchNode](documentation/nodes/duckduckgo_search.md)**: Performs a web search using DuckDuckGo.
 *   **[GoogleSearchNode](documentation/nodes/google_search.md)**: Performs a web search using the Google Custom Search API.
-*   **[BrowserControlNode](documentation/nodes/browser_control.md)**: Controls a web browser to navigate pages, interact with elements, and take screenshots.
+*   **[BrowserControlNode](documentation/nodes/browser_control.md)**: Controls a Playwright browser to navigate pages, interact with elements, evaluate scripts, and take screenshots.
+*   **[NavigatorNode](documentation/nodes/navigator.md)**: Controls PinchTab instances/tabs for advanced browser navigation, snapshots, actions, text extraction, media export, and tab safety features.
 *   **[WebSocketsNode](documentation/nodes/websockets.md)**: Provides real-time, two-way communication with web services.
 *   **[WebhookNode](documentation/nodes/webhook.md)**: Exposes an HTTP endpoint to receive webhooks, triggering a specified qflow flow.
 *   **[HttpServerNode](documentation/nodes/http_server.md)**: Creates a web server and handles HTTP requests by triggering a qflow flow.
@@ -818,6 +819,5 @@ test("Node should handle parameters via setParams", () => {
 ## Contributing
 
 We welcome contributions! Please see our GitHub repository for more details on how to contribute.
-
 
 

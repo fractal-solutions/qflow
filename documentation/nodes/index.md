@@ -50,6 +50,7 @@ This section contains detailed documentation for each of the integrated nodes in
 *   [DuckDuckGoSearchNode](duckduckgo_search.md)
 *   [GoogleSearchNode](google_search.md)
 *   [BrowserControlNode](browser_control.md)
+*   [NavigatorNode](navigator.md)
 *   [WebSocketsNode](websockets.md)
 *   [WebhookNode](webhook.md)
 *   [HttpServerNode](http_server.md)
