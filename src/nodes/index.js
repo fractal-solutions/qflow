@@ -46,3 +46,4 @@ export * from '../agent/lpavrl_agent.js';
 export * from '../agent/pema_agent.js';
 export * from './webview.js';
 export * from './interactive_webview.js';
+export * from './navigator.js';
