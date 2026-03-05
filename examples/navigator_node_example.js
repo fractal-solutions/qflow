@@ -1,223 +1,197 @@
-import { NavigatorNode } from '../src/nodes/navigator.js';
+import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';
+import { NavigatorNode } from '@fractal-solutions/qflow/nodes';
 
-async function runNavigator(action, params, shared) {
+const BASE_URL = 'http://localhost:9867';
+const TARGET_URL = 'https://the-internet.herokuapp.com/login';
+
+async function runNavigator(shared, action, params = {}) {
   const node = new NavigatorNode();
-  node.setParams({ action, ...params });
-  const result = await node.runAsync(shared);
-  return result;
+  node.setParams({ action, baseUrl: shared.baseUrl, ...params });
+  return await node.runAsync(shared);
 }
 
-function getFirstRefByRole(snapshot, roles) {
-  const nodes = snapshot?.nodes || snapshot?.elements || [];
-  const match = nodes.find((item) => roles.includes(item.role));
-  return match?.ref;
+function arr(value) {
+  if (Array.isArray(value)) return value;
+  if (value && Array.isArray(value.items)) return value.items;
+  if (value && Array.isArray(value.tabs)) return value.tabs;
+  if (value && Array.isArray(value.instances)) return value.instances;
+  if (value && Array.isArray(value.profiles)) return value.profiles;
+  return [];
 }
 
-(async () => {
-  const shared = {};
-  const baseUrl = 'http://localhost:9867';
-  const profileName = `qflow-navigator-${Date.now()}`;
-  let profileId;
-  let instanceId;
-  let tabId;
-
-  try {
+class InitNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    shared.baseUrl = BASE_URL;
+    shared.mode = 'unknown';
+    shared.profileId = null;
+    shared.instanceId = null;
+    shared.tabId = null;
     console.log('Navigator tool definition:', NavigatorNode.getToolDefinition().name);
+    return 'default';
+  }
+}
 
-    const orchestrator = await runNavigator('ensure_orchestrator', {
-      baseUrl,
+class EnsureNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    const status = await runNavigator(shared, 'ensure_orchestrator', {
       autoStartOrchestrator: true,
-      orchestratorWaitMs: 15000
-    }, shared);
-    console.log('orchestrator:', orchestrator.status);
+      orchestratorWaitMs: 10000
+    });
+    console.log('orchestrator:', status?.status || 'running');
+    return 'default';
+  }
+}
 
-    const profile = await runNavigator('create_profile', {
-      baseUrl,
-      profileName
-    }, shared);
-    profileId = profile.id;
-    console.log('profile:', profileId, profileName);
+class DetectModeNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    try {
+      const probe = await runNavigator(shared, 'create_profile', {
+        profileName: `qflow-probe-${Date.now()}`
+      });
+      shared.mode = 'orchestrator';
+      shared.profileId = probe?.id || null;
+      return 'orchestrator';
+    } catch (error) {
+      const message = String(error?.message || '');
+      if (message.includes('HTTP 405') && message.includes('POST /profiles')) {
+        shared.mode = 'single_session';
+        return 'single_session';
+      }
+      throw error;
+    }
+  }
 
-    const profiles = await runNavigator('list_profiles', { baseUrl }, shared);
-    console.log('profiles total:', Array.isArray(profiles) ? profiles.length : 0);
+  async postAsync(shared, prepRes, execRes) {
+    return execRes;
+  }
+}
 
-    const instance = await runNavigator('start_instance', {
-      baseUrl,
-      mode: 'headless',
-      profileId
-    }, shared);
-    instanceId = instance.id;
-    console.log('instance:', instanceId, instance.status);
+class OrchestratorPathNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    console.log('mode: orchestrator');
 
-    const ready = await runNavigator('wait_instance_ready', {
-      baseUrl,
-      instanceId,
+    const instance = await runNavigator(shared, 'start_instance', {
+      profileId: shared.profileId,
+      mode: 'headless'
+    });
+    shared.instanceId = instance.id;
+
+    await runNavigator(shared, 'wait_instance_ready', {
+      instanceId: shared.instanceId,
       waitTimeoutMs: 20000,
       pollIntervalMs: 500
-    }, shared);
-    console.log('instance ready:', ready.ready, `(${ready.waitedMs}ms)`);
+    });
 
-    const html = `
-      <html>
-        <head><title>Qflow Navigator Demo</title></head>
-        <body>
-          <h1>Qflow Navigator</h1>
-          <a href="https://example.com" aria-label="Example Link">Open Example</a>
-          <form>
-            <label>Email <input aria-label="Email Input" value=""></label>
-            <label>Plan
-              <select aria-label="Plan Select">
-                <option>Basic</option>
-                <option>Pro</option>
-              </select>
-            </label>
-            <button type="button" aria-label="Submit Button" onclick="document.querySelector('#status').textContent='submitted'">Submit</button>
-          </form>
-          <p id="status">idle</p>
-        </body>
-      </html>
-    `;
+    const tab = await runNavigator(shared, 'open_tab', {
+      instanceId: shared.instanceId,
+      url: TARGET_URL
+    });
+    shared.tabId = tab.id;
 
-    const tab = await runNavigator('open_tab', {
-      baseUrl,
-      instanceId,
-      url: `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
-    }, shared);
-    tabId = tab.id;
-    console.log('tab:', tabId);
+    console.log('tab:', shared.tabId);
+    return 'default';
+  }
+}
 
-    const snapshot = await runNavigator('snapshot', {
-      baseUrl,
-      tabId,
+class SingleSessionPathNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    console.log('mode: single-session');
+    const tabs = arr(await runNavigator(shared, 'list_tabs'));
+    if (!tabs.length) {
+      throw new Error('No tabs found in single-session mode.');
+    }
+
+    shared.tabId = tabs[0].id;
+    await runNavigator(shared, 'navigate', {
+      tabId: shared.tabId,
+      url: TARGET_URL,
+      timeout: 15000
+    });
+
+    console.log('tab:', shared.tabId);
+    return 'default';
+  }
+}
+
+class DemoActionsNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    const snapshot = await runNavigator(shared, 'snapshot', {
+      tabId: shared.tabId,
       snapshotOptions: {
         interactive: true,
         compact: true,
-        depth: 3,
+        depth: 4,
         maxTokens: 1800
       }
-    }, shared);
+    });
     const nodes = snapshot?.nodes || snapshot?.elements || [];
     console.log('snapshot nodes:', nodes.length);
 
-    const emailRef = getFirstRefByRole(snapshot, ['textbox']);
-    const selectRef = getFirstRefByRole(snapshot, ['combobox', 'listbox']);
-    const submitRef = getFirstRefByRole(snapshot, ['button']);
-    const linkRef = getFirstRefByRole(snapshot, ['link']);
+    const evalRes = await runNavigator(shared, 'evaluate', {
+      tabId: shared.tabId,
+      expression: 'JSON.stringify({ title: document.title, url: location.href })',
+      awaitExpression: true
+    });
+    console.log('evaluate:', evalRes?.result || evalRes);
 
-    if (emailRef && selectRef && submitRef) {
-      const batchAction = await runNavigator('actions', {
-        baseUrl,
-        tabId,
-        interactions: [
-          { kind: 'fill', ref: emailRef, text: 'agent@qflow.dev' },
-          { kind: 'select', ref: selectRef, text: 'Pro' },
-          { kind: 'click', ref: submitRef }
-        ]
-      }, shared);
-      console.log('actions count:', batchAction?.results?.length ?? 0);
-    }
+    const text = await runNavigator(shared, 'text', { tabId: shared.tabId });
+    console.log('text preview:', String(text?.text || '').slice(0, 120).replace(/\s+/g, ' '));
 
-    if (linkRef) {
-      await runNavigator('action', {
-        baseUrl,
-        tabId,
-        interaction: { kind: 'hover', ref: linkRef }
-      }, shared);
-      console.log('single action: hover on link');
-    }
-
-    const text = await runNavigator('text', {
-      baseUrl,
-      tabId
-    }, shared);
-    console.log('text preview:', (text.text || '').slice(0, 90).replace(/\s+/g, ' '));
-
-    const evalResult = await runNavigator('evaluate', {
-      baseUrl,
-      tabId,
-      expression: 'JSON.stringify({ title: document.title, status: document.querySelector("#status")?.textContent })'
-    }, shared);
-    console.log('evaluate result:', evalResult?.result || evalResult);
-
-    await runNavigator('lock_tab', {
-      baseUrl,
-      tabId,
-      owner: 'qflow-example-agent',
-      ttl: 30
-    }, shared);
-    const lockStatus = await runNavigator('tab_lock_status', {
-      baseUrl,
-      tabId
-    }, shared);
-    console.log('lock status:', lockStatus);
-
-    await runNavigator('unlock_tab', {
-      baseUrl,
-      tabId,
-      owner: 'qflow-example-agent'
-    }, shared);
-
-    const fingerprint = await runNavigator('rotate_fingerprint', {
-      baseUrl,
-      tabId
-    }, shared);
-    console.log('fingerprint rotated:', fingerprint?.rotated ?? true);
-
-    const fpStatus = await runNavigator('fingerprint_status', {
-      baseUrl,
-      tabId
-    }, shared);
-    console.log('fingerprint status:', fpStatus);
-
-    const cookies = await runNavigator('get_cookies', {
-      baseUrl,
-      tabId
-    }, shared);
-    console.log('cookies:', Array.isArray(cookies) ? cookies.length : 0);
-
-    const screenshot = await runNavigator('screenshot', {
-      baseUrl,
-      tabId,
+    const screenshot = await runNavigator(shared, 'screenshot', {
+      tabId: shared.tabId,
       outputPath: './examples/output/navigator-demo.jpg',
-      screenshotOptions: { format: 'jpeg', quality: 82 }
-    }, shared);
-    console.log('screenshot:', screenshot.outputPath, screenshot.sizeBytes);
+      screenshotOptions: { format: 'jpeg', quality: 85 }
+    });
+    console.log('screenshot:', screenshot?.outputPath, screenshot?.sizeBytes);
 
-    const pdf = await runNavigator('pdf', {
-      baseUrl,
-      tabId,
+    const pdf = await runNavigator(shared, 'pdf', {
+      tabId: shared.tabId,
       outputPath: './examples/output/navigator-demo.pdf',
       pdfOptions: { landscape: false, scale: 1.0 }
-    }, shared);
-    console.log('pdf:', pdf.outputPath, pdf.sizeBytes);
+    });
+    console.log('pdf:', pdf?.outputPath, pdf?.sizeBytes);
 
-    console.log('\nNavigator example completed successfully.');
-  } catch (error) {
-    console.error('\nNavigator example failed:', error.message);
-    throw error;
-  } finally {
-    if (tabId) {
-      try {
-        await runNavigator('close_tab', { baseUrl, tabId }, shared);
-      } catch (error) {
-        console.warn('close_tab cleanup skipped:', error.message);
-      }
-    }
-
-    if (instanceId) {
-      try {
-        await runNavigator('stop_instance', { baseUrl, instanceId }, shared);
-      } catch (error) {
-        console.warn('stop_instance cleanup skipped:', error.message);
-      }
-    }
-
-    if (profileId) {
-      try {
-        await runNavigator('delete_profile', { baseUrl, profileId }, shared);
-      } catch (error) {
-        console.warn('delete_profile cleanup skipped:', error.message);
-      }
-    }
+    return 'default';
   }
-})();
+}
+
+class CleanupNode extends AsyncNode {
+  async execAsync(prepRes, shared) {
+    if (shared.mode === 'orchestrator' && shared.tabId) {
+      try { await runNavigator(shared, 'close_tab', { tabId: shared.tabId }); } catch {}
+    }
+    if (shared.mode === 'orchestrator' && shared.instanceId) {
+      try { await runNavigator(shared, 'stop_instance', { instanceId: shared.instanceId }); } catch {}
+    }
+    if (shared.mode === 'orchestrator' && shared.profileId) {
+      try { await runNavigator(shared, 'delete_profile', { profileId: shared.profileId }); } catch {}
+    }
+    console.log('\nNavigator demo completed.');
+    return 'default';
+  }
+}
+
+const initNode = new InitNode();
+const ensureNode = new EnsureNode();
+const detectNode = new DetectModeNode();
+const orchestratorNode = new OrchestratorPathNode();
+const singleSessionNode = new SingleSessionPathNode();
+const demoNode = new DemoActionsNode();
+const cleanupNode = new CleanupNode();
+
+initNode.next(ensureNode);
+ensureNode.next(detectNode);
+detectNode.next(orchestratorNode, 'orchestrator');
+detectNode.next(singleSessionNode, 'single_session');
+orchestratorNode.next(demoNode);
+singleSessionNode.next(demoNode);
+demoNode.next(cleanupNode);
+
+const flow = new AsyncFlow(initNode);
+
+try {
+  await flow.runAsync({});
+} catch (error) {
+  console.error('\nNavigator example failed:', error.message);
+  throw error;
+}
