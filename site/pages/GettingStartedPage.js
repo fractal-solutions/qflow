@@ -77,18 +77,18 @@ window.GettingStartedPage = () => {
                     </div>
                     <h1 className="text-4xl font-display text-ink">Ship your first qflow workflow in minutes</h1>
                     <p className="text-muted">
-                        Start with create-qflow or install the library directly. This guide shows the scaffolder flow and a complete workflow example with shared state and async nodes.
+                        Start with create-qflow or install the library directly. You only need one path: use the scaffolder for a full starter, or install the package into an existing project.
                     </p>
                     <div className="glass rounded-2xl p-6 shadow-soft min-w-0">
                         <p className="text-xs uppercase tracking-wide text-accent">Quick checklist</p>
                         <div className="mt-4 space-y-3 text-sm text-muted">
                             <div className="flex items-center space-x-2">
                                 <span className="h-2 w-2 rounded-full bg-accent"></span>
-                                <span>Install with bunx or npm</span>
+                                <span>Pick one path: scaffolder or direct install</span>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <span className="h-2 w-2 rounded-full bg-accent"></span>
-                                <span>Pick a workflow style that matches your codebase</span>
+                                <span>Select a workflow style that matches your codebase</span>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <span className="h-2 w-2 rounded-full bg-accent"></span>
@@ -98,10 +98,14 @@ window.GettingStartedPage = () => {
                     </div>
                 </div>
                 <div className="glass rounded-3xl p-8 shadow-soft min-w-0">
-                    <p className="text-xs uppercase tracking-wide text-muted">Scaffold</p>
-                    <CodeBlock code={installScaffold} title="create-qflow install" language="bash" />
-                    <CodeBlock code={usageScaffold} title="create-qflow usage" language="bash" />
-                    <p className="text-xs uppercase tracking-wide text-muted mt-6">Library install</p>
+                    <p className="text-xs uppercase tracking-wide text-muted">Scaffold a new project (recommended for new apps)</p>
+                    <CodeBlock code={installScaffold} title="create-qflow" language="bash" />
+                    <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted">
+                        <span className="h-px flex-1 bg-slate-300/60"></span>
+                        <span>OR</span>
+                        <span className="h-px flex-1 bg-slate-300/60"></span>
+                    </div>
+                    <p className="text-xs uppercase tracking-wide text-muted">Install into an existing project (preferred on Windows)</p>
                     <CodeBlock code={coreInstall} title="Install qflow" language="bash" />
                 </div>
             </section>
