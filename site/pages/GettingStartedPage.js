@@ -1,143 +1,153 @@
-const GettingStartedPage = () => {
-    const step1Code = `bunx create-qflow@latest my-weather-cli
-cd my-weather-cli`;
+window.GettingStartedPage = () => {
+    const CodeBlock = window.CodeBlock;
 
-    const step2Code = `// weather-flow.js
-import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';
-import { HttpRequestNode, UserInputNode } from '@fractal-solutions/qflow/nodes`;
+    const installScaffold = `bunx create-qflow@latest my-new-project`;
+    const usageScaffold = `bunx create-qflow@latest <project-name>`;
 
-    const step3Code = `// 1. Node to get the city from the user
-const getCity = new UserInputNode();
-getCity.setParams({
-    prompt: 'Enter a city name: '
-});
+    const coreInstall = `npm install @fractal-solutions/qflow\n# or\nbun add @fractal-solutions/qflow`;
 
-// This node's 'postAsync' will save the user's input into the shared state
-getCity.postAsync = async (shared, _, city) => {
-    shared.city = city.trim();
-    console.log(`Fetching weather for ${shared.city}...`);
-    return 'default';
-};
+    const step1Code = `bunx create-qflow@latest my-weather-cli\ncd my-weather-cli`;
 
-    const step4Code = `// 2. Node to call the weather API
-const fetchWeather = new HttpRequestNode();
+    const step2Code = `// weather-flow.js\nimport { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';\nimport { HttpRequestNode, UserInputNode } from '@fractal-solutions/qflow/nodes';`;
 
-// 'prepAsync' is used to prepare data right before execution.
-// Here, we use the city from the shared state to build the API URL.
-fetchWeather.prepAsync = async (shared) => {
-    if (!shared.city) {
-        throw new Error('City not provided!');
-    }
-    // wttr.in is a great, simple weather API that returns JSON
-    fetchWeather.setParams({
-        url: `https://wttr.in/${encodeURIComponent(shared.city)}?format=j1`,
-        method: 'GET',
-    });
-};
+    const step3Code = `const getCity = new UserInputNode();\ngetCity.setParams({ prompt: 'Enter a city name: ' });\n\ngetCity.postAsync = async (shared, _, city) => {\n  shared.city = city.trim();\n  console.log('Fetching weather for ' + shared.city + '...');\n  return 'default';\n};`;
 
-// 'postAsync' saves the weather data to the shared state
-fetchWeather.postAsync = async (shared, _, execRes) => {
-    if (execRes.status === 200) {
-        shared.weather = execRes.body; // The body is already parsed JSON
-    } else {
-        throw new Error(`Failed to fetch weather: ${execRes.status}`);
-    }
-    return 'default';
-};
+    const step4Code = `const fetchWeather = new HttpRequestNode();\n\nfetchWeather.prepAsync = async (shared) => {\n  if (!shared.city) throw new Error('City not provided!');\n  fetchWeather.setParams({\n    url: 'https://wttr.in/' + encodeURIComponent(shared.city) + '?format=j1',\n    method: 'GET',\n  });\n};\n\nfetchWeather.postAsync = async (shared, _, execRes) => {\n  if (execRes.status === 200) {\n    shared.weather = execRes.body;\n  } else {\n    throw new Error('Failed to fetch weather: ' + execRes.status);\n  }\n  return 'default';\n};`;
 
-    const step5Code = `// 3. Node to display the result
-class DisplayWeatherNode extends AsyncNode {
-    async execAsync(prepRes, shared) {
-        const weather = shared.weather;
-        if (!weather) {
-            console.log("Could not retrieve weather data.");
-            return;
-        }
+    const step5Code = `class DisplayWeatherNode extends AsyncNode {\n  async execAsync(prepRes, shared) {\n    const weather = shared.weather;\n    if (!weather) return;\n\n    const current = weather.current_condition[0];\n    const feelsLike = current.FeelsLikeC;\n    const temp = current.temp_C;\n    const description = current.weatherDesc[0].value;\n\n    console.log('--- Weather in ' + shared.city + ' ---');\n    console.log(description + ', ' + temp + '°C (Feels like ' + feelsLike + '°C)');\n  }\n}\n\nconst displayWeather = new DisplayWeatherNode();`;
 
-        const current = weather.current_condition[0];
-        const feelsLike = current.FeelsLikeC;
-        const temp = current.temp_C;
-        const description = current.weatherDesc[0].value;
-
-        console.log(`\n--- Weather in ${shared.city} ---`);
-        console.log(`${description}, ${temp}°C (Feels like ${feelsLike}°C)`);
-        console.log('---------------------------\n');
-    }
-}
-
-const displayWeather = new DisplayWeatherNode();`;
-
-    const step6Code = `// 4. Chain the nodes together and create the flow
-getCity.next(fetchWeather);
-fetchWeather.next(displayWeather);
-
-// 5. Create and run the AsyncFlow
-const weatherFlow = new AsyncFlow(getCity);
-
-(async () => {
-    try {
-        await weatherFlow.runAsync({});
-        console.log('Weather check complete!');
-    } catch (error) {
-        console.error('Flow failed:', error.message);
-    }
-})();`;
+    const step6Code = `getCity.next(fetchWeather);\nfetchWeather.next(displayWeather);\n\nconst weatherFlow = new AsyncFlow(getCity);\n\n(async () => {\n  try {\n    await weatherFlow.runAsync({});\n    console.log('Weather check complete!');\n  } catch (error) {\n    console.error('Flow failed:', error.message);\n  }\n})();`;
 
     const step7Code = `node weather-flow.js`;
 
+    const workflowStyles = [
+        {
+            title: 'Concise (Functional)',
+            body: 'Create an AsyncNode and override execAsync/postAsync directly.'
+        },
+        {
+            title: 'Flexible (Object Spread)',
+            body: 'Use object spread to extend an AsyncNode inline for quick flows.'
+        },
+        {
+            title: 'Structured (Class-based)',
+            body: 'Extend AsyncNode for encapsulation and reuse.'
+        },
+        {
+            title: 'Agent (Generic LLM)',
+            body: 'Scaffold a generic agent with configurable base URL, model, and tools.'
+        }
+    ];
+
     return (
-        <div className="container mx-auto px-6 py-12 text-left max-w-4xl">
-            <h1 className="text-4xl font-bold text-white font-orbitron">Getting Started</h1>
-            <p className="mt-4 text-lg text-gray-400">
-                Welcome to qflow! Let's build your first project: a simple command-line weather tool. This will introduce you to the core concepts of nodes, flows, and shared state.
-            </p>
+        <div className="container mx-auto px-6 py-14">
+            <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="space-y-6">
+                    <div className="inline-flex items-center space-x-2 rounded-full border border-slate-200 bg-white/70 px-4 py-1 text-xs uppercase tracking-wide text-accent">
+                        <span className="h-2 w-2 rounded-full bg-accent"></span>
+                        <span>Getting Started</span>
+                    </div>
+                    <h1 className="text-4xl font-display text-ink">Ship your first qflow workflow in minutes</h1>
+                    <p className="text-muted">
+                        Start with create-qflow or install the library directly. This guide shows the scaffolder flow and a complete workflow example with shared state and async nodes.
+                    </p>
+                    <div className="glass rounded-2xl p-6 shadow-soft">
+                        <p className="text-xs uppercase tracking-wide text-accent">Quick checklist</p>
+                        <div className="mt-4 space-y-3 text-sm text-muted">
+                            <div className="flex items-center space-x-2">
+                                <span className="h-2 w-2 rounded-full bg-accent"></span>
+                                <span>Install with bunx or npm</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <span className="h-2 w-2 rounded-full bg-accent"></span>
+                                <span>Pick a workflow style that matches your codebase</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <span className="h-2 w-2 rounded-full bg-accent"></span>
+                                <span>Run a flow and inspect shared state</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="glass rounded-3xl p-8 shadow-soft">
+                    <p className="text-xs uppercase tracking-wide text-muted">Scaffold</p>
+                    <CodeBlock code={installScaffold} title="create-qflow install" language="bash" />
+                    <CodeBlock code={usageScaffold} title="create-qflow usage" language="bash" />
+                    <p className="text-xs uppercase tracking-wide text-muted mt-6">Library install</p>
+                    <CodeBlock code={coreInstall} title="Install qflow" language="bash" />
+                </div>
+            </section>
 
-            <div className="mt-12">
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron">Step 1: Create a New Project</h2>
-                <p className="mt-2 text-gray-400">
-                    The easiest way to start is with the `create-qflow` tool, which sets up a new project with all the necessary files.
-                </p>
-                <CodeBlock code={step1Code} />
+            <section className="mt-12">
+                <div className="glass rounded-3xl p-8 shadow-soft">
+                    <h2 className="text-2xl font-display text-ink">Choose your workflow style</h2>
+                    <p className="mt-3 text-muted">
+                        create-qflow prompts you to select a workflow style so you can start with the coding approach that best matches your team.
+                    </p>
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                        {workflowStyles.map((style) => (
+                            <div key={style.title} className="surface rounded-2xl p-4">
+                                <p className="text-sm font-semibold text-ink">{style.title}</p>
+                                <p className="mt-2 text-sm text-muted">{style.body}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 2: Create Your Flow File</h2>
-                <p className="mt-2 text-gray-400">
-                    Inside your new project, create a file named `weather-flow.js`. This is where we'll define our workflow. Start by importing the necessary classes.
-                </p>
-                <CodeBlock code={step2Code} />
+            <section className="mt-12 grid gap-8 md:grid-cols-2">
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 1: Create the project</h2>
+                    <p className="mt-2 text-sm text-muted">Scaffold the directory and install dependencies.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step1Code} title="Create Project" language="bash" />
+                    </div>
+                </div>
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 2: Import nodes</h2>
+                    <p className="mt-2 text-sm text-muted">Use the core Flow/AsyncNode classes and built-in nodes.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step2Code} title="Imports" language="js" />
+                    </div>
+                </div>
+            </section>
 
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 3: Get User Input</h2>
-                <p className="mt-2 text-gray-400">
-                    First, we need a node to ask the user for a city. We'll use the built-in `UserInputNode`. After the user enters a city, we use `postAsync` to save the result into the flow's `shared` state object.
-                </p>
-                <CodeBlock code={step3Code} />
+            <section className="mt-8 grid gap-8 md:grid-cols-2">
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 3: Capture input</h2>
+                    <p className="mt-2 text-sm text-muted">Store user input into shared state.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step3Code} title="User Input" language="js" />
+                    </div>
+                </div>
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 4: Fetch data</h2>
+                    <p className="mt-2 text-sm text-muted">Use HttpRequestNode in prepAsync/postAsync.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step4Code} title="HTTP Request" language="js" />
+                    </div>
+                </div>
+            </section>
 
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 4: Fetch the Weather</h2>
-                <p className="mt-2 text-gray-400">
-                    Next, we'll use the `HttpRequestNode` to call a weather API. We use the `prepAsync` method to dynamically set the URL based on the city we saved in the `shared` state.
-                </p>
-                <CodeBlock code={step4Code} />
-
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 5: Display the Result</h2>
-                <p className="mt-2 text-gray-400">
-                    Now we need a node to present the data to the user. We can create a custom `AsyncNode` for this. It reads the weather data from the `shared` state and prints a formatted message to the console.
-                </p>
-                <CodeBlock code={step5Code} />
-
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 6: Assemble and Run the Flow</h2>
-                <p className="mt-2 text-gray-400">
-                    Finally, we chain our nodes together using `.next()` to define the sequence of operations. We then create an `AsyncFlow`, give it our starting node, and call `runAsync()` to execute the workflow.
-                </p>
-                <CodeBlock code={step6Code} />
-
-                <h2 className="text-2xl font-bold text-cyan-400 font-orbitron mt-8">Step 7: Run Your Project!</h2>
-                <p className="mt-2 text-gray-400">
-                    Save all the code into your `weather-flow.js` file and run it from your terminal.
-                </p>
-                <CodeBlock code={step7Code} />
-                <p className="mt-4 text-gray-400">
-                    You've just created a complete qflow application! You can see how easy it is to chain different operations, pass data between them, and handle asynchronous tasks. From here, you can explore more complex flows, different nodes, and the powerful agent capabilities.
-                </p>
-            </div>
+            <section className="mt-8 grid gap-8 md:grid-cols-2">
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 5: Render output</h2>
+                    <p className="mt-2 text-sm text-muted">Format results with a custom AsyncNode.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step5Code} title="Display Result" language="js" />
+                    </div>
+                </div>
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h2 className="text-xl font-display text-ink">Step 6: Run the flow</h2>
+                    <p className="mt-2 text-sm text-muted">Chain nodes and run asynchronously.</p>
+                    <div className="mt-4">
+                        <CodeBlock code={step6Code} title="Run Flow" language="js" />
+                        <div className="mt-4">
+                            <CodeBlock code={step7Code} title="Execute" language="bash" />
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 };
