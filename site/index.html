@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>qflow - Lightweight Workflow and Agent Library</title>
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('qflow-theme');
+                if (saved) {
+                    document.documentElement.setAttribute('data-theme', saved);
+                }
+            } catch (e) {
+                // Ignore theme initialization errors.
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +29,26 @@
             --accent: #0f766e;
             --accent-2: #f59e0b;
             --ring: rgba(15, 118, 110, 0.25);
+            --surface: rgba(255, 255, 255, 0.75);
+            --surface-2: rgba(255, 255, 255, 0.9);
+            --border: rgba(15, 23, 42, 0.12);
+            --code-bg: #0b111a;
+            --code-text: #e2e8f0;
+            --shadow: 0 20px 60px rgba(10, 15, 20, 0.1);
+        }
+        [data-theme="dark"] {
+            --ink: #e5e7eb;
+            --paper: #0a0f1a;
+            --muted: #94a3b8;
+            --accent: #34d399;
+            --accent-2: #fbbf24;
+            --ring: rgba(52, 211, 153, 0.3);
+            --surface: rgba(15, 23, 42, 0.7);
+            --surface-2: rgba(15, 23, 42, 0.92);
+            --border: rgba(148, 163, 184, 0.2);
+            --code-bg: #0f172a;
+            --code-text: #e2e8f0;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
         * { box-sizing: border-box; }
         body {
@@ -25,6 +57,12 @@
                         radial-gradient(900px 600px at 90% 0%, #fff3d8 0%, transparent 50%),
                         var(--paper);
             color: var(--ink);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        [data-theme="dark"] body {
+            background: radial-gradient(1200px 700px at 10% -10%, rgba(16, 185, 129, 0.12) 0%, transparent 55%),
+                        radial-gradient(900px 600px at 90% 0%, rgba(251, 191, 36, 0.12) 0%, transparent 50%),
+                        var(--paper);
         }
         h1, h2, h3, h4, h5, h6, .font-display {
             font-family: 'Fraunces', serif;
@@ -66,12 +104,32 @@
             50% { transform: translateY(-8px); }
         }
         .glass {
-            background: rgba(255, 255, 255, 0.7);
+            background: var(--surface);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(15, 118, 110, 0.15);
+            border: 1px solid var(--border);
+        }
+        .surface {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
         }
         .shadow-soft {
-            box-shadow: 0 20px 60px rgba(10, 15, 20, 0.1);
+            box-shadow: var(--shadow);
+        }
+        .text-muted { color: var(--muted); }
+        .text-accent { color: var(--accent); }
+        .bg-accent { background: var(--accent); }
+        .border-accent { border-color: var(--accent); }
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .code-block pre {
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        .code-block code {
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -86,6 +144,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 
+    <script type="text/babel" src="components/Navbar.js"></script>
+    <script type="text/babel" src="components/Footer.js"></script>
+    <script type="text/babel" src="components/CodeBlock.js"></script>
+    <script type="text/babel" src="pages/LandingPage.js"></script>
+    <script type="text/babel" src="pages/GettingStartedPage.js"></script>
+    <script type="text/babel" src="pages/DocsPage.js"></script>
+    <script type="text/babel" src="pages/ExamplesPage.js"></script>
     <script type="text/babel" src="app.js"></script>
 </body>
 </html>
