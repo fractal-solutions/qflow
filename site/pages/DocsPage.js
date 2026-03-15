@@ -407,6 +407,51 @@ window.DocsPage = () => {
         return lines.filter(Boolean);
     };
 
+    const parseMarkdownTable = (text) => {
+        if (!text) return null;
+        const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+        const tableLines = lines.filter((line) => line.includes('|'));
+        if (tableLines.length < 2) return null;
+        const header = tableLines[0];
+        const separator = tableLines[1];
+        if (!separator.match(/^\|?\s*-+/)) return null;
+        const parseRow = (row) =>
+            row
+                .split('|')
+                .map((cell) => cell.trim())
+                .filter((cell) => cell.length);
+        const headers = parseRow(header);
+        const rows = tableLines.slice(2).map(parseRow).filter((row) => row.length);
+        if (!headers.length) return null;
+        return { headers, rows };
+    };
+
+    const renderTable = (table) => {
+        const headers = table.headers;
+        const rows = table.rows.map((row) => {
+            const obj = {};
+            headers.forEach((header, idx) => {
+                obj[header] = row[idx] || '';
+            });
+            return obj;
+        });
+
+        return (
+            <div className="mt-3 space-y-2">
+                {rows.map((row, idx) => (
+                    <div key={`${row[headers[0]] || 'row'}-${idx}`} className="rounded-lg surface p-2 text-xs text-muted">
+                        {headers.map((header) => (
+                            <div key={`${header}-${idx}`} className="grid grid-cols-[96px_1fr] gap-2 py-0.5">
+                                <div className="font-semibold text-ink">{header}</div>
+                                <div className="break-words">{row[header]}</div>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     const renderList = (items, { tokenize } = { tokenize: false }) => (
         <ul className="mt-2 space-y-1 text-xs text-muted">
             {items.map((item, idx) => (
@@ -423,6 +468,8 @@ window.DocsPage = () => {
         const doc = getNodeDoc(activeNode.docKey);
         const parameters = toListItems(doc.parameters);
         const returns = toListItems(doc.returns);
+        const parameterTable = parseMarkdownTable(doc.parameters);
+        const returnsTable = parseMarkdownTable(doc.returns);
         const description = doc.description || activeNode.summary;
         const notes = toListItems(doc.notes);
         const requirements = toListItems(doc.requirements);
@@ -458,15 +505,19 @@ window.DocsPage = () => {
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="surface rounded-2xl p-4">
                             <h3 className="text-sm font-semibold text-ink">Parameters</h3>
-                            {parameters.length > 0 ? renderList(parameters, { tokenize: true }) : (
-                                <p className="mt-2 text-xs text-muted">Parameters not specified in docs.</p>
-                            )}
+                            {parameterTable
+                                ? renderTable(parameterTable)
+                                : parameters.length > 0
+                                    ? renderList(parameters, { tokenize: true })
+                                    : <p className="mt-2 text-xs text-muted">Parameters not specified in docs.</p>}
                         </div>
                         <div className="surface rounded-2xl p-4">
                             <h3 className="text-sm font-semibold text-ink">Returns / Output</h3>
-                            {returns.length > 0 ? renderList(returns, { tokenize: true }) : (
-                                <p className="mt-2 text-xs text-muted">Returns not specified in docs.</p>
-                            )}
+                            {returnsTable
+                                ? renderTable(returnsTable)
+                                : returns.length > 0
+                                    ? renderList(returns, { tokenize: true })
+                                    : <p className="mt-2 text-xs text-muted">Returns not specified in docs.</p>}
                         </div>
                     </div>
 
@@ -792,15 +843,22 @@ window.DocsPage = () => {
 
     const sections = [
         {
-            title: 'Essentials',
+            title: 'Getting Oriented',
             items: [
                 { id: 'overview', label: 'Overview' },
                 { id: 'core-primitives', label: 'Core Primitives' },
                 { id: 'async-and-batch', label: 'Async and Batch' },
+                { id: 'create-qflow', label: 'create-qflow' },
             ]
         },
         {
-            title: 'Agents',
+            title: 'Node Reference',
+            items: [
+                { id: 'node-catalog', label: 'Node Catalog' },
+            ]
+        },
+        {
+            title: 'Agents & Tools',
             items: [
                 { id: 'agents-and-tools', label: 'Agents and Tools' },
                 { id: 'custom-tools', label: 'Custom Tools' },
@@ -814,22 +872,15 @@ window.DocsPage = () => {
             ]
         },
         {
-            title: 'Scaffolding',
-            items: [
-                { id: 'create-qflow', label: 'create-qflow' },
-                { id: 'workflow-styles', label: 'Workflow Styles' },
-            ]
-        },
-        {
             title: 'Patterns',
             items: [
                 { id: 'common-patterns', label: 'Common Patterns' },
             ]
         },
         {
-            title: 'Reference',
+            title: 'Workflow Styles',
             items: [
-                { id: 'node-catalog', label: 'Node Catalog' },
+                { id: 'workflow-styles', label: 'Workflow Styles' },
             ]
         }
     ];

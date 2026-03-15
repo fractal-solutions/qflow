@@ -183,6 +183,111 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            display: block;
+            overflow-x: auto;
+        }
+        .prose thead,
+        .prose tbody {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .prose th,
+        .prose td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        .prose th {
+            background: var(--surface);
+            color: var(--ink);
+            font-weight: 600;
+        }
+        .splash {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--paper);
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+        }
+        .splash.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .splash-inner {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .splash-logo {
+            width: 88px;
+            height: 88px;
+            display: grid;
+            place-items: center;
+            position: relative;
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+        .splash-logo::before,
+        .splash-logo::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(251, 191, 36, 0.18));
+            transform: rotate(8deg);
+        }
+        .splash-logo::after {
+            transform: rotate(-8deg);
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.18), rgba(251, 191, 36, 0.12));
+        }
+        .splash-logo svg {
+            position: relative;
+            width: 54px;
+            height: 54px;
+            z-index: 1;
+        }
+        .splash-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            color: var(--ink);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .splash-bar {
+            width: 160px;
+            height: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .splash-bar span {
+            display: block;
+            height: 100%;
+            width: 40%;
+            background: var(--accent);
+            animation: slide 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+        @keyframes slide {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(60%); }
+            100% { transform: translateX(220%); }
+        }
         .param-token {
             display: inline-block;
             padding: 2px 6px;
@@ -196,6 +301,21 @@
     </style>
 </head>
 <body class="antialiased">
+    <div id="splash" class="splash">
+        <div class="splash-inner">
+            <div class="splash-logo" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <path d="M16 20h32v8H16z" fill="var(--accent)"/>
+                    <path d="M12 32h40v8H12z" fill="var(--accent-2)"/>
+                    <path d="M20 44h24v6H20z" fill="var(--accent)"/>
+                    <circle cx="20" cy="16" r="4" fill="var(--accent-2)"/>
+                    <circle cx="44" cy="16" r="4" fill="var(--accent)"/>
+                </svg>
+            </div>
+            <div class="splash-title">qflow</div>
+            <div class="splash-bar"><span></span></div>
+        </div>
+    </div>
     <div class="noise"></div>
     <div id="root"></div>
 
@@ -216,5 +336,13 @@
     <script type="text/babel" src="pages/DocsPage.js"></script>
     <script type="text/babel" src="pages/ExamplesPage.js"></script>
     <script type="text/babel" src="app.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const splash = document.getElementById('splash');
+            if (!splash) return;
+            splash.classList.add('hide');
+            setTimeout(() => splash.remove(), 500);
+        });
+    </script>
 </body>
 </html>
