@@ -7,23 +7,76 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
     <style>
+        :root {
+            --ink: #0c0f14;
+            --paper: #f5f3ef;
+            --muted: #5b6270;
+            --accent: #0f766e;
+            --accent-2: #f59e0b;
+            --ring: rgba(15, 118, 110, 0.25);
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Roboto Mono', monospace;
-            background-color: #0a0a1a;
-            color: #e0e0e0;
+            font-family: 'Space Grotesk', sans-serif;
+            background: radial-gradient(1200px 700px at 10% -10%, #e6f5f2 0%, transparent 55%),
+                        radial-gradient(900px 600px at 90% 0%, #fff3d8 0%, transparent 50%),
+                        var(--paper);
+            color: var(--ink);
         }
-        h1, h2, h3, h4, h5, h6, .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
+        h1, h2, h3, h4, h5, h6, .font-display {
+            font-family: 'Fraunces', serif;
         }
-        pre[class*="language-"] {
-            background: #000;
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+            z-index: -1;
+        }
+        .glow-orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(60px);
+            opacity: 0.5;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(16px);
+            animation: reveal 0.8s ease forwards;
+        }
+        .reveal-1 { animation-delay: 0.05s; }
+        .reveal-2 { animation-delay: 0.15s; }
+        .reveal-3 { animation-delay: 0.25s; }
+        .reveal-4 { animation-delay: 0.35s; }
+        .float-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes reveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(15, 118, 110, 0.15);
+        }
+        .shadow-soft {
+            box-shadow: 0 20px 60px rgba(10, 15, 20, 0.1);
         }
     </style>
 </head>
 <body class="antialiased">
+    <div class="noise"></div>
     <div id="root"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
