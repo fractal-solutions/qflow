@@ -4,6 +4,7 @@ window.DocsPage = () => {
     const [activeTopic, setActiveTopic] = React.useState('overview');
     const [nodeQuery, setNodeQuery] = React.useState('');
     const [activeNode, setActiveNode] = React.useState(null);
+    const [navOpen, setNavOpen] = React.useState(false);
 
     const topics = {
         'overview': {
@@ -166,7 +167,14 @@ window.DocsPage = () => {
         'common-patterns': {
             title: 'Common Patterns',
             content: `
-                <p>Practical recipes for everyday workflows.</p>
+                <p>Practical recipes for everyday workflows. These patterns show how teams structure reusable flows, keep state predictable, and blend tools, data, and agents.</p>
+                <p>Each pattern below is designed to be copy-paste friendly and modular. Swap nodes, change the shared state shape, or insert observability and logging nodes to match your stack.</p>
+                <ul>
+                    <li><strong>Data pipelines:</strong> ingest, validate, transform, and persist.</li>
+                    <li><strong>Agent workflows:</strong> tools, memory, and multi-step reasoning.</li>
+                    <li><strong>Automation loops:</strong> poll, compare, notify, and escalate.</li>
+                    <li><strong>Batch processing:</strong> sequential or parallel item handling.</li>
+                </ul>
             `
         },
         'node-catalog': {
@@ -213,6 +221,16 @@ window.DocsPage = () => {
             code: `const fetch = new HttpRequestNode();\nconst validate = new DataValidationNode();\nconst transform = new TransformNode();\nconst db = new DatabaseNode();\n\nfetch.next(validate).next(transform).next(db);\nconst flow = new AsyncFlow(fetch);\nawait flow.runAsync({});`
         },
         {
+            title: 'Polling + alerting loop',
+            description: 'Check an endpoint on a schedule, compare to thresholds, and alert.',
+            code: `const poll = new HttpRequestNode();\npoll.setParams({ url: 'https://api.example.com/metrics' });\n\nconst transform = new TransformNode();\ntransform.setParams({\n  transform: (shared, _, execRes) => ({\n    value: execRes.body.value,\n    alert: execRes.body.value > 80\n  })\n});\n\nconst notify = new SystemNotificationNode();\nnotify.setParams({ title: 'Metric Alert', message: 'Threshold breached.' });\n\npoll.next(transform).next(notify);\nconst flow = new AsyncFlow(poll);\nawait flow.runAsync({});`
+        },
+        {
+            title: 'Multi-step approval workflow',
+            description: 'Collect approval, log decisions, and notify stakeholders.',
+            code: `const request = new InteractiveInputNode();\nrequest.setParams({ prompt: 'Approve deployment? (yes/no)' });\n\nconst validate = new TransformNode();\nvalidate.setParams({\n  transform: (shared, _, execRes) => ({ approved: execRes.trim().toLowerCase() === 'yes' })\n});\n\nconst notify = new SystemNotificationNode();\nnotify.setParams({ title: 'Deployment', message: 'Approval captured.' });\n\nrequest.next(validate).next(notify);\nconst flow = new AsyncFlow(request);\nawait flow.runAsync({});`
+        },
+        {
             title: 'Agent + tool registry',
             description: 'Expose tools as nodes and let an agent plan the workflow.',
             code: `const tools = {\n  http_request: new HttpRequestNode(),\n  shell_command: new ShellCommandNode(),\n  web_scraper: new WebScraperNode(),\n};\nconst agent = new AgentNode(llm, tools);\nconst flow = new AsyncFlow(agent);\nawait flow.runAsync({});`
@@ -221,6 +239,21 @@ window.DocsPage = () => {
             title: 'File processing batch',
             description: 'Iterate over files, parse content, and store summaries.',
             code: `const iterator = new IteratorNode();\niterator.setParams({\n  items: ['file1.txt', 'file2.txt'],\n  flow: new AsyncFlow(readNode)\n});\nawait new AsyncFlow(iterator).runAsync({});`
+        },
+        {
+            title: 'Batch + parallel fan-out',
+            description: 'Process many items concurrently and merge results.',
+            code: `const parallel = new AsyncParallelBatchFlow(processNode, { concurrency: 4 });\nconst batchNode = new BatchFlowNode(parallel);\nbatchNode.setParams({ items: [1, 2, 3, 4] });\n\nconst flow = new AsyncFlow(batchNode);\nawait flow.runAsync({});`
+        },
+        {
+            title: 'RAG prep flow',
+            description: 'Chunk files, embed them, and write to semantic memory.',
+            code: `const list = new ListDirectoryNode();\nlist.setParams({ directoryPath: './docs' });\n\nconst iterator = new IteratorNode();\niterator.setParams({\n  items: ['file1.md', 'file2.md'],\n  flow: new AsyncFlow(readNode)\n});\n\nconst embed = new EmbeddingNode();\nconst memory = new SemanticMemoryNode();\n\nlist.next(iterator).next(embed).next(memory);\nconst flow = new AsyncFlow(list);\nawait flow.runAsync({});`
+        },
+        {
+            title: 'Webhook to ETL',
+            description: 'Receive webhooks, enrich, and store results.',
+            code: `const webhook = new WebHookNode();\nwebhook.setParams({ port: 8080, path: '/events' });\n\nconst enrich = new HttpRequestNode();\nenrich.setParams({ url: 'https://api.example.com/enrich' });\n\nconst store = new DatabaseNode();\nstore.setParams({ adapter: 'sqlite', connection: ':memory:', action: 'insert', table: 'events' });\n\nwebhook.next(enrich).next(store);\nconst flow = new AsyncFlow(webhook);\nawait flow.runAsync({});`
         },
         {
             title: 'Interactive webview flow',
@@ -747,10 +780,10 @@ window.DocsPage = () => {
         );
     };
 
-    const SidebarLink = ({ topicId, children }) => (
+    const SidebarLink = ({ topicId, children, onClick }) => (
         <a
             href="#"
-            onClick={(e) => { e.preventDefault(); setActiveTopic(topicId); }}
+            onClick={(e) => { e.preventDefault(); setActiveTopic(topicId); if (onClick) onClick(); }}
             className={`block px-4 py-2 rounded-xl transition-colors ${activeTopic === topicId ? 'bg-accent text-white' : 'text-muted hover:bg-white/70 hover:text-ink'}`}
         >
             {children}
@@ -803,8 +836,16 @@ window.DocsPage = () => {
 
     return (
         <div className="container mx-auto px-6 py-14">
+            <div className="mb-6 md:hidden">
+                <button
+                    onClick={() => setNavOpen(true)}
+                    className="w-full rounded-2xl surface px-4 py-3 text-left text-sm font-semibold text-ink"
+                >
+                    Open Contents
+                </button>
+            </div>
             <div className="grid gap-8 md:grid-cols-[260px_1fr] min-w-0">
-                <aside className="space-y-6 min-w-0">
+                <aside className="space-y-6 min-w-0 hidden md:block">
                     <div className="glass rounded-2xl p-5 shadow-soft">
                         <p className="text-xs uppercase tracking-wide text-muted">Contents</p>
                         <nav className="mt-4 space-y-4">
@@ -830,6 +871,43 @@ window.DocsPage = () => {
                 </aside>
                 <main className="min-w-0">{renderContent()}</main>
             </div>
+            {navOpen && (
+                <div className="fixed inset-0 z-[60] md:hidden">
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        onClick={() => setNavOpen(false)}
+                    ></div>
+                    <div className="absolute inset-x-4 top-6 bottom-6 glass rounded-3xl p-5 shadow-soft overflow-y-auto">
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs uppercase tracking-wide text-muted">Contents</p>
+                            <button
+                                onClick={() => setNavOpen(false)}
+                                className="px-3 py-1 rounded-full surface text-xs font-semibold text-ink hover:border-accent hover:shadow-soft transition"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <nav className="mt-4 space-y-4">
+                            {sections.map((section) => (
+                                <div key={section.title} className="space-y-2">
+                                    <p className="text-xs font-semibold text-muted uppercase tracking-wide">{section.title}</p>
+                                    <div className="space-y-1">
+                                        {section.items.map((item) => (
+                                            <SidebarLink
+                                                key={item.id}
+                                                topicId={item.id}
+                                                onClick={() => setNavOpen(false)}
+                                            >
+                                                {item.label}
+                                            </SidebarLink>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </nav>
+                    </div>
+                </div>
+            )}
             {renderNodeModal()}
         </div>
     );

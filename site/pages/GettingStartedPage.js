@@ -68,9 +68,9 @@ window.GettingStartedPage = () => {
     ];
 
     return (
-        <div className="container mx-auto px-6 py-14">
-            <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-                <div className="space-y-6">
+        <div className="container mx-auto px-4 sm:px-6 py-14">
+            <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] min-w-0">
+                <div className="space-y-6 min-w-0">
                     <div className="inline-flex items-center space-x-2 rounded-full chip-accent px-4 py-1 text-xs uppercase tracking-wide">
                         <span className="h-2 w-2 rounded-full bg-accent"></span>
                         <span>Getting Started</span>
@@ -79,7 +79,7 @@ window.GettingStartedPage = () => {
                     <p className="text-muted">
                         Start with create-qflow or install the library directly. This guide shows the scaffolder flow and a complete workflow example with shared state and async nodes.
                     </p>
-                    <div className="glass rounded-2xl p-6 shadow-soft">
+                    <div className="glass rounded-2xl p-6 shadow-soft min-w-0">
                         <p className="text-xs uppercase tracking-wide text-accent">Quick checklist</p>
                         <div className="mt-4 space-y-3 text-sm text-muted">
                             <div className="flex items-center space-x-2">
@@ -97,7 +97,7 @@ window.GettingStartedPage = () => {
                         </div>
                     </div>
                 </div>
-                <div className="glass rounded-3xl p-8 shadow-soft">
+                <div className="glass rounded-3xl p-8 shadow-soft min-w-0">
                     <p className="text-xs uppercase tracking-wide text-muted">Scaffold</p>
                     <CodeBlock code={installScaffold} title="create-qflow install" language="bash" />
                     <CodeBlock code={usageScaffold} title="create-qflow usage" language="bash" />

@@ -120,10 +120,12 @@
             background: var(--surface);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
+            min-width: 0;
         }
         .surface {
             background: var(--surface-2);
             border: 1px solid var(--border);
+            min-width: 0;
         }
         .shadow-soft {
             box-shadow: var(--shadow);
@@ -160,15 +162,19 @@
             border: 1px solid rgba(148, 163, 184, 0.2);
             max-width: 100%;
             min-width: 0;
+            overflow-x: auto;
         }
         .code-header {\n            background: var(--code-header);\n        }
         .code-block pre {
             font-size: 0.75rem;
             line-height: 1.4;
             max-width: 100%;
+            overflow-x: auto;
         }
         .code-block code {
             font-size: 0.75rem;
+            display: block;
+            max-width: 100%;
         }
         .prose {
             overflow-wrap: anywhere;

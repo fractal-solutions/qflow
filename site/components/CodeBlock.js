@@ -19,7 +19,7 @@ window.CodeBlock = ({ code, title, language }) => {
     };
 
     return (
-        <div className="code-block w-full rounded-2xl overflow-hidden shadow-soft">
+        <div className="code-block w-full min-w-0 rounded-2xl overflow-hidden shadow-soft">
             <div className="code-header flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-white/10 text-slate-200">
                 <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide min-w-0">
                     <span>{title || 'Code Example'}</span>
@@ -32,7 +32,7 @@ window.CodeBlock = ({ code, title, language }) => {
                     {copyText}
                 </button>
             </div>
-            <pre className="p-4 overflow-x-auto">
+            <pre className="p-4 overflow-x-auto min-w-0">
                 <code ref={codeRef} className={`language-${language || 'js'}`}>
                     {code}
                 </code>
