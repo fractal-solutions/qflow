@@ -58,8 +58,8 @@ await flow.runAsync();`;
         <div className="container mx-auto px-6 py-16">
             <section className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
                 <div className="space-y-6">
-                    <div className="inline-flex items-center space-x-2 rounded-full border border-teal-900/10 bg-white/70 px-4 py-1 text-xs uppercase tracking-wide text-teal-800">
-                        <span className="h-2 w-2 rounded-full bg-teal-600"></span>
+                    <div className="inline-flex items-center space-x-2 rounded-full chip-accent px-4 py-1 text-xs uppercase tracking-wide">
+                        <span className="h-2 w-2 rounded-full bg-accent"></span>
                         <span>Agentic workflows without the weight</span>
                     </div>
                     <h1 className="text-4xl md:text-6xl font-display text-ink leading-tight reveal reveal-1">
@@ -128,7 +128,7 @@ await flow.runAsync();`;
                     <span className="h-px w-16 bg-slate-300"></span>
                     <div className="flex flex-wrap gap-2">
                         {['Automation', 'Data Pipelines', 'Agents', 'Observability', 'Integrations'].map((label) => (
-                            <span key={label} className="px-3 py-1 rounded-full bg-white/70 border border-slate-200 text-muted">{label}</span>
+                            <span key={label} className="px-3 py-1 rounded-full chip text-xs">{label}</span>
                         ))}
                     </div>
                 </div>
@@ -203,7 +203,7 @@ await flow.runAsync();`;
                             <p className="mt-2 text-sm text-muted">{item.description}</p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {item.tags.map((tag) => (
-                                    <span key={tag} className="px-2 py-1 rounded-full bg-white/70 border border-slate-200 text-xs text-muted">{tag}</span>
+                                    <span key={tag} className="px-2 py-1 rounded-full chip text-xs">{tag}</span>
                                 ))}
                             </div>
                         </div>

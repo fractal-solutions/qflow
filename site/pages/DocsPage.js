@@ -22,27 +22,56 @@ window.DocsPage = () => {
         'core-primitives': {
             title: 'Core Primitives',
             content: `
-                <p>qflow is built around a small, consistent runtime. You build Nodes, connect them in a Flow, and pass a shared state object through the graph. This keeps data movement explicit and easy to inspect.</p>
+                <p>qflow is built around a small, consistent runtime. You build Nodes, connect them in a Flow, and pass a shared state object through the graph. This keeps data movement explicit, debuggable, and easy to evolve as your workflow grows.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Shared state</h4>
                 <p>A mutable object that flows through each node. It is the primary mechanism for passing context, accumulating results, and coordinating subflows.</p>
+                <ul>
+                    <li><strong>Single source of truth:</strong> treat <code>shared</code> as your workflow's memory.</li>
+                    <li><strong>Predictable handoff:</strong> every node can read/write to shared.</li>
+                    <li><strong>Low ceremony:</strong> no DTOs or heavy schemas unless you want them.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Node lifecycle</h4>
                 <p>Nodes implement <code>prep</code>, <code>exec</code>, and <code>post</code>. Async nodes mirror this with <code>prepAsync</code>, <code>execAsync</code>, and <code>postAsync</code>. Each stage can read and write shared state.</p>
+                <ul>
+                    <li><strong>prep:</strong> compute inputs, read shared, validate params.</li>
+                    <li><strong>exec:</strong> do the actual work (IO, compute, tool call).</li>
+                    <li><strong>post:</strong> write results to shared and choose next action.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Flow orchestration</h4>
                 <p>Flows connect nodes with <code>.next()</code>. You can branch on returned actions, invoke subflows, and chain batches for iterative work.</p>
+                <ul>
+                    <li><strong>Linear:</strong> node A -> node B -> node C.</li>
+                    <li><strong>Conditional:</strong> return action strings to route to different nodes.</li>
+                    <li><strong>Subflows:</strong> encapsulate complex logic and reuse it.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Retries & fallback</h4>
-                <p>AsyncNode supports retries and fallback handlers for resilient execution.</p>
+                <p>AsyncNode supports retries and fallback handlers for resilient execution. This is ideal for flaky APIs and transient errors.</p>
+                <ul>
+                    <li><strong>Retries:</strong> configure retry count and backoff.</li>
+                    <li><strong>Fallback:</strong> provide a graceful alternative when a node fails.</li>
+                </ul>
             `
         },
         'async-and-batch': {
             title: 'Async and Batch',
             content: `
-                <p>Asynchronous execution is first-class. Use AsyncNode and AsyncFlow for I/O-heavy tasks, and batch flows for iterating over collections.</p>
+                <p>Asynchronous execution is first-class. Use AsyncNode and AsyncFlow for I/O-heavy tasks, and batch flows for iterating over collections. This keeps your workflows responsive while handling APIs, file systems, and external services.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">AsyncFlow</h4>
                 <p>Run async nodes with <code>runAsync()</code> and capture outputs in shared state. This is the standard for networked tools and file I/O.</p>
+                <ul>
+                    <li><strong>Non-blocking:</strong> await I/O without freezing the pipeline.</li>
+                    <li><strong>Composable:</strong> async nodes behave exactly like sync nodes in the graph.</li>
+                    <li><strong>Observable:</strong> events include async durations and statuses.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Batch flows</h4>
                 <p>AsyncBatchFlow and AsyncParallelBatchFlow let you process lists sequentially or in parallel while reusing a subflow.</p>
+                <ul>
+                    <li><strong>Sequential batch:</strong> maintain ordering or rate limits.</li>
+                    <li><strong>Parallel batch:</strong> maximize throughput when tasks are independent.</li>
+                    <li><strong>Shared context:</strong> aggregate results into shared state.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">IteratorNode</h4>
-                <p>Use IteratorNode when you want to apply a subflow to each item in a collection with full shared context.</p>
+                <p>Use IteratorNode when you want to apply a subflow to each item in a collection with full shared context. It provides a clean way to reuse logic without custom loops.</p>
             `
         },
         'agents-and-tools': {
@@ -51,10 +80,25 @@ window.DocsPage = () => {
                 <p>Agents wrap the qflow runtime with a tool-using reasoning loop. Tools are nodes with JSON schema definitions that make them callable by the LLM.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">AgentNode</h4>
                 <p>Provide an LLM node plus a map of tool nodes. The agent chooses tools based on the goal, then observes tool output.</p>
+                <ul>
+                    <li><strong>Goal-driven:</strong> set a single goal and let the agent plan actions.</li>
+                    <li><strong>Tool registry:</strong> tools are simply node instances in a map.</li>
+                    <li><strong>Memory-aware:</strong> pair with MemoryNode/SemanticMemoryNode for context.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Tool definitions</h4>
                 <p>Tool nodes expose a static <code>getToolDefinition()</code> JSON schema. This schema informs and validates tool calls.</p>
+                <ul>
+                    <li><strong>Safe by design:</strong> parameters must match schema.</li>
+                    <li><strong>Readable:</strong> descriptions become the agent’s tool guide.</li>
+                    <li><strong>Composable:</strong> tools are reusable in any flow.</li>
+                </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Agent cycles</h4>
                 <p>qflow ships with multiple reasoning cycles (RAOR, OODA, PEMA) to structure the loop.</p>
+                <ul>
+                    <li><strong>RAOR:</strong> Reflect, Act, Observe, Refine.</li>
+                    <li><strong>OODA:</strong> Observe, Orient, Decide, Act.</li>
+                    <li><strong>PEMA:</strong> Plan, Execute, Monitor, Adapt.</li>
+                </ul>
             `
         },
         'observability': {
@@ -94,13 +138,13 @@ window.DocsPage = () => {
             content: `
                 <p>create-qflow offers multiple coding styles to match your preferences and team habits.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Concise (Functional)</h4>
-                <p>Create an <code>AsyncNode</code> and override methods directly.</p>
+                <p>Create an <code>AsyncNode</code> and override methods directly. Best for quick scripts and small utilities.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Flexible (Object Spread)</h4>
-                <p>Use object spread to extend an <code>AsyncNode</code> instance inline.</p>
+                <p>Use object spread to extend an <code>AsyncNode</code> instance inline. Great for concise inline nodes.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Structured (Class-based)</h4>
-                <p>Define a dedicated class that extends <code>AsyncNode</code> for encapsulation and reuse.</p>
+                <p>Define a dedicated class that extends <code>AsyncNode</code> for encapsulation and reuse. Ideal for larger teams and shared libraries.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Agent (Generic LLM)</h4>
-                <p>Scaffold a generic agent with a configurable base URL, API key, model, and tools.</p>
+                <p>Scaffold a generic agent with a configurable base URL, API key, model, and tools. Useful for multi-tool, multi-step automation.</p>
             `
         },
         'custom-tools': {
@@ -111,6 +155,12 @@ window.DocsPage = () => {
                 <p>Extend <code>AsyncNode</code> and provide a <code>getToolDefinition()</code> JSON schema.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Register the node</h4>
                 <p>Add your node path to <code>qflow.config.js</code> so agents can discover it automatically.</p>
+                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Design tips</h4>
+                <ul>
+                    <li><strong>Small surface area:</strong> keep parameters tight and explicit.</li>
+                    <li><strong>Deterministic outputs:</strong> return structured data where possible.</li>
+                    <li><strong>Shared state:</strong> store results in shared for downstream nodes.</li>
+                </ul>
             `
         },
         'common-patterns': {
@@ -151,6 +201,10 @@ window.DocsPage = () => {
     const observabilitySnippet = `const flow = new AsyncFlow(startNode);\nflow.on('flow:start', ({ flowId }) => console.log('Flow', flowId));\nflow.on('node:end', ({ nodeClass, duration }) => console.log(nodeClass, duration));\nawait flow.runAsync({});`;
 
     const loggingSnippet = `import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';\nsetLogLevel(LogLevel.INFO);\n\nconst node = new HttpRequestNode();\nnode.setParams({\n  url: 'https://api.example.com',\n  logging: { method: 'file', params: { filePath: './logs/http.log' } }\n});`;
+
+    const customToolSnippet = `// my_nodes/MyCustomToolNode.js\nimport { AsyncNode } from '@fractal-solutions/qflow';\n\nexport class MyCustomToolNode extends AsyncNode {\n  static getToolDefinition() {\n    return {\n      name: 'my_custom_tool',\n      description: 'Greets a user with a custom message.',\n      parameters: {\n        type: 'object',\n        properties: {\n          name: { type: 'string', description: 'Name to greet.' },\n          greeting: { type: 'string', description: 'Optional greeting.' }\n        },\n        required: ['name']\n      }\n    };\n  }\n\n  async execAsync() {\n    const { name, greeting = 'Hello' } = this.params;\n    return { message: \`\${greeting}, \${name}!\` };\n  }\n\n  async postAsync(shared, _, execRes) {\n    shared.customToolOutput = execRes.message;\n    return 'default';\n  }\n}`;
+
+    const customToolConfigSnippet = `// qflow.config.js\n/** @type {import('./src/types').QFlowConfig} */\nconst qflowConfig = {\n  customNodePaths: [\n    './my_nodes/MyCustomToolNode.js'\n  ]\n};\n\nexport default qflowConfig;`;
 
     const commonPatterns = [
         {
@@ -299,6 +353,18 @@ window.DocsPage = () => {
 
     const getNodeDoc = (docKey) => NODE_DOCS[docKey] || {};
 
+    const renderTokenized = (text) => {
+        if (!text) return null;
+        const parts = text.split(/(`[^`]+`)/g).filter(Boolean);
+        return parts.map((part, idx) => {
+            if (part.startsWith('`') && part.endsWith('`')) {
+                const token = part.slice(1, -1);
+                return <code key={`${token}-${idx}`} className="param-token">{token}</code>;
+            }
+            return <span key={`${part}-${idx}`}>{part}</span>;
+        });
+    };
+
     const toListItems = (text) => {
         if (!text) return [];
         const lines = text.split('\n').map((line) => line.trim());
@@ -308,12 +374,12 @@ window.DocsPage = () => {
         return lines.filter(Boolean);
     };
 
-    const renderList = (items) => (
+    const renderList = (items, { tokenize } = { tokenize: false }) => (
         <ul className="mt-2 space-y-1 text-xs text-muted">
             {items.map((item, idx) => (
                 <li key={`${item}-${idx}`} className="flex items-start gap-2">
                     <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent"></span>
-                    <span>{item}</span>
+                    <span className="space-x-2">{tokenize ? renderTokenized(item) : item}</span>
                 </li>
             ))}
         </ul>
@@ -325,6 +391,8 @@ window.DocsPage = () => {
         const parameters = toListItems(doc.parameters);
         const returns = toListItems(doc.returns);
         const description = doc.description || activeNode.summary;
+        const notes = toListItems(doc.notes);
+        const requirements = toListItems(doc.requirements);
 
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-6">
@@ -337,7 +405,7 @@ window.DocsPage = () => {
                         </div>
                         <button
                             onClick={() => setActiveNode(null)}
-                            className="px-3 py-1 rounded-full border border-slate-200 text-xs font-semibold text-ink hover:bg-white/70 transition-colors"
+                            className="px-3 py-1 rounded-full surface text-xs font-semibold text-ink hover:border-accent hover:shadow-soft transition"
                         >
                             Close
                         </button>
@@ -357,17 +425,34 @@ window.DocsPage = () => {
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="surface rounded-2xl p-4">
                             <h3 className="text-sm font-semibold text-ink">Parameters</h3>
-                            {parameters.length > 0 ? renderList(parameters) : (
+                            {parameters.length > 0 ? renderList(parameters, { tokenize: true }) : (
                                 <p className="mt-2 text-xs text-muted">Parameters not specified in docs.</p>
                             )}
                         </div>
                         <div className="surface rounded-2xl p-4">
                             <h3 className="text-sm font-semibold text-ink">Returns / Output</h3>
-                            {returns.length > 0 ? renderList(returns) : (
+                            {returns.length > 0 ? renderList(returns, { tokenize: true }) : (
                                 <p className="mt-2 text-xs text-muted">Returns not specified in docs.</p>
                             )}
                         </div>
                     </div>
+
+                    {(notes.length > 0 || requirements.length > 0) && (
+                        <div className="mt-6 grid gap-6 md:grid-cols-2">
+                            {notes.length > 0 && (
+                                <div className="surface rounded-2xl p-4">
+                                    <h3 className="text-sm font-semibold text-ink">Notes</h3>
+                                    {renderList(notes, { tokenize: false })}
+                                </div>
+                            )}
+                            {requirements.length > 0 && (
+                                <div className="surface rounded-2xl p-4">
+                                    <h3 className="text-sm font-semibold text-ink">Requirements</h3>
+                                    {renderList(requirements, { tokenize: false })}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="mt-6">
                         <h3 className="text-sm font-semibold text-ink">Usage</h3>
@@ -460,27 +545,61 @@ window.DocsPage = () => {
                 )}
 
                 {activeTopic === 'observability' && (
-                    <div className="mt-6">
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="surface rounded-2xl p-4">
                             <p className="text-sm font-semibold text-ink">Flow event hooks</p>
+                            <p className="mt-2 text-sm text-muted">Capture lifecycle events for tracing and metrics.</p>
                             <div className="mt-4">
                                 <CodeBlock code={observabilitySnippet} title="Event Listeners" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Structured node telemetry</p>
+                            <p className="mt-2 text-sm text-muted">Record node timings and errors into shared state.</p>
+                            <div className="mt-4">
+                                <CodeBlock code={`const flow = new AsyncFlow(startNode);\nflow.on('node:end', ({ nodeClass, duration, status }) => {\n  shared.metrics = shared.metrics || [];\n  shared.metrics.push({ nodeClass, duration, status });\n});\nawait flow.runAsync({});`} title="Telemetry Capture" language="js" />
                             </div>
                         </div>
                     </div>
                 )}
 
                 {activeTopic === 'logging' && (
-                    <div className="mt-6">
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="surface rounded-2xl p-4">
                             <p className="text-sm font-semibold text-ink">Logging configuration</p>
+                            <p className="mt-2 text-sm text-muted">Route logs to files, emitters, or remote sinks.</p>
                             <div className="mt-4">
                                 <CodeBlock code={loggingSnippet} title="Logging" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Per-node log settings</p>
+                            <p className="mt-2 text-sm text-muted">Disable or redirect logging at node level.</p>
+                            <div className="mt-4">
+                                <CodeBlock code={`const silentNode = new HttpRequestNode();\nsilentNode.setParams({\n  url: 'https://api.example.com',\n  logging: { type: 'none' }\n});`} title="Per-node Logging" language="js" />
                             </div>
                         </div>
                     </div>
                 )}
 
+                {activeTopic === 'custom-tools' && (
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Define a custom tool node</p>
+                            <p className="mt-2 text-sm text-muted">Expose a JSON schema so agents can call it safely.</p>
+                            <div className="mt-4">
+                                <CodeBlock code={customToolSnippet} title="Custom Tool Node" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Register in qflow.config.js</p>
+                            <p className="mt-2 text-sm text-muted">Add your tool path so agents discover it automatically.</p>
+                            <div className="mt-4">
+                                <CodeBlock code={customToolConfigSnippet} title="Tool Registry" language="js" />
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTopic === 'create-qflow' && (
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <CodeBlock code={createQflowInstall} title="Install" language="bash" />
@@ -489,11 +608,67 @@ window.DocsPage = () => {
                 )}
 
                 {activeTopic === 'workflow-styles' && (
-                    <div className="mt-6 space-y-6">
-                        <CodeBlock code={functionalExample} title="Concise (Functional)" language="js" />
-                        <CodeBlock code={spreadExample} title="Flexible (Object Spread)" language="js" />
-                        <CodeBlock code={classExample} title="Structured (Class-based)" language="js" />
-                        <CodeBlock code={agentExample} title="Agent (Generic LLM)" language="js" />
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Concise (Functional)</p>
+                            <p className="mt-2 text-sm text-muted">Best for quick scripts and simple flows.</p>
+                            <div className="mt-4 text-xs text-muted">
+                                <p className="font-semibold text-ink">When to choose</p>
+                                <ul className="mt-2 list-disc list-inside space-y-1">
+                                    <li>Prototyping or validating a new workflow.</li>
+                                    <li>Small nodes with 1-2 behaviors.</li>
+                                    <li>Rapid iteration without extra files.</li>
+                                </ul>
+                            </div>
+                            <div className="mt-4">
+                                <CodeBlock code={functionalExample} title="Functional Style" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Flexible (Object Spread)</p>
+                            <p className="mt-2 text-sm text-muted">Inline customization with minimal boilerplate.</p>
+                            <div className="mt-4 text-xs text-muted">
+                                <p className="font-semibold text-ink">When to choose</p>
+                                <ul className="mt-2 list-disc list-inside space-y-1">
+                                    <li>Inline nodes inside a single module.</li>
+                                    <li>Quickly overriding one or two methods.</li>
+                                    <li>Keeping node definition close to flow setup.</li>
+                                </ul>
+                            </div>
+                            <div className="mt-4">
+                                <CodeBlock code={spreadExample} title="Object Spread Style" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Structured (Class-based)</p>
+                            <p className="mt-2 text-sm text-muted">Reusable nodes and clear architecture.</p>
+                            <div className="mt-4 text-xs text-muted">
+                                <p className="font-semibold text-ink">When to choose</p>
+                                <ul className="mt-2 list-disc list-inside space-y-1">
+                                    <li>Nodes reused across multiple workflows.</li>
+                                    <li>Complex behavior or internal state.</li>
+                                    <li>Team projects needing clear structure.</li>
+                                </ul>
+                            </div>
+                            <div className="mt-4">
+                                <CodeBlock code={classExample} title="Class-based Style" language="js" />
+                            </div>
+                        </div>
+                        <div className="surface rounded-2xl p-4">
+                            <p className="text-sm font-semibold text-ink">Agent (Generic LLM)</p>
+                            <p className="mt-2 text-sm text-muted">Multi-tool automation with configurable models.</p>
+                            <div className="mt-4 text-xs text-muted">
+                                <p className="font-semibold text-ink">When to choose</p>
+                                <ul className="mt-2 list-disc list-inside space-y-1">
+                                    <li>Goal-driven workflows with tool use.</li>
+                                    <li>Multi-step tasks needing reasoning.</li>
+                                    <li>LLM routing across a tool registry.</li>
+                                </ul>
+                            </div>
+                            <div className="mt-4">
+                                <CodeBlock code={agentExample} title="Agent Style" language="js" />
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -522,7 +697,7 @@ window.DocsPage = () => {
                                 value={nodeQuery}
                                 onChange={(e) => setNodeQuery(e.target.value)}
                                 placeholder="Search nodes"
-                                className="w-full md:w-64 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-ink"
+                                className="input-field w-full md:w-64 rounded-xl px-3 py-2 text-sm"
                             />
                         </div>
                         {nodeCatalog.map((section) => {
@@ -545,7 +720,7 @@ window.DocsPage = () => {
                                             <h3 className="text-xl font-display text-ink">{section.category}</h3>
                                             <p className="text-sm text-muted mt-2">{section.description}</p>
                                         </div>
-                                        <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-xs text-muted">
+                                    <div className="rounded-2xl surface px-4 py-3 text-xs text-muted">
                                             <p><strong>Parameters:</strong> {section.params}</p>
                                             <p className="mt-2"><strong>Returns:</strong> {section.returns}</p>
                                         </div>
@@ -555,7 +730,7 @@ window.DocsPage = () => {
                                             <button
                                                 key={node.name}
                                                 onClick={() => setActiveNode({ ...node, category: section.category })}
-                                                className="text-left rounded-xl border border-slate-200/60 bg-white/70 px-4 py-3 hover:border-accent hover:shadow-soft transition"
+                                                className="text-left rounded-xl surface px-4 py-3 hover:border-accent hover:shadow-soft transition"
                                             >
                                                 <p className="text-sm font-semibold text-ink">{node.name}</p>
                                                 <p className="text-xs text-muted mt-1">{node.summary}</p>
