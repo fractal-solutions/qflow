@@ -720,9 +720,9 @@ window.DocsPage = () => {
                                             <h3 className="text-xl font-display text-ink">{section.category}</h3>
                                             <p className="text-sm text-muted mt-2">{section.description}</p>
                                         </div>
-                                    <div className="rounded-2xl surface px-4 py-3 text-xs text-muted">
-                                            <p><strong>Parameters:</strong> {section.params}</p>
-                                            <p className="mt-2"><strong>Returns:</strong> {section.returns}</p>
+                                    <div className="rounded-2xl surface px-4 py-3 text-xs text-muted min-w-0">
+                                            <p className="break-words"><strong>Parameters:</strong> {section.params}</p>
+                                            <p className="mt-2 break-words"><strong>Returns:</strong> {section.returns}</p>
                                         </div>
                                     </div>
                                     <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -730,11 +730,11 @@ window.DocsPage = () => {
                                             <button
                                                 key={node.name}
                                                 onClick={() => setActiveNode({ ...node, category: section.category })}
-                                                className="text-left rounded-xl surface px-4 py-3 hover:border-accent hover:shadow-soft transition"
+                                                className="text-left rounded-xl surface px-4 py-3 hover:border-accent hover:shadow-soft transition min-w-0"
                                             >
-                                                <p className="text-sm font-semibold text-ink">{node.name}</p>
-                                                <p className="text-xs text-muted mt-1">{node.summary}</p>
-                                                <p className="text-xs text-muted mt-2">Use cases: {node.uses}</p>
+                                                <p className="text-sm font-semibold text-ink break-words">{node.name}</p>
+                                                <p className="text-xs text-muted mt-1 break-words">{node.summary}</p>
+                                                <p className="text-xs text-muted mt-2 break-words">Use cases: {node.uses}</p>
                                             </button>
                                         ))}
                                     </div>
@@ -803,8 +803,8 @@ window.DocsPage = () => {
 
     return (
         <div className="container mx-auto px-6 py-14">
-            <div className="grid gap-8 md:grid-cols-[260px_1fr]">
-                <aside className="space-y-6">
+            <div className="grid gap-8 md:grid-cols-[260px_1fr] min-w-0">
+                <aside className="space-y-6 min-w-0">
                     <div className="glass rounded-2xl p-5 shadow-soft">
                         <p className="text-xs uppercase tracking-wide text-muted">Contents</p>
                         <nav className="mt-4 space-y-4">
@@ -828,7 +828,7 @@ window.DocsPage = () => {
                         <a href="#getting-started" className="mt-4 inline-flex text-sm font-semibold text-accent hover:opacity-80">Open Getting Started</a>
                     </div>
                 </aside>
-                <main>{renderContent()}</main>
+                <main className="min-w-0">{renderContent()}</main>
             </div>
             {renderNodeModal()}
         </div>

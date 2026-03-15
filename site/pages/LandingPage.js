@@ -55,9 +55,9 @@ await flow.runAsync();`;
     ];
 
     return (
-        <div className="container mx-auto px-6 py-16">
+        <div className="container mx-auto px-4 sm:px-6 py-16">
             <section className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
-                <div className="space-y-6">
+                <div className="space-y-6 min-w-0">
                     <div className="inline-flex items-center space-x-2 rounded-full chip-accent px-4 py-1 text-xs uppercase tracking-wide">
                         <span className="h-2 w-2 rounded-full bg-accent"></span>
                         <span>Agentic workflows without the weight</span>
@@ -69,18 +69,18 @@ await flow.runAsync();`;
                     <p className="text-lg text-muted max-w-xl reveal reveal-2">
                         qflow gives you a lightweight core for chaining operations, managing shared state, and building autonomous agents that can reason, plan, and use tools.
                     </p>
-                    <div className="flex flex-wrap gap-4 reveal reveal-3">
-                        <a href="#getting-started" className="px-6 py-3 rounded-full bg-accent text-white text-sm font-semibold shadow-soft hover:opacity-90 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 reveal reveal-3">
+                        <a href="#getting-started" className="w-full sm:w-auto text-center px-6 py-3 rounded-full bg-accent text-white text-sm font-semibold shadow-soft hover:opacity-90 transition-colors">
                             Get Started
                         </a>
-                        <a href="#docs" className="px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">
+                        <a href="#docs" className="w-full sm:w-auto text-center px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">
                             Explore Docs
                         </a>
-                        <a href="#examples" className="px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">
+                        <a href="#examples" className="w-full sm:w-auto text-center px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">
                             Browse Examples
                         </a>
                     </div>
-                    <div className="grid grid-cols-3 gap-6 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 pt-4">
                         <div>
                             <p className="text-2xl font-display text-ink">40+</p>
                             <p className="text-xs uppercase tracking-wide text-muted">Built-in nodes</p>
@@ -95,9 +95,9 @@ await flow.runAsync();`;
                         </div>
                     </div>
                 </div>
-                <div className="space-y-6">
-                    <div className="glass rounded-3xl p-6 shadow-soft">
-                        <div className="flex items-center justify-between mb-4">
+                <div className="space-y-6 min-w-0">
+                    <div className="glass rounded-3xl p-6 shadow-soft min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                             <div>
                                 <p className="text-xs uppercase tracking-wide text-muted">Flow Console</p>
                                 <p className="text-lg font-display text-ink">Agent Overview</p>
@@ -106,14 +106,14 @@ await flow.runAsync();`;
                         </div>
                         <CodeBlock code={featureCode} title="Agent Definition" language="js" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
                             { title: 'Composable', body: 'Build reusable nodes and plug them into any flow.' },
                             { title: 'Observable', body: 'Trace execution with detailed lifecycle events.' },
                             { title: 'Extensible', body: 'Register custom tools with JSON schema.' },
                             { title: 'Pragmatic', body: 'Small API surface, big leverage.' },
                         ].map((item) => (
-                            <div key={item.title} className="glass rounded-2xl p-4">
+                            <div key={item.title} className="glass rounded-2xl p-4 min-w-0">
                                 <p className="text-sm font-semibold text-ink">{item.title}</p>
                                 <p className="text-xs text-muted mt-2">{item.body}</p>
                             </div>
@@ -212,18 +212,18 @@ await flow.runAsync();`;
             </section>
 
             <section className="mt-20">
-                <div className="glass rounded-3xl p-10 shadow-soft grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-                    <div>
+                <div className="glass rounded-3xl p-8 sm:p-10 shadow-soft grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div className="min-w-0">
                         <h2 className="text-3xl font-display text-ink">Start shipping durable workflows today</h2>
                         <p className="mt-4 text-muted">
                             Spin up a new project in minutes and grow into sophisticated agentic systems without changing foundations.
                         </p>
-                        <div className="mt-6 flex flex-wrap gap-4">
-                            <a href="#getting-started" className="px-6 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold hover:opacity-90 transition-colors">Launch Quickstart</a>
-                            <a href="#docs" className="px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">Read the Docs</a>
+                        <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+                            <a href="#getting-started" className="w-full sm:w-auto text-center px-6 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold hover:opacity-90 transition-colors">Launch Quickstart</a>
+                            <a href="#docs" className="w-full sm:w-auto text-center px-6 py-3 rounded-full border border-slate-300 text-sm font-semibold text-ink hover:bg-white/80 transition-colors">Read the Docs</a>
                         </div>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-4 min-w-0">
                         <p className="text-xs uppercase tracking-wide text-muted">Install</p>
                         <CodeBlock code={installCode} title="Install qflow" language="bash" />
                     </div>

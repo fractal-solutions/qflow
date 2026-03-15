@@ -38,7 +38,7 @@ window.Navbar = () => {
                             <a href="#getting-started" className={navLinkClass}>Getting Started</a>
                             <a href="#docs" className={navLinkClass}>Docs</a>
                             <a href="#examples" className={navLinkClass}>Examples</a>
-                            <a href="https://github.com/fractal-code/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
+                            <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
                         </div>
                         <div className="hidden md:flex items-center space-x-3">
                             <button
@@ -70,7 +70,7 @@ window.Navbar = () => {
                             <a href="#getting-started" className={navLinkClass} onClick={() => setOpen(false)}>Getting Started</a>
                             <a href="#docs" className={navLinkClass} onClick={() => setOpen(false)}>Docs</a>
                             <a href="#examples" className={navLinkClass} onClick={() => setOpen(false)}>Examples</a>
-                            <a href="https://github.com/fractal-code/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
+                            <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
                             <button
                                 onClick={() => { toggleTheme(); setOpen(false); }}
                                 className="px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold text-ink hover:bg-white/70 transition-colors"

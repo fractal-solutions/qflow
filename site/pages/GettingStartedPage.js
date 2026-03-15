@@ -71,7 +71,7 @@ window.GettingStartedPage = () => {
         <div className="container mx-auto px-6 py-14">
             <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
                 <div className="space-y-6">
-                    <div className="inline-flex items-center space-x-2 rounded-full border border-slate-200 bg-white/70 px-4 py-1 text-xs uppercase tracking-wide text-accent">
+                    <div className="inline-flex items-center space-x-2 rounded-full chip-accent px-4 py-1 text-xs uppercase tracking-wide">
                         <span className="h-2 w-2 rounded-full bg-accent"></span>
                         <span>Getting Started</span>
                     </div>

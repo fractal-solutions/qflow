@@ -19,9 +19,9 @@ window.CodeBlock = ({ code, title, language }) => {
     };
 
     return (
-        <div className="code-block rounded-2xl overflow-hidden shadow-soft">
-            <div className="code-header flex items-center justify-between px-4 py-2 border-b border-white/10 text-slate-200">
-                <div className="flex items-center space-x-3 text-xs uppercase tracking-wide">
+        <div className="code-block w-full rounded-2xl overflow-hidden shadow-soft">
+            <div className="code-header flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-white/10 text-slate-200">
+                <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide min-w-0">
                     <span>{title || 'Code Example'}</span>
                     {language && <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-200">{language}</span>}
                 </div>

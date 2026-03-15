@@ -21,7 +21,7 @@ window.Footer = () => {
                     <div>
                         <h4 className="text-sm font-semibold text-ink uppercase tracking-wide">Resources</h4>
                         <div className="mt-3 flex flex-col space-y-2 text-sm text-muted">
-                            <a href="https://github.com/fractal-code/qflow" target="_blank" rel="noopener noreferrer" className="nav-link">GitHub</a>
+                            <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className="nav-link">GitHub</a>
                             <a href="#docs" className="nav-link">API Reference</a>
                             <a href="#getting-started" className="nav-link">Examples</a>
                         </div>
