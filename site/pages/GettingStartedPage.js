@@ -201,6 +201,16 @@ window.GettingStartedPage = () => {
                     </div>
                 </div>
             </section>
+
+            <section className="mt-8">
+                <div className="glass rounded-2xl p-6 shadow-soft">
+                    <h3 className="text-lg font-display text-ink">Keep exploring</h3>
+                    <p className="mt-2 text-sm text-muted">See more real workflows and copy-ready snippets.</p>
+                    <a href="#examples" className="mt-4 inline-flex text-sm font-semibold text-accent hover:opacity-80">
+                        Browse Examples
+                    </a>
+                </div>
+            </section>
         </div>
     );
 };
