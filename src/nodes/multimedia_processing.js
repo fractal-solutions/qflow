@@ -1,5 +1,5 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
-import { ShellCommandNode } from './index.js'; // Assuming ShellCommandNode is available
+import { ShellCommandNode } from './shell.js';
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';

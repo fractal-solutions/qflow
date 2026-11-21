@@ -1,5 +1,6 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
-import { ShellCommandNode, ReadFileNode } from './index.js'; // Assuming these are in the same nodes directory
+import { ShellCommandNode } from './shell.js';
+import { ReadFileNode } from './filesystem.js';
 import path from 'path';
 import os from 'os';
 import { promises as fs } from 'fs';

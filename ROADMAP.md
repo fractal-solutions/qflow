@@ -25,10 +25,17 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 - [ ] Fix tool registry: missing `AsyncNode` import, Windows dynamic import, consumer `qflow.config.js` resolution.
 - [ ] Export `./mcp` subpath, add tests and docs.
 
-### Track 2 — One agent engine
-- Collapse `agent.js`, `base_agent.js` and the four pattern agents into one execution engine with pluggable reasoning strategies (RAOR / OODA / PEMA / LPAVRL preserved as strategies).
-- Fix missing `SummarizeNode` imports and shared tool-call duplication while consolidating.
-- Streaming LLM output as flow events.
+### Track 2 — One agent engine *(done)*
+- [x] `src/agent/engine.js`: one `AgentEngine` containing the loop, tool execution, history management, finish confirmation and response parsing.
+- [x] `src/agent/strategies.js`: declarative `default` / `raor` / `ooda` / `lpavrl` / `pema` phase definitions; `getStrategy()` and `listStrategies()`.
+- [x] Legacy classes (`AgentNode`, `BaseAgent`, and the four pattern agents) are thin subclasses that select a strategy — existing imports keep working.
+- [x] New options-object constructor: `new AgentNode({ llmNode, availableTools, strategy: 'raor', ... })`.
+- [x] Added `./agent` subpath export and `src/agent/index.js`.
+- [x] Fixed the missing `SummarizeNode` import, custom-tool validation, and the five node files that imported `nodes/index.js` (circular dependency).
+- [x] Tests cover all five strategies end to end with a scripted LLM.
+- [ ] Streaming LLM output as flow events *(next)*.
+
+**Migration note:** the positional constructor still works. Prefer the options object for new code; reasoning patterns are now data, so a custom pattern can be added with `agentStrategies.myPattern = {...}` and `strategy: 'myPattern'` instead of a new class.
 
 ### Track 3 — Durable execution (Bun-native)
 - Checkpoint flow graph + cursor + `shared` state to `bun:sqlite` at node boundaries.

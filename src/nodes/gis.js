@@ -1,5 +1,5 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
-import { HttpRequestNode } from './index.js'; // For making HTTP requests to APIs
+import { HttpRequestNode } from './http.js'; // For making HTTP requests to APIs
 
 // Internal helper for Google Maps API calls
 class GoogleMapsProvider {
