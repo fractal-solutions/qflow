@@ -15,6 +15,7 @@
 *   **MCP Bridge:** Expose qflow nodes as MCP tools over stdio, or call external MCP servers from an agent.
 *   **Streaming LLM Output:** Surface token deltas as flow events with OpenAI-compatible providers.
 *   **Durable Execution:** Checkpoint flow state to `bun:sqlite` and resume runs after a crash.
+*   **Graph Guards:** Fan-out/fan-in nodes, error edges, loop limits and flow-level timeouts.
 
 ## Installation
 
@@ -61,6 +62,7 @@ bun add @fractal-solutions/qflow
     import { streamChatCompletions } from '@fractal-solutions/qflow/streaming';
     import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
     import { MockNode, recordFlow } from '@fractal-solutions/qflow/testing';
+    import { FanOutNode, FanInNode } from '@fractal-solutions/qflow/graph';
     ```
 
 See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.

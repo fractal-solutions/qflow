@@ -23,6 +23,7 @@ Node.js is no longer a supported runtime. 2.0 uses Bun APIs directly (`Bun.spawn
 | `@fractal-solutions/qflow/streaming` | `streamChatCompletions()` and event-name constants |
 | `@fractal-solutions/qflow/durable` | `SQLiteCheckpointer` and `DurableFlow` |
 | `@fractal-solutions/qflow/testing` | `MockNode`, `MockLLMNode`, `recordFlow()` and snapshot helpers |
+| `@fractal-solutions/qflow/graph` | `FanOutNode` and `FanInNode` |
 
 ## Async lifecycle methods
 
@@ -36,6 +37,20 @@ async execAsync(prepRes, shared, observer = {}) {
 ```
 
 Existing implementations that accept fewer arguments are unaffected. `AsyncFlow.on()` still works, and `onAny()` / `on('*')` now receive every event. Nested flow events are forwarded with `nested: true`.
+
+## Flow options
+
+`Flow` and `AsyncFlow` now accept an optional second argument:
+
+```js
+const flow = new AsyncFlow(startNode, {
+  maxSteps: 100,
+  timeout: 30_000,
+  onError: recoveryNode,
+});
+```
+
+`maxSteps` guards loops, `timeout` rejects with a `TimeoutError`, and `onError` routes a failed node to a recovery node with `shared.error` populated. Existing `new AsyncFlow(startNode)` usage is unchanged.
 
 ## Agents
 

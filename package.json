@@ -36,6 +36,10 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
+    },
+    "./graph": {
+      "types": "./dist/graph.d.ts",
+      "default": "./dist/graph.js"
     }
   },
   "files": [

@@ -9,6 +9,7 @@
 - Streaming LLM support: `streamChatCompletions()`, `StreamingLLMNode`, `AgentStreamingLLMNode`, and `llm:*` events under `./streaming`.
 - Bun-native durable execution: `SQLiteCheckpointer`, `DurableFlow`, resume-after-failure, run/checkpoint history, and `AbortSignal` cancellation under `./durable`.
 - Testing utilities under `./testing`: `MockNode`, `MockLLMNode`, `recordFlow()` and deterministic trace snapshots.
+- Graph semantics: `FanOutNode` / `FanInNode` under `./graph`, plus `maxSteps`, `timeout` and `onError` flow options.
 - Migration guide for 2.0.
 
 ### Changed

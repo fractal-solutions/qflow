@@ -85,9 +85,11 @@ class BatchNode extends Node {
 }
 
 class Flow extends BaseNode {
-  constructor(start = null) {
+  constructor(start = null, options = {}) {
     super();
     this.startNode = start;
+    this.maxSteps = options.maxSteps ?? Infinity;
+    this.errorNode = options.onError ?? null;
   }
 
   start(startNode) {
@@ -106,11 +108,24 @@ class Flow extends BaseNode {
   _orch(shared, params = {}) {
     let curr = this.startNode;
     let lastAction = null;
+    let steps = 0;
     let p = { ...this.params, ...params };
+
     while (curr) {
-      curr.setParams(p);
-      lastAction = curr._run(shared);
-      curr = this.getNextNode(curr, lastAction);
+      if (steps >= this.maxSteps) {
+        throw new Error(`Flow exceeded maxSteps (${this.maxSteps}).`);
+      }
+      steps++;
+
+      try {
+        curr.setParams(p);
+        lastAction = curr._run(shared);
+        curr = this.getNextNode(curr, lastAction);
+      } catch (error) {
+        if (!this.errorNode) throw error;
+        shared.error = { message: error.message, stack: error.stack };
+        curr = this.errorNode;
+      }
     }
     return lastAction;
   }
@@ -246,9 +261,10 @@ class AsyncParallelBatchNode extends AsyncNode {
 }
 
 class AsyncFlow extends Flow {
-  constructor(start = null) {
-    super(start);
+  constructor(start = null, options = {}) {
+    super(start, options);
     this.listeners = {};
+    this.timeout = options.timeout ?? null;
   }
 
   on(eventName, callback) {
@@ -299,6 +315,7 @@ class AsyncFlow extends Flow {
     };
 
     return {
+      ...parentObserver,
       emit,
       flowId,
       parentFlowId: parentObserver.flowId ?? null,
@@ -314,27 +331,61 @@ class AsyncFlow extends Flow {
     let curr = initialNode;
     let lastAction = null;
     let lastExecRes = null;
+    let steps = 0;
     let p = { ...this.params, ...params };
     const observerContext = {
       ...observer,
       emit: typeof observer.emit === 'function' ? observer.emit : this.emit.bind(this),
       flowId: observer.flowId ?? flowId,
     };
+    const signal = observerContext.signal;
 
     while (curr) {
-      curr.setParams(p);
+      if (signal?.aborted) throw signal.reason ?? new Error('Flow aborted.');
+      if (steps >= this.maxSteps) {
+        throw new Error(`Flow exceeded maxSteps (${this.maxSteps}).`);
+      }
+      steps++;
 
-      const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared, observerContext) : curr.prep(shared);
-      const execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared, observerContext) : curr._exec(prepRes, shared);
-      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes, observerContext) : curr.post(shared, prepRes, execRes);
-      lastExecRes = execRes;
-      
-      curr = this.getNextNode(curr, lastAction);
+      try {
+        curr.setParams(p);
+
+        const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared, observerContext) : curr.prep(shared);
+        const execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared, observerContext) : curr._exec(prepRes, shared);
+        lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes, observerContext) : curr.post(shared, prepRes, execRes);
+        lastExecRes = execRes;
+        curr = this.getNextNode(curr, lastAction);
+      } catch (error) {
+        if (!this.errorNode) throw error;
+        shared.error = { message: error.message, stack: error.stack };
+        curr = this.errorNode;
+        lastExecRes = null;
+      }
     }
     return lastExecRes;
   }
 
   async _runAsync(shared, parentObserver = {}) {
+    if (!this.timeout) return await this._executeRun(shared, parentObserver);
+
+    const controller = new AbortController();
+    const timeoutError = new Error(`Flow timed out after ${this.timeout}ms.`);
+    timeoutError.name = 'TimeoutError';
+    const timer = setTimeout(() => controller.abort(timeoutError), this.timeout);
+
+    try {
+      return await Promise.race([
+        this._executeRun(shared, { ...parentObserver, signal: controller.signal }),
+        new Promise((resolve, reject) => {
+          controller.signal.addEventListener('abort', () => reject(timeoutError), { once: true });
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async _executeRun(shared, parentObserver = {}) {
     const flowObserver = this._createFlowObserver(crypto.randomUUID(), parentObserver);
     const flowId = flowObserver.flowId;
     const flowStartTime = performance.now();

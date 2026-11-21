@@ -58,7 +58,7 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 - [ ] Trace replay tooling / viewer *(next)*.
 
 ### Track 4 — Graph semantics & DX *(in progress)*
-- [ ] Fan-out/fan-in, error edges, guarded loops, flow-level timeouts.
+- [x] Fan-out/fan-in (`./graph`), error edges (`onError`), guarded loops (`maxSteps`) and `timeout` on `Flow` / `AsyncFlow`.
 - [x] `@fractal-solutions/qflow/testing`: `MockNode`, `MockLLMNode`, `recordFlow()` and deterministic trace snapshots.
 - [ ] Reuse `site/` as a run-trace viewer instead of a static brochure.
 
