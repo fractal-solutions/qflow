@@ -4,6 +4,7 @@ import { SummarizeNode } from '../nodes/summarize.js';
 import { getToolDefinitions } from './tools.js';
 import { logger } from './logger.js';
 import { getStrategy } from './strategies.js';
+import { buildAgentFlow } from './flow.js';
 
 const FLOW_TOOLS = new Set(['sub_flow', 'iterator', 'scheduler']);
 
@@ -39,6 +40,9 @@ export class AgentEngine extends AsyncNode {
       maxConversationHistoryTokens: maxTokens = 100000,
       maxSteps = 70,
       strategy,
+      toolRegistry = null,
+      grantedCapabilities = null,
+      grantedPermissions = null,
     } = options;
 
     if (!llmNode) {
@@ -54,10 +58,41 @@ export class AgentEngine extends AsyncNode {
     this.requireFinishConfirmation = confirm;
     this.maxConversationHistoryTokens = maxTokens;
     this.strategy = getStrategy(strategy ?? new.target.strategyId ?? 'default');
+    this.toolRegistry = toolRegistry;
+    this.grantedCapabilities = grantedCapabilities ? new Set(grantedCapabilities) : null;
+    this.grantedPermissions = grantedPermissions ? new Set(grantedPermissions) : null;
+    this.currentGoal = null;
+  }
+
+  /** Expose the declarative reasoning loop as a runnable, inspectable flow. */
+  asFlow(options = {}) {
+    return buildAgentFlow(this, options);
+  }
+
+  /** Initialise conversation state once, shared by the loop and asFlow(). */
+  initialize(goal) {
+    if (!goal) throw new Error(`${this.constructor.name} requires a 'goal' parameter.`);
+    this.llmNode.setParams({ goal });
+    this.conversationHistory = [
+      { role: 'system', content: this.getSystemPrompt() },
+      { role: 'user', content: `Goal: ${goal}` },
+      ...(this.strategy.initialMessages ?? []),
+    ];
+    return this.conversationHistory;
+  }
+
+  getToolDescriptions() {
+    if (this.toolRegistry) {
+      return this.toolRegistry.definitions({
+        grantedCapabilities: this.grantedCapabilities,
+        grantedPermissions: this.grantedPermissions,
+      });
+    }
+    return getToolDefinitions();
   }
 
   getSystemPrompt() {
-    const toolDescriptions = getToolDefinitions().map(tool =>
+    const toolDescriptions = this.getToolDescriptions().map(tool =>
       `### ${tool.name}: ${tool.description}\nParameters: ${JSON.stringify(tool.parameters)}`
     ).join('\n');
 
@@ -169,10 +204,6 @@ ${toolDescriptions}${flowRegistryDescription}
   }
 
   validateToolParameters(toolCall) {
-    const toolSchema = getToolDefinitions().find(def => def.name === toolCall.tool) ??
-      (this.availableTools[toolCall.tool] ? { parameters: { required: [] } } : null);
-    if (!toolSchema) return `Tool '${toolCall.tool}' is not a recognized tool.`;
-
     if (toolCall.tool === 'finish') {
       return toolCall.parameters?.output === undefined ? "Missing required parameter: 'output' for tool 'finish'." : null;
     }
@@ -184,6 +215,23 @@ ${toolDescriptions}${flowRegistryDescription}
       return this.flowRegistry[toolCall.parameters.flow] ? null : `Flow '${toolCall.parameters.flow}' not found in registry.`;
     }
 
+    if (this.toolRegistry) {
+      const spec = this.toolRegistry.get(toolCall.tool);
+      if (!spec) return `Tool '${toolCall.tool}' is not a recognized tool.`;
+      if (!this.toolRegistry.allowed(spec, {
+        grantedCapabilities: this.grantedCapabilities,
+        grantedPermissions: this.grantedPermissions,
+      })) {
+        return `Tool '${toolCall.tool}' is not allowed by the current capability grant.`;
+      }
+      const errors = spec.validate(toolCall.parameters ?? {});
+      return errors.length ? errors.join(' ') : null;
+    }
+
+    const toolSchema = getToolDefinitions().find(def => def.name === toolCall.tool) ??
+      (this.availableTools[toolCall.tool] ? { parameters: { required: [] } } : null);
+    if (!toolSchema) return `Tool '${toolCall.tool}' is not a recognized tool.`;
+
     const required = toolSchema.parameters?.required ?? [];
     for (const param of required) {
       if (toolCall.parameters?.[param] === undefined) {
@@ -193,8 +241,25 @@ ${toolDescriptions}${flowRegistryDescription}
     return null;
   }
 
-  async executeToolCalls(toolCalls, parallel) {
+  async executeToolCalls(toolCalls, parallel, shared = {}) {
     const executeTool = async toolCall => {
+      if (this.toolRegistry && this.toolRegistry.get(toolCall.tool)) {
+        try {
+          logger.toolCall(toolCall.tool, toolCall.parameters);
+          const outcome = await this.toolRegistry.execute(toolCall.tool, toolCall.parameters ?? {}, {
+            shared,
+            observer: this.currentObserver,
+            grantedCapabilities: this.grantedCapabilities,
+            grantedPermissions: this.grantedPermissions,
+          });
+          const output = outcome.result;
+          logger.toolResult(toolCall.tool, output);
+          return { success: true, output };
+        } catch (error) {
+          return { success: false, error: `Error executing tool '${toolCall.tool}': ${error.message}` };
+        }
+      }
+
       const toolInstance = this.availableTools[toolCall.tool];
       if (!toolInstance) {
         return { success: false, error: `Tool '${toolCall.tool}' not found. Available tools: ${Object.keys(this.availableTools).join(', ')}.` };
@@ -296,14 +361,9 @@ You MUST respond with a single JSON object containing 'thought' and 'tool_calls'
 
   async execAsync(prepRes, shared, observer = {}) {
     const { goal } = this.params;
-    if (!goal) throw new Error(`${this.constructor.name} requires a 'goal' parameter.`);
-
-    this.llmNode.setParams({ goal });
-    this.conversationHistory = [
-      { role: 'system', content: this.getSystemPrompt() },
-      { role: 'user', content: `Goal: ${goal}` },
-      ...(this.strategy.initialMessages ?? []),
-    ];
+    this.currentObserver = observer;
+    this.currentShared = shared;
+    this.initialize(goal);
 
     const actionPhase = this.strategy.phases.find(phase => phase.kind === 'action');
     let step = 0;
@@ -356,7 +416,7 @@ You MUST respond with a single JSON object containing 'thought' and 'tool_calls'
         continue;
       }
 
-      const observations = await this.executeToolCalls(action.toolCalls, action.parallel);
+      const observations = await this.executeToolCalls(action.toolCalls, action.parallel, shared);
       this.conversationHistory.push({ role: 'user', content: `Observation: ${JSON.stringify(observations)}` });
 
       const toolErrors = observations.filter(obs => obs.success === false);

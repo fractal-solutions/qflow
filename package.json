@@ -1,6 +1,6 @@
 {
   "name": "@fractal-solutions/qflow",
-  "version": "2.0.0-canary.2",
+  "version": "2.0.0-canary.3",
   "description": "A lightweight and flexible JavaScript library for creating and managing workflows and agents.",
   "type": "module",
   "main": "dist/qflow.js",
@@ -52,6 +52,30 @@
     "./logger": {
       "types": "./dist/logger.d.ts",
       "default": "./dist/logger.js"
+    },
+    "./llm": {
+      "types": "./dist/llm/index.d.ts",
+      "default": "./dist/llm/index.js"
+    },
+    "./tool-spec": {
+      "types": "./dist/tool_spec.d.ts",
+      "default": "./dist/tool_spec.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "default": "./dist/contracts.js"
+    },
+    "./side-effects": {
+      "types": "./dist/side_effects.d.ts",
+      "default": "./dist/side_effects.js"
+    },
+    "./eval": {
+      "types": "./dist/eval.d.ts",
+      "default": "./dist/eval.js"
+    },
+    "./bun": {
+      "types": "./dist/bun_nodes.d.ts",
+      "default": "./dist/bun_nodes.js"
     }
   },
   "files": [

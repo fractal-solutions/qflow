@@ -18,6 +18,13 @@
 *   **Graph Guards:** Fan-out/fan-in nodes, error edges, loop limits and flow-level timeouts.
 *   **Trace Viewer:** Export flow/durable-run traces as JSON and inspect them at `#trace` on the docs site.
 *   **Opt-in Integrations:** Heavy packages load only when the node action that needs them runs.
+*   **Provider-Neutral LLM:** One `LLMNode` with adapters for OpenAI-compatible APIs, Anthropic, Ollama and Gemini, plus capability negotiation, retries, fallbacks and usage/cost events.
+*   **Portable Tool Specs:** `ToolSpec` / `ToolRegistry` power agents, MCP export and docs from one definition, with permissions, namespaces, dry-run, timeouts and idempotency.
+*   **Replay-Safe Side Effects:** Durable operations reserve an ID before running, replay completed results, and refuse to re-run uncertain effects.
+*   **Agent-Native Nodes:** Plan, critique, reflect, finish and human approval as composable, checkpointable graph nodes; `AgentEngine.asFlow()` exposes strategies as inspectable flows.
+*   **Dataflow & Contracts:** Map/reduce/join/branch/cycle nodes with typed shared-state schemas and explicit iteration budgets.
+*   **Eval & Replay:** Assert, score, compare and replay nodes turn saved traces into regression suites.
+*   **Bun-Native Nodes:** Process spawning, SQLite queries, file watching and Web Stream transforms without optional native packages.
 
 ## Installation
 
@@ -66,6 +73,13 @@ qflow 2.0 is **Bun-only**. Node.js is not a supported runtime.
     import { normalizeTrace, writeTraceFile } from '@fractal-solutions/qflow/trace';
     import { OPTIONAL_DEPENDENCIES, loadOptional } from '@fractal-solutions/qflow/optional';
     import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';
+    // 2.0 canary.3 node families
+    import { LLMNode, registerLLMAdapter, listLLMAdapters } from '@fractal-solutions/qflow/llm';
+    import { ToolSpec, ToolRegistry, generateToolDocs } from '@fractal-solutions/qflow/tool-spec';
+    import { StateContract, defineState } from '@fractal-solutions/qflow/contracts';
+    import { ReplaySafeNode, SideEffectUncertainError } from '@fractal-solutions/qflow/side-effects';
+    import { AssertNode, ScoreNode, CompareNode, ReplayNode } from '@fractal-solutions/qflow/eval';
+    import { BunSpawnNode, SQLiteQueryNode, FileWatchNode } from '@fractal-solutions/qflow/bun';
     ```
 
 See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.
@@ -289,6 +303,150 @@ See [examples/webview_data_visualization.js](examples/webview_data_visualization
 
 
 
+## 2.0 Node Families
+
+These families ship in `2.0.0-canary.3`. They are additive: the older vendor-specific nodes and agent classes keep working.
+
+### Provider-neutral LLM
+
+`LLMNode` replaces a separate class per vendor. Adapters cover `openai` (plus DeepSeek, OpenRouter, Hugging Face, Groq, Together and any OpenAI-compatible endpoint), `anthropic`, `ollama` and `gemini`. Register your own with `registerLLMAdapter()`.
+
+```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { LLMNode } from '@fractal-solutions/qflow/llm';
+
+const flow = new AsyncFlow(new LLMNode({
+  provider: 'openai',
+  model: 'gpt-4o-mini',
+  apiKey: Bun.env.OPENAI_API_KEY,
+  pricing: { inputPerMillion: 0.15, outputPerMillion: 0.6 },
+}));
+flow.on('llm:delta', ({ delta }) => process.stdout.write(delta));
+
+const result = await flow.runAsync({ prompt: 'Summarize this release.' });
+// result: { text, reasoning, toolCalls, usage: { prompt, completion, total, cost }, ... }
+```
+
+Capabilities are negotiated before a call: requesting `toolCalls` from an adapter that does not support it emits `llm:capability` and fails without hitting the API. Failures emit `llm:retry`, then `llm:fallback` when `fallbackProviders` is set. Events: `llm:delta`, `llm:reasoning`, `llm:done`, `llm:retry`, `llm:fallback`, `llm:negotiated`, `llm:capability`, `llm:usage`, `llm:tool_call`.
+
+### Tool specs and registries
+
+`ToolSpec` turns `getToolDefinition()` into a portable definition for agents, MCP clients and generated docs. `ToolRegistry` adds namespaces, capability/permission grants, dry-run, timeouts and idempotency caching.
+
+```javascript
+import { ToolSpec, ToolRegistry, generateToolDocs } from '@fractal-solutions/qflow/tool-spec';
+import { QFlowMCPServer } from '@fractal-solutions/qflow/mcp';
+
+const spec = new ToolSpec({
+  name: 'echo',
+  description: 'Echo a value.',
+  parameters: { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
+  capabilities: ['read'],
+  permissions: ['public'],
+  idempotencyKey: '{{value}}',
+  execute: async ({ value }) => value,
+});
+const registry = new ToolRegistry({ tools: [spec], grantedCapabilities: ['read'] });
+await registry.execute('echo', { value: 'hello' }); // { tool, result, args }
+registry.llmTools();                               // OpenAI tool definitions
+new QFlowMCPServer({ toolRegistry: registry });    // tools/list + tools/call
+generateToolDocs(registry);                        // Markdown
+```
+
+`toolSpecFromNode(NodeClass)` derives the same spec from an existing node. Agents accept a registry with `new AgentNode({ llmNode, toolRegistry, grantedCapabilities, grantedPermissions })`.
+
+### Replay-safe side effects
+
+Pass an `operationId` to make an external effect safe across durable replay. The checkpointer reserves the operation before execution; completed effects return their recorded result, while a reserved-but-unfinished effect raises `SideEffectUncertainError` (`QFLOW_SIDE_EFFECT_UNCERTAIN`) instead of running twice.
+
+```javascript
+import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
+import { ReplaySafeNode } from '@fractal-solutions/qflow/side-effects';
+
+const charge = new ReplaySafeNode({
+  operationId: '{{orderId}}',
+  kind: 'charge',
+  execute: async ({ input }) => paymentApi.charge(input),
+});
+const checkpointer = new SQLiteCheckpointer('./runs.db');
+const flow = new DurableFlow(charge, { checkpointer });
+
+await flow.runDurable({ runId, shared: { orderId: 'ord-1', input: { amount: 42 } } });
+await flow.runDurable({ runId, resume: true }); // no second charge
+```
+
+`HttpRequestNode`, `GitNode`, `WebHookNode` and `DatabaseNode` also accept `operationId` (with `{{template}}` placeholders). Events: `side_effect:replay`, `side_effect:committed`.
+
+### Dataflow and shared-state contracts
+
+`MapNode`, `ReduceNode`, `JoinNode`, `BranchNode` and `CycleNode` add explicit dataflow routing. `StateContract` validates `shared` at node boundaries, and `describeGraph(flow.startNode)` returns JSON nodes/edges for visual authoring.
+
+```javascript
+import { defineState } from '@fractal-solutions/qflow/contracts';
+import { MapNode, ReduceNode } from '@fractal-solutions/qflow/graph';
+
+const contract = defineState({
+  fields: { items: { type: 'array', required: true } },
+  strict: true,
+});
+const map = new MapNode({ mapper: value => value * 2, inputContract: contract });
+const reduce = new ReduceNode({ reducer: (sum, value) => sum + value, initialValue: 0 });
+map.next(reduce);
+await new AsyncFlow(map).runAsync({ items: [1, 2, 3] }); // shared.reduceResult === 12
+```
+
+`CycleNode` enforces `maxIterations` / `maxItems` budgets; events include `cycle:iteration`, `map:item_error` and `reduce:step`.
+
+### Agent-native control nodes
+
+`PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode` and `HumanApprovalNode` are first-class nodes from `/agent`. `AgentEngine.asFlow()` turns any declarative strategy into a runnable, inspectable `AsyncFlow`; each phase becomes its own checkpointable node.
+
+```javascript
+import { PlanNode, CriticNode } from '@fractal-solutions/qflow/agent';
+
+const plan = new PlanNode({ llmNode });
+const critic = new CriticNode({ llmNode });
+plan.next(critic, 'default');
+// critic.next(approvedNode, 'approve').next(reviseNode, 'reject')
+
+const flow = new AgentNode({ llmNode, availableTools, strategy: 'raor' }).asFlow();
+flow.graph; // { nodes, edges } suitable for a visual editor
+```
+
+### Evaluation and trace replay
+
+`AssertNode`, `ScoreNode`, `CompareNode` and `ReplayNode` turn saved traces into regression suites. Volatile fields (IDs, timings, stack traces) are ignored when diffing.
+
+```javascript
+import { AssertNode, ScoreNode, createEvalSuite } from '@fractal-solutions/qflow/eval';
+
+const suite = createEvalSuite(flow, [{ name: 'happy path', shared: { input: 'hello' } }]);
+const results = await suite.run();
+```
+
+`ReplayNode` accepts a trace (or `tracePath`), reruns a `flowFactory`, and diffs events/spans/status; events include `eval:assert`, `eval:score`, `eval:compare` and `eval:replay`.
+
+### Bun-native nodes
+
+Small, composable nodes built on Bun primitives with no optional native dependencies: `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, `StreamTransformNode`, `StreamMapNode`, `StreamFilterNode` and `StreamReduceNode`.
+
+```javascript
+import { BunSpawnNode, SQLiteQueryNode, StreamMapNode } from '@fractal-solutions/qflow/bun';
+
+const spawn = new BunSpawnNode();
+spawn.setParams({ command: 'bun', args: ['--version'] });
+await new AsyncFlow(spawn).runAsync({}); // shared.spawnStdout
+
+const query = new SQLiteQueryNode();
+query.setParams({ database: ':memory:', sql: 'SELECT 1 AS ok', mode: 'all' });
+await new AsyncFlow(query).runAsync({}); // shared.sqliteResult
+
+const stream = new StreamMapNode({ transform: value => value * 2 });
+await new AsyncFlow(stream).runAsync({ streamInput: [1, 2, 3] }); // shared.streamResult
+```
+
+Events include `spawn:exit`, `file:change` and `stream:item`.
+
 ## Integrated Nodes and their Examples
 
 Here's a comprehensive list of integrated nodes available in qflow, along with a brief description and a link to their detailed documentation.
@@ -376,7 +534,13 @@ You can attach listeners with `on(name, handler)`, subscribe to everything with 
 *   `node:start`: `{ flowId, nodeClass, startTime, params }`
 *   `node:retry`: `{ flowId, nodeClass, attempt, maxRetries, error }`
 *   `node:end`: `{ flowId, nodeClass, endTime, duration, status, result, error }`
-*   `llm:delta` / `llm:reasoning` / `llm:done`: streaming payloads from `StreamingLLMNode`
+*   `llm:delta` / `llm:reasoning` / `llm:done`: streaming payloads from `StreamingLLMNode` and `LLMNode`
+*   `llm:retry` / `llm:fallback` / `llm:negotiated` / `llm:capability` / `llm:usage` / `llm:tool_call`: provider-neutral LLM lifecycle
+*   `side_effect:replay` / `side_effect:committed`: replay-safe side-effect outcomes
+*   `eval:assert` / `eval:score` / `eval:compare` / `eval:replay`: evaluation results
+*   `cycle:iteration` / `map:item_error` / `reduce:step`: dataflow progress
+*   `spawn:exit` / `file:change` / `stream:item`: Bun-native node progress
+*   `agent:approval`: human approval decisions
 *   `run:start` / `run:end` / `run:resumed` / `checkpoint:saved`: durable-run events
 
 Nested flow events are forwarded to the parent with `nested: true` and `parentFlowId`.

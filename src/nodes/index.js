@@ -1,3 +1,6 @@
+export * from '../llm/index.js';
+export * from '../side_effects.js';
+export * from '../bun_nodes.js';
 export * from './llm.js';
 export * from './streaming_llm.js';
 export * from './agent_llm.js';

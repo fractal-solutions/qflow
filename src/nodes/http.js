@@ -1,5 +1,6 @@
 import { AsyncNode } from '../qflow.js';
 import { log } from '../logger.js';
+import { withReplaySafeSideEffect } from '../side_effects.js';
 
 /**
  * A flexible node for making generic HTTP requests to any REST API.
@@ -70,48 +71,60 @@ export class HttpRequestNode extends AsyncNode {
     };
   }
 
-  async execAsync() {
-    const { url, method = 'GET', headers = {}, body, auth } = this.params;
+  async execAsync(prepRes, shared = {}, observer = {}) {
+    const execute = async () => {
+      const { url, method = 'GET', headers = {}, body, auth } = this.params;
 
-    if (!url) {
-      throw new Error('HttpRequestNode requires a `url` parameter.');
-    }
+      if (!url) {
+        throw new Error('HttpRequestNode requires a `url` parameter.');
+      }
 
-    const fetchOptions = {
-      method,
-      headers: { ...headers }, // Create a mutable copy
+      const fetchOptions = {
+        method,
+        headers: { ...headers }, // Create a mutable copy
+      };
+
+      // Handle Authentication
+      if (auth) {
+        if (auth.type === 'bearer' && auth.token) {
+          fetchOptions.headers['Authorization'] = `Bearer ${auth.token}`;
+        } else if (auth.type === 'basic' && auth.username && auth.password) {
+          const credentials = btoa(`${auth.username}:${auth.password}`);
+          fetchOptions.headers['Authorization'] = `Basic ${credentials}`;
+        }
+      }
+
+      // Handle Body
+      if (body) {
+        if (typeof body === 'object' && !fetchOptions.headers['Content-Type']) {
+          fetchOptions.headers['Content-Type'] = 'application/json';
+          fetchOptions.body = JSON.stringify(body);
+        } else {
+          fetchOptions.body = body;
+        }
+      }
+
+      log(`[HTTP] ${method} ${url}`, this.params.logging);
+      const response = await fetch(url, fetchOptions);
+      const responseBody = await this.parseResponseBody(response);
+
+      return {
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseBody,
+      };
     };
 
-    // Handle Authentication
-    if (auth) {
-      if (auth.type === 'bearer' && auth.token) {
-        fetchOptions.headers['Authorization'] = `Bearer ${auth.token}`;
-      } else if (auth.type === 'basic' && auth.username && auth.password) {
-        const credentials = btoa(`${auth.username}:${auth.password}`);
-        fetchOptions.headers['Authorization'] = `Basic ${credentials}`;
-      }
-    }
-
-    // Handle Body
-    if (body) {
-      if (typeof body === 'object' && !fetchOptions.headers['Content-Type']) {
-        fetchOptions.headers['Content-Type'] = 'application/json';
-        fetchOptions.body = JSON.stringify(body);
-      } else {
-        fetchOptions.body = body;
-      }
-    }
-
-    log(`[HTTP] ${method} ${url}`, this.params.logging);
-    const response = await fetch(url, fetchOptions);
-
-    const responseBody = await this.parseResponseBody(response);
-
-    return {
-      status: response.status,
-      headers: Object.fromEntries(response.headers.entries()),
-      body: responseBody,
-    };
+    const outcome = await withReplaySafeSideEffect({
+      params: this.params,
+      shared,
+      observer,
+      kind: 'http',
+      operationId: this.params.operationId,
+      onPending: this.params.onPendingSideEffect ?? 'error',
+      execute,
+    });
+    return outcome.result;
   }
 
   async parseResponseBody(response) {

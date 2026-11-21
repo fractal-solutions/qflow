@@ -64,47 +64,47 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 - [x] `site/#trace`: paste/upload/filter/download traces, view node spans, token deltas, checkpoints, and payloads.
 - [x] Heavy integrations are opt-in with guarded dynamic imports and actionable install errors.
 
-## Node innovation direction
+## Node innovation *(done in 2.0.0-canary.3)*
 
-The next differentiator should be **nodes that understand they are part of an agent run**, not just wrappers around APIs.
+Nodes now understand they are part of an agent run, not just wrappers around APIs. Implemented in the order below; the full chain compounds: tracing makes agents debuggable, checkpoints make them safe, and shared tool specs make them portable.
 
-1. **Provider-neutral LLM node**
-   - One `LLMNode` with an adapter registry (`openai`, `anthropic`, `ollama`, `openrouter`, `gemini`) instead of one class per vendor.
-   - Capability negotiation: streaming, tool calls, structured output, reasoning tokens, token/cost accounting.
-   - Provider failures become normal flow events (`llm:retry`, `llm:fallback`) so durable flows can resume cleanly.
+1. **Provider-neutral LLM node** *(done)*
+   - [x] One `LLMNode` with an adapter registry (`openai` + OpenAI-compatible providers, `anthropic`, `ollama`, `gemini`) in `src/llm/` and the `./llm` export.
+   - [x] Capability negotiation for streaming, tool calls, structured output, reasoning and usage; normalized `usage` / `cost` accounting.
+   - [x] Provider failures emit `llm:retry` / `llm:fallback` events; `llm:negotiated`, `llm:capability`, `llm:usage` and `llm:tool_call` make runs observable.
 
-2. **Reusable `ToolSpec` layer**
-   - Promote `getToolDefinition()` to a typed, provider-neutral spec with permissions, idempotency keys, timeouts, and dry-run support.
-   - The same spec powers agents, MCP export, and docs generation.
-   - Add `ToolRegistry` with namespaced tools and capability-based filtering, so an agent only sees tools it is allowed to call.
+2. **Reusable `ToolSpec` layer** *(done)*
+   - [x] `ToolSpec` + `toolSpecFromNode()` promote `getToolDefinition()` to a spec with permissions, idempotency keys, timeouts, dry-run and side-effect hints (`./tool-spec`).
+   - [x] The same spec powers agent prompts, MCP `tools/list` / `tools/call`, LLM tool schemas and generated Markdown docs.
+   - [x] `ToolRegistry` adds namespaces, capability/permission grants, validation and an idempotency store.
 
-3. **Agent-native control nodes**
-   - First-class `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode`, and `HumanApprovalNode` instead of hiding these inside agent strategies.
-   - Make strategies composable flow graphs: reasoning patterns become reusable subflows that can be checkpointed and traced.
-   - Add `AgentNode.asFlow()` to expose the engine loop as an inspectable graph.
+3. **Agent-native control nodes** *(done)*
+   - [x] First-class `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode` and `HumanApprovalNode` in `src/agent/control_nodes.js`.
+   - [x] `AgentEngine.asFlow()` / `buildAgentFlow()` turn declarative strategies into checkpointable, traceable `AsyncFlow`s with one node per phase.
+   - [x] `strategyGraph()` and `describeGraph()` expose JSON nodes/edges for visual authoring.
 
-4. **Replay-safe side-effect nodes**
-   - `HttpNode`, `GitNode`, `WebhookNode`, and `DatabaseNode` gain stable operation IDs and exactly-once semantics backed by `SQLiteCheckpointer`.
-   - On replay, a completed side effect returns its recorded result instead of running twice.
-   - This is the missing piece that turns durable execution from "resume" into "safe replay."
+4. **Replay-safe side-effect nodes** *(done)*
+   - [x] `withReplaySafeSideEffect()` and `ReplaySafeNode` reserve an operation before execution via a new SQLite `qflow_side_effects` table.
+   - [x] `HttpRequestNode`, `GitNode`, `WebHookNode` and `DatabaseNode` accept `operationId` templates; completed effects replay their recorded result.
+   - [x] Reserved-but-unfinished effects raise `SideEffectUncertainError` / `QFLOW_SIDE_EFFECT_UNCERTAIN` instead of re-running.
+   - [x] Resume now retries from the start node when a run failed before its first checkpoint.
 
-5. **Dataflow and graph nodes**
-   - `MapNode`, `ReduceNode`, `JoinNode`, `BranchNode`, and `CycleNode` with explicit budgets and typed shared-state schemas.
-   - Visual graph authoring becomes realistic once nodes expose input/output contracts and trace spans line up with graph edges.
+5. **Dataflow and graph nodes** *(done)*
+   - [x] `MapNode`, `ReduceNode`, `JoinNode`, `BranchNode` and `CycleNode` with contract validation and explicit iteration/item budgets.
+   - [x] `StateContract` / `defineState()` (`./contracts`) validate shared state at node boundaries; `describeGraph()` supports visual authoring.
 
-6. **Evaluation and testing nodes**
-   - `AssertNode`, `ScoreNode`, `CompareNode`, and `ReplayNode` turn saved traces into regression suites.
-   - Pair with the site viewer: select a trace, replay it against a new flow, diff the spans and payloads.
+6. **Evaluation and testing nodes** *(done)*
+   - [x] `AssertNode`, `ScoreNode`, `CompareNode` and `ReplayNode` (`./eval`) turn normalized traces into regression suites.
+   - [x] `compareTraces()` / `deepDiff()` ignore volatile IDs, timings and stack traces; `createEvalSuite()` runs cases against a flow.
+   - [x] Replay pairs with the site viewer's JSON traces: select a trace, replay it against a new flow, diff the spans and payloads.
 
-7. **Bun-native performance nodes**
-   - `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, and streaming transform nodes built on Bun primitives.
-   - These should be small, composable, and free of optional native dependencies.
-
-**Recommended sequence:** provider-neutral LLM adapter + `ToolSpec` first, then replay-safe side effects, then trace-driven evaluation. That chain compounds: tracing makes agents debuggable, checkpoints make them safe, and shared tool specs make them portable.
+7. **Bun-native performance nodes** *(done)*
+   - [x] `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode` and Web Stream transform nodes in `src/bun_nodes.js` (`./bun`).
+   - [x] Built on `Bun.spawn`, `bun:sqlite` and `Bun.watch` with no optional native dependencies.
 
 ## Shipping floor (kept deliberately small)
 
-- [x] `type: module`, correct export map including `/mcp`, `/agent`, `/streaming` and `/durable`, pinned toolchain + lockfile.
+- [x] `type: module`, export map including `/mcp`, `/agent`, `/streaming`, `/durable`, `/trace`, `/optional`, `/logger`, `/llm`, `/tool-spec`, `/contracts`, `/side-effects`, `/eval` and `/bun`; pinned toolchain + lockfile.
 - [x] Real tests under `tests/`; keep `examples/*_test.js` demos out of test discovery.
 - [x] CI: typecheck + tests on Bun (`.github/workflows/ci.yml`).
 - [x] Resolve license mismatch; CHANGELOG + migration guide.

@@ -1,6 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { AsyncFlow } from './qflow.js';
 import { normalizeTrace, serializeTrace } from './trace.js';
+import { SideEffectUncertainError } from './util.js';
 
 function parseJson(value, fallback = null) {
   if (value == null) return fallback;
@@ -108,6 +109,17 @@ export class SQLiteCheckpointer {
         created_at TEXT NOT NULL,
         PRIMARY KEY (run_id, step)
       );
+      CREATE TABLE IF NOT EXISTS qflow_side_effects (
+        run_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        kind TEXT,
+        status TEXT NOT NULL,
+        result_json TEXT,
+        error_json TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (run_id, operation_id)
+      );
     `);
   }
 
@@ -143,7 +155,12 @@ export class SQLiteCheckpointer {
         entry.step,
         entry.nodeIndex,
         entry.nodeClass,
-        entry.action ?? null,
+        // Actions are normally action names, but standalone eval/dataflow nodes
+        // return their exec result. Persist those as JSON instead of handing an
+        // object to bun:sqlite.
+        typeof entry.action === 'object' && entry.action !== null
+          ? stringify(entry.action)
+          : entry.action ?? null,
         entry.nextNodeIndex,
         stringify(entry.shared),
         stringify(entry.params),
@@ -236,6 +253,96 @@ export class SQLiteCheckpointer {
     }));
   }
 
+  loadSideEffect(runId, operationId) {
+    const row = this.db.prepare(`
+      SELECT * FROM qflow_side_effects WHERE run_id = ? AND operation_id = ?
+    `).get(runId, operationId);
+    if (!row) return null;
+
+    return {
+      runId: row.run_id,
+      operationId: row.operation_id,
+      kind: row.kind,
+      status: row.status,
+      result: parseJson(row.result_json),
+      error: parseJson(row.error_json),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  /**
+   * Reserve an operation before running it, then record its result. A completed
+   * operation replays its result; a reserved-but-unfinished operation is treated
+   * as uncertain so it is never executed twice.
+   */
+  async runSideEffect({ runId, operationId, execute, kind = 'side_effect', onPending = 'error' }) {
+    if (!runId || !operationId) throw new Error('runSideEffect requires runId and operationId.');
+    if (typeof execute !== 'function') throw new Error('runSideEffect requires an execute function.');
+
+    const existing = this.loadSideEffect(runId, operationId);
+    if (existing?.status === 'completed') {
+      return { result: existing.result, replayed: true, operationId, status: 'completed' };
+    }
+    if (existing && (existing.status === 'pending' || existing.status === 'failed')) {
+      if (!(existing.status === 'failed' && onPending === 'retry')) {
+        if (onPending === 'return-null') {
+          return { result: null, replayed: true, operationId, status: existing.status };
+        }
+        throw new SideEffectUncertainError(operationId);
+      }
+    }
+
+    const now = new Date().toISOString();
+    this.db.prepare(`
+      INSERT INTO qflow_side_effects (
+        run_id, operation_id, kind, status, result_json, error_json, created_at, updated_at
+      ) VALUES (?, ?, ?, 'pending', NULL, NULL, ?, ?)
+      ON CONFLICT(run_id, operation_id) DO UPDATE SET
+        kind = excluded.kind,
+        status = 'pending',
+        result_json = NULL,
+        error_json = NULL,
+        updated_at = excluded.updated_at
+    `).run(runId, operationId, kind, now, now);
+
+    try {
+      const result = await execute();
+      this.db.prepare(`
+        UPDATE qflow_side_effects
+        SET status = 'completed', result_json = ?, error_json = NULL, updated_at = ?
+        WHERE run_id = ? AND operation_id = ?
+      `).run(stringify(result), new Date().toISOString(), runId, operationId);
+      return { result, replayed: false, operationId, status: 'completed' };
+    } catch (error) {
+      this.db.prepare(`
+        UPDATE qflow_side_effects
+        SET status = 'failed', result_json = NULL, error_json = ?, updated_at = ?
+        WHERE run_id = ? AND operation_id = ?
+      `).run(
+        stringify({ message: error.message, stack: error.stack }),
+        new Date().toISOString(),
+        runId,
+        operationId,
+      );
+      throw error;
+    }
+  }
+
+  listSideEffects(runId) {
+    return this.db.prepare(`
+      SELECT run_id, operation_id, kind, status, created_at, updated_at
+      FROM qflow_side_effects WHERE run_id = ? ORDER BY created_at
+    `).all(runId).map(row => ({
+      runId: row.run_id,
+      operationId: row.operation_id,
+      kind: row.kind,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
   /** Export a run as a JSON-safe trace for the site viewer. */
   exportRunTrace(runId, options = {}) {
     const run = this.loadRun(runId);
@@ -318,8 +425,10 @@ export class DurableFlow extends AsyncFlow {
     });
 
     const nodeIndex = this.buildNodeIndex();
-    let curr = resume
-      ? (state.cursorNodeIndex == null ? null : this.findNodeByIndex(nodeIndex, state.cursorNodeIndex))
+    // A run that failed before its first checkpoint has no cursor yet; retry
+    // from the start node rather than silently completing with no work done.
+    let curr = resume && state.cursorNodeIndex != null
+      ? this.findNodeByIndex(nodeIndex, state.cursorNodeIndex)
       : this.startNode;
     let step = state.step;
     let lastResult = state.result;

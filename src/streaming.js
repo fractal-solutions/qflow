@@ -23,6 +23,43 @@ function extractReasoning(chunk) {
   return '';
 }
 
+function normalizeToolCalls(calls = []) {
+  return calls
+    .filter(call => call?.function?.name || call?.id)
+    .map(call => ({
+      index: call.index ?? 0,
+      id: call.id ?? null,
+      type: call.type ?? 'function',
+      function: {
+        name: call.function?.name ?? '',
+        arguments: typeof call.function?.arguments === 'string' ? call.function.arguments : JSON.stringify(call.function?.arguments ?? {}),
+      },
+    }));
+}
+
+function collectToolCalls(chunk, collected) {
+  const calls = chunk?.choices?.[0]?.delta?.tool_calls ?? chunk?.choices?.[0]?.message?.tool_calls ?? [];
+  for (const call of calls) {
+    const index = call.index ?? 0;
+    const existing = collected.find(entry => entry.index === index);
+    if (!existing) {
+      collected.push({
+        index,
+        id: call.id ?? null,
+        type: call.type ?? 'function',
+        function: {
+          name: call.function?.name ?? '',
+          arguments: typeof call.function?.arguments === 'string' ? call.function.arguments : '',
+        },
+      });
+      continue;
+    }
+    if (call.id) existing.id = call.id;
+    if (call.function?.name) existing.function.name = call.function.name;
+    if (typeof call.function?.arguments === 'string') existing.function.arguments += call.function.arguments;
+  }
+}
+
 /**
  * Stream an OpenAI-compatible chat completion and report each text delta.
  *
@@ -76,6 +113,7 @@ export async function streamChatCompletions({
       reasoning: '',
       finishReason: data?.choices?.[0]?.finish_reason ?? null,
       usage: data?.usage ?? null,
+      toolCalls: normalizeToolCalls(data?.choices?.[0]?.message?.tool_calls ?? []),
     };
   }
 
@@ -86,6 +124,7 @@ export async function streamChatCompletions({
     reasoning: '',
     finishReason: null,
     usage: null,
+    toolCalls: [],
   };
   let buffer = '';
   let deltaIndex = 0;
@@ -114,6 +153,7 @@ export async function streamChatCompletions({
 
     result.finishReason = chunk.choices?.[0]?.finish_reason ?? result.finishReason;
     result.usage = chunk.usage ?? result.usage;
+    collectToolCalls(chunk, result.toolCalls);
 
     const delta = extractText(chunk);
     if (delta) {

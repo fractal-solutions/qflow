@@ -25,12 +25,22 @@ function toMCPTool(definition) {
  */
 export class QFlowMCPServer {
   constructor(options = {}) {
-    const { name = 'qflow', version = '2.0.0-canary', toolClasses } = options;
+    const { name = 'qflow', version = '2.0.0-canary', toolClasses, toolRegistry } = options;
 
     this.name = name;
     this.version = version;
+    this.toolRegistry = toolRegistry ?? null;
     this.toolClasses = toolClasses ?? getToolClasses();
-    this.definitions = toolClasses ? this.toolClasses.filter(c => typeof c.getToolDefinition === 'function').map(c => c.getToolDefinition()) : getToolDefinitions();
+
+    if (this.toolRegistry) {
+      this.definitions = this.toolRegistry.definitions();
+      this.classByName = new Map();
+      return;
+    }
+
+    this.definitions = toolClasses
+      ? this.toolClasses.filter(c => typeof c.getToolDefinition === 'function').map(c => c.getToolDefinition())
+      : getToolDefinitions();
 
     this.classByName = new Map();
     for (const ToolClass of this.toolClasses) {
@@ -40,6 +50,23 @@ export class QFlowMCPServer {
   }
 
   async callTool({ name, arguments: args = {} }) {
+    if (this.toolRegistry) {
+      if (name === 'finish' && !this.toolRegistry.get(name)) {
+        return { content: [{ type: 'text', text: String(args?.output ?? '') }] };
+      }
+      try {
+        const outcome = await this.toolRegistry.execute(name, args ?? {});
+        const output = outcome.result;
+        const text = typeof output === 'string' ? output : JSON.stringify(output ?? null, null, 2);
+        return { content: [{ type: 'text', text: text ?? '' }] };
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Tool '${name}' failed: ${error.message}` }],
+          isError: true,
+        };
+      }
+    }
+
     const ToolClass = this.classByName.get(name);
 
     if (!ToolClass) {

@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.0.0-canary.3
+
+### Added
+- Provider-neutral `LLMNode` (`./llm`): adapter registry for OpenAI-compatible providers, Anthropic, Ollama and Gemini, capability negotiation, streaming, tool calls, retries/fallbacks, token/cost accounting and `llm:*` events.
+- `ToolSpec` / `ToolRegistry` (`./tool-spec`): one portable definition for agent tools, MCP tools, LLM schemas and generated docs, with namespaces, capability/permission grants, dry-run, timeouts and idempotency caching.
+- Replay-safe side effects (`./side-effects`): `ReplaySafeNode`, `withReplaySafeSideEffect()` and `SideEffectUncertainError`; SQLite `qflow_side_effects` reservations on `DurableFlow`.
+- Opt-in `operationId` support on `HttpRequestNode`, `GitNode`, `WebHookNode` and `DatabaseNode` so completed effects replay instead of re-running.
+- Dataflow nodes in `./graph`: `MapNode`, `ReduceNode`, `JoinNode`, `BranchNode`, `CycleNode` and `describeGraph()`; `./contracts` adds `StateContract` / `defineState()` validation.
+- Agent-native nodes (`./agent`): `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode`, `HumanApprovalNode`, plus `AgentEngine.asFlow()` and `strategyGraph()`.
+- Evaluation nodes (`./eval`): `AssertNode`, `ScoreNode`, `CompareNode`, `ReplayNode`, `compareTraces()`, `deepDiff()` and `createEvalSuite()`.
+- Bun-native nodes (`./bun`): `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, `StreamTransformNode`, `StreamMapNode`, `StreamFilterNode` and `StreamReduceNode`.
+- New subpath exports: `./llm`, `./tool-spec`, `./contracts`, `./side-effects`, `./eval`, `./bun`; new node families are also re-exported from `./nodes` / `./agent`.
+- Tests for every new family; the suite now has 74 passing tests.
+
+### Changed
+- `AgentEngine` accepts `toolRegistry`, `grantedCapabilities` and `grantedPermissions`, and shares one `initialize()` path with `asFlow()`.
+- `QFlowMCPServer` can be constructed with `{ toolRegistry }` and call tools through the registry execute path.
+- `ReplayNode` compares status/events/spans by default; saved checkpoints are treated as input metadata, not replay output.
+- Version bumped to `2.0.0-canary.3`.
+
+### Fixed
+- `StateContract` no longer shadows its own `validate()` method when a custom validator is supplied.
+- `ToolRegistry.allowed()` accepts capability/permission arrays as well as sets.
+- `DurableFlow` retries from the start node when a run failed before its first checkpoint, and persists object-valued node actions as JSON.
+- `AgentFlowFinishNode` now returns the flow's final output instead of an empty string.
+
 ## 2.0.0-canary.2
 
 ### Added

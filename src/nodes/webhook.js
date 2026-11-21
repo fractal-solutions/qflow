@@ -3,6 +3,7 @@ import http from 'http';
 import { URL } from 'url'; // Node.js built-in
 import crypto from 'crypto'; // Node.js built-in
 import { log } from '../logger.js';
+import { withReplaySafeSideEffect } from '../side_effects.js';
 export class WebHookNode extends AsyncNode {
   static getToolDefinition() {
     return {
@@ -48,7 +49,8 @@ export class WebHookNode extends AsyncNode {
     this.webhookPath = null;
     this.sharedSecret = null;
   }
-    async execAsync() {
+    async execAsync(prepRes, shared = {}, observer = {}) {
+      const execute = async () => {
         const { port = 3000, // Port to listen on
         path = '/webhook', // URL path for the webhook
         flow, // The qflow AsyncFlow instance to trigger
@@ -148,6 +150,18 @@ export class WebHookNode extends AsyncNode {
         // This node returns immediately after starting the server.
         // The flow continues, and the server runs in the background.
         return { status: 'listening', port, path: this.webhookPath };
+      };
+
+      const outcome = await withReplaySafeSideEffect({
+        params: this.params,
+        shared,
+        observer,
+        kind: 'webhook',
+        operationId: this.params.operationId,
+        onPending: this.params.onPendingSideEffect ?? 'error',
+        execute,
+      });
+      return outcome.result;
     }
     // Cleanup: Ensure the server is closed when the node's flow completes or is cancelled
     async postAsync(shared, prepRes, execRes) {

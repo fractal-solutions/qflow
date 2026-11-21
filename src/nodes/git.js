@@ -1,6 +1,7 @@
 
 import { AsyncNode } from '../qflow.js';
 import { loadOptional } from '../optional.js';
+import { withReplaySafeSideEffect } from '../side_effects.js';
 
 export class GitNode extends AsyncNode {
   static getToolDefinition() {
@@ -48,64 +49,77 @@ export class GitNode extends AsyncNode {
     };
   }
 
-  async execAsync() {
-    const {
-      action,
-      repoPath,
-      remoteUrl,
-      files,
-      message,
-      branch,
-      remote = 'origin',
-    } = this.params;
+  async execAsync(prepRes, shared = {}, observer = {}) {
+    const execute = async () => {
+      const {
+        action,
+        repoPath,
+        remoteUrl,
+        files,
+        message,
+        branch,
+        remote = 'origin',
+      } = this.params;
 
-    if (!repoPath && action !== 'clone') {
-      throw new Error('GitNode requires a `repoPath` for all actions except `clone`.');
-    }
+      if (!repoPath && action !== 'clone') {
+        throw new Error('GitNode requires a `repoPath` for all actions except `clone`.');
+      }
 
-    const { default: simpleGit } = await loadOptional('simple-git');
-    const git = simpleGit(repoPath);
+      const { default: simpleGit } = await loadOptional('simple-git');
+      const git = simpleGit(repoPath);
 
-    let result = {};
+      let result = {};
 
-    switch (action) {
-      case 'clone':
-        if (!remoteUrl || !repoPath) throw new Error('`remoteUrl` and `repoPath` are required for `clone`.');
-        await git.clone(remoteUrl, repoPath);
-        result = { message: `Repository cloned from ${remoteUrl} to ${repoPath}` };
-        break;
-      case 'init':
-        await git.init();
-        result = { message: `Initialized empty Git repository in ${repoPath}` };
-        break;
-      case 'add':
-        if (!files) throw new Error('`files` parameter is required for `add` action.');
-        await git.add(files);
-        result = { message: `Files added: ${files.join(', ')}` };
-        break;
-      case 'commit':
-        if (!message) throw new Error('`message` parameter is required for `commit` action.');
-        const commitResult = await git.commit(message);
-        result = { message: 'Commit successful', ...commitResult };
-        break;
-      case 'push':
-        if (!branch) throw new Error('`branch` parameter is required for `push` action.');
-        await git.push(remote, branch);
-        result = { message: `Pushed to ${remote}/${branch}` };
-        break;
-      case 'pull':
-        if (!branch) throw new Error('`branch` parameter is required for `pull` action.');
-        await git.pull(remote, branch);
-        result = { message: `Pulled from ${remote}/${branch}` };
-        break;
-      case 'status':
-        const statusResult = await git.status();
-        result = statusResult;
-        break;
-      default:
-        throw new Error(`Unsupported Git action: ${action}`);
-    }
+      switch (action) {
+        case 'clone':
+          if (!remoteUrl || !repoPath) throw new Error('`remoteUrl` and `repoPath` are required for `clone`.');
+          await git.clone(remoteUrl, repoPath);
+          result = { message: `Repository cloned from ${remoteUrl} to ${repoPath}` };
+          break;
+        case 'init':
+          await git.init();
+          result = { message: `Initialized empty Git repository in ${repoPath}` };
+          break;
+        case 'add':
+          if (!files) throw new Error('`files` parameter is required for `add` action.');
+          await git.add(files);
+          result = { message: `Files added: ${files.join(', ')}` };
+          break;
+        case 'commit':
+          if (!message) throw new Error('`message` parameter is required for `commit` action.');
+          const commitResult = await git.commit(message);
+          result = { message: 'Commit successful', ...commitResult };
+          break;
+        case 'push':
+          if (!branch) throw new Error('`branch` parameter is required for `push` action.');
+          await git.push(remote, branch);
+          result = { message: `Pushed to ${remote}/${branch}` };
+          break;
+        case 'pull':
+          if (!branch) throw new Error('`branch` parameter is required for `pull` action.');
+          await git.pull(remote, branch);
+          result = { message: `Pulled from ${remote}/${branch}` };
+          break;
+        case 'status':
+          const statusResult = await git.status();
+          result = statusResult;
+          break;
+        default:
+          throw new Error(`Unsupported Git action: ${action}`);
+      }
 
-    return result;
+      return result;
+    };
+
+    const outcome = await withReplaySafeSideEffect({
+      params: this.params,
+      shared,
+      observer,
+      kind: 'git',
+      operationId: this.params.operationId,
+      onPending: this.params.onPendingSideEffect ?? 'error',
+      execute,
+    });
+    return outcome.result;
   }
 }

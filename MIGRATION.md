@@ -27,6 +27,12 @@ Node.js is no longer a supported runtime. 2.0 uses Bun APIs directly (`Bun.spawn
 | `@fractal-solutions/qflow/trace` | `normalizeTrace()`, `serializeTrace()` and `writeTraceFile()` |
 | `@fractal-solutions/qflow/optional` | Optional dependency map and guarded loader |
 | `@fractal-solutions/qflow/logger` | `log`, `setLogLevel` and `LogLevel` |
+| `@fractal-solutions/qflow/llm` | `LLMNode`, adapter registry and `llm:*` event names |
+| `@fractal-solutions/qflow/tool-spec` | `ToolSpec`, `ToolRegistry`, `toolSpecFromNode()` and `generateToolDocs()` |
+| `@fractal-solutions/qflow/contracts` | `StateContract`, `defineState()` and validation helpers |
+| `@fractal-solutions/qflow/side-effects` | `ReplaySafeNode`, `withReplaySafeSideEffect()` and `SideEffectUncertainError` |
+| `@fractal-solutions/qflow/eval` | `AssertNode`, `ScoreNode`, `CompareNode`, `ReplayNode` and `createEvalSuite()` |
+| `@fractal-solutions/qflow/bun` | `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode` and stream nodes |
 
 ## Async lifecycle methods
 
@@ -148,6 +154,64 @@ await writeTraceFile(recorder.events, './trace.json');
 ```
 
 For durable runs, use `createRunTrace(checkpointer, runId, { events: recorder.events, includeState: true })`.
+
+## New node families (canary.3)
+
+All of these are additive; no existing import needs to change. The new families are also re-exported from `/nodes` and, for agent control nodes, `/agent`.
+
+### One LLM node instead of one per vendor
+
+`LLMNode` is the preferred way to call an LLM. The older `OpenAILLMNode`, `GeminiLLMNode`, `OllamaLLMNode`, etc. remain available but are no longer the only option:
+
+```js
+import { LLMNode } from '@fractal-solutions/qflow/llm';
+
+const llm = new LLMNode({
+  provider: 'openai', // also anthropic, ollama, gemini, openrouter, deepseek, ...
+  model: 'gpt-4o-mini',
+  fallbackProviders: ['ollama'],
+  maxRetries: 2,
+});
+```
+
+`provider` can also be an adapter object implementing `complete()`/`stream()`; register reusable ones with `registerLLMAdapter(id, adapter)`. The result is normalized to `{ text, reasoning, toolCalls, usage, cost, finishReason }` across providers. New events: `llm:retry`, `llm:fallback`, `llm:negotiated`, `llm:capability`, `llm:usage`, `llm:tool_call`.
+
+### Tool specs replace bare `getToolDefinition()` objects
+
+`ToolSpec` and `ToolRegistry` wrap existing tool definitions and are now the shared source for agent prompts, MCP `tools/list`, LLM tool schemas and generated docs:
+
+```js
+import { toolSpecFromNode, ToolRegistry } from '@fractal-solutions/qflow/tool-spec';
+import { AgentNode } from '@fractal-solutions/qflow/agent';
+import { QFlowMCPServer } from '@fractal-solutions/qflow/mcp';
+
+const registry = new ToolRegistry({
+  tools: [toolSpecFromNode(MyToolNode, { capabilities: ['read'], permissions: ['public'] })],
+  grantedCapabilities: ['read'],
+});
+const agent = new AgentNode({ llmNode, toolRegistry: registry, grantedCapabilities: ['read'] });
+const mcp = new QFlowMCPServer({ toolRegistry: registry });
+```
+
+Capabilities/permissions are checked before a tool is listed or executed; `idempotencyKey`, `timeoutMs` and `dryRun` can be set per spec.
+
+### Safe replay of side effects
+
+`DurableFlow` captures a reservation before running an external effect. Set `operationId` on replay-safe nodes (including `HttpRequestNode`, `GitNode`, `WebHookNode` and `DatabaseNode`) to opt in:
+
+```js
+http.setParams({ url, operationId: '{{requestId}}' });
+await flow.runDurable({ runId, shared: { requestId: 'req-1' } });
+await flow.runDurable({ runId, resume: true }); // returns the recorded response
+```
+
+Completed operations replay their result. A row that is reserved but not completed raises `SideEffectUncertainError` / `QFLOW_SIDE_EFFECT_UNCERTAIN` — it is never retried automatically. Runs that fail before their first checkpoint now retry from the start node on resume.
+
+### Strategies as flows, and trace-driven evaluation
+
+`AgentEngine.asFlow()` (available on all agent classes) returns an `AsyncFlow` with one node per strategy phase and a `graph` property describing nodes/edges. Use `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode` and `HumanApprovalNode` from `/agent` to compose your own control graphs.
+
+`AssertNode`, `ScoreNode`, `CompareNode` and `ReplayNode` from `/eval` consume the same normalized traces as the site viewer, so `writeTraceFile()` output can drive regression suites. `compareTraces()` ignores volatile IDs, timings and stack traces by default.
 
 ## License
 

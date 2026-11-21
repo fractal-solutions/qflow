@@ -1,6 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 import { SQL } from 'bun';
 import { Database as SQLiteDatabase } from 'bun:sqlite';
+import { withReplaySafeSideEffect } from '../side_effects.js';
 
 export class DatabaseNode extends AsyncNode {
   static getToolDefinition() {
@@ -70,7 +71,8 @@ export class DatabaseNode extends AsyncNode {
     }
   }
 
-  async execAsync(prepRes, shared) {
+  async execAsync(prepRes, shared = {}, observer = {}) {
+    const execute = async () => {
     const { action, query, table, data, where, operations } = this.params;
 
     if (this.#db instanceof SQLiteDatabase) {
@@ -129,6 +131,18 @@ export class DatabaseNode extends AsyncNode {
                 throw new Error(`Unsupported database action for bun:sql: ${action}`);
         }
     }
+    };
+
+    const outcome = await withReplaySafeSideEffect({
+      params: this.params,
+      shared,
+      observer,
+      kind: 'database',
+      operationId: this.params.operationId,
+      onPending: this.params.onPendingSideEffect ?? 'error',
+      execute,
+    });
+    return outcome.result;
   }
 
   async postAsync(shared, prepRes, execRes) {
