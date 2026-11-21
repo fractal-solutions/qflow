@@ -1,6 +1,5 @@
 import { AsyncNode } from '../qflow.js';
-// You would need to install the 'ssh2' library: npm install ssh2
-import { Client } from 'ssh2';
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 export class RemoteExecutionNode extends AsyncNode {
@@ -84,6 +83,7 @@ export class RemoteExecutionNode extends AsyncNode {
       throw new Error('RemoteExecutionNode requires either `password` or `privateKey` for authentication.');
     }
 
+    const { Client } = await loadOptional('ssh2');
     const conn = new Client();
     let result = {};
 

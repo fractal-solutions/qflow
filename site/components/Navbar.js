@@ -38,6 +38,7 @@ window.Navbar = () => {
                             <a href="#getting-started" className={navLinkClass}>Getting Started</a>
                             <a href="#docs" className={navLinkClass}>Docs</a>
                             <a href="#examples" className={navLinkClass}>Examples</a>
+                            <a href="#trace" className={navLinkClass}>Trace Viewer</a>
                             <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
                         </div>
                         <div className="hidden md:flex items-center space-x-3">
@@ -70,6 +71,7 @@ window.Navbar = () => {
                             <a href="#getting-started" className={navLinkClass} onClick={() => setOpen(false)}>Getting Started</a>
                             <a href="#docs" className={navLinkClass} onClick={() => setOpen(false)}>Docs</a>
                             <a href="#examples" className={navLinkClass} onClick={() => setOpen(false)}>Examples</a>
+                            <a href="#trace" className={navLinkClass} onClick={() => setOpen(false)}>Trace Viewer</a>
                             <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className={navLinkClass}>GitHub</a>
                             <button
                                 onClick={() => { toggleTheme(); setOpen(false); }}

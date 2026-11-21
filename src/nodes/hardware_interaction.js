@@ -1,7 +1,5 @@
 import { AsyncNode } from '../qflow.js';
-// You would need to install the 'serialport' library: npm install serialport
-import { SerialPort } from 'serialport';
-import { ReadlineParser } from '@serialport/parser-readline'; // For reading line-by-line
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 export class HardwareInteractionNode extends AsyncNode {
@@ -64,6 +62,7 @@ export class HardwareInteractionNode extends AsyncNode {
       case 'list_ports':
         // List available serial ports
         try {
+          const { SerialPort } = await loadOptional('serialport');
           const ports = await SerialPort.list();
           result = ports.map(p => ({
             path: p.path,
@@ -85,6 +84,7 @@ export class HardwareInteractionNode extends AsyncNode {
         }
 
         try {
+          const { SerialPort } = await loadOptional('serialport');
           this.port = new SerialPort({ path: portPath, baudRate: baudRate });
 
           await new Promise((resolve, reject) => {
@@ -105,6 +105,7 @@ export class HardwareInteractionNode extends AsyncNode {
             });
             result = { status: 'data_written', data: dataToWrite };
           } else if (action === 'read_line') {
+            const { ReadlineParser } = await loadOptional('@serialport/parser-readline');
             this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\n' }));
             result = await new Promise((resolve, reject) => {
               const timer = setTimeout(() => {

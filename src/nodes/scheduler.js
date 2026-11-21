@@ -1,6 +1,5 @@
 import { AsyncNode, AsyncFlow } from '../qflow.js';
-// You would need to install the 'node-cron' library: npm install node-cron
-import * as cron from 'node-cron';
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 export class SchedulerNode extends AsyncNode {
@@ -77,6 +76,7 @@ export class SchedulerNode extends AsyncNode {
 
       let task;
       if (typeof schedule === 'string') { // Cron string
+        const cron = await loadOptional('node-cron');
         task = cron.schedule(schedule, async () => {
           log(`[SchedulerNode] Scheduled cron task triggered for ID: ${id}`, this.params.logging);
           try {

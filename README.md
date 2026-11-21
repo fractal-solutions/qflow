@@ -16,6 +16,8 @@
 *   **Streaming LLM Output:** Surface token deltas as flow events with OpenAI-compatible providers.
 *   **Durable Execution:** Checkpoint flow state to `bun:sqlite` and resume runs after a crash.
 *   **Graph Guards:** Fan-out/fan-in nodes, error edges, loop limits and flow-level timeouts.
+*   **Trace Viewer:** Export flow/durable-run traces as JSON and inspect them at `#trace` on the docs site.
+*   **Opt-in Integrations:** Heavy packages load only when the node action that needs them runs.
 
 ## Installation
 
@@ -25,15 +27,13 @@ To get started quickly with a new project, you can use the `create-qflow` tool (
 bunx create-qflow@latest <project-name>
 ```
 
-or
-
-You can install `qflow` via npm or Bun:
+or install the package with Bun:
 
 ```bash
-npm install @fractal-solutions/qflow
-# or
 bun add @fractal-solutions/qflow
 ```
+
+qflow 2.0 is **Bun-only**. Node.js is not a supported runtime.
 
 ## Module Imports
 
@@ -56,13 +56,16 @@ bun add @fractal-solutions/qflow
     import { AgentNode, RAORAgent, listStrategies } from '@fractal-solutions/qflow/agent';
     ```
 
-*   **MCP, streaming and durability:**
+*   **MCP, streaming, durability, testing and tooling:**
     ```javascript
     import { QFlowMCPServer, MCPClientNode } from '@fractal-solutions/qflow/mcp';
     import { streamChatCompletions } from '@fractal-solutions/qflow/streaming';
-    import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
+    import { DurableFlow, SQLiteCheckpointer, createRunTrace } from '@fractal-solutions/qflow/durable';
     import { MockNode, recordFlow } from '@fractal-solutions/qflow/testing';
     import { FanOutNode, FanInNode } from '@fractal-solutions/qflow/graph';
+    import { normalizeTrace, writeTraceFile } from '@fractal-solutions/qflow/trace';
+    import { OPTIONAL_DEPENDENCIES, loadOptional } from '@fractal-solutions/qflow/optional';
+    import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';
     ```
 
 See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.
@@ -274,7 +277,7 @@ See [documentation/examples.md](documentation/examples.md) for a full list of ex
 
 ### Interactive Webview Form with Validation
 
-This example demonstrates how to create a persistent interactive webview for a multi-field form, perform data validation using `DataValidationNode`, and provide dynamic feedback to the user within the webview.
+This example demonstrates how to create a persistent interactive webview for a multi-field form, perform data validation using `DataValidationNode`, and provide dynamic feedback to the user within the webview. It requires the optional `webview-bun`, `ajv`, and `ajv-formats` packages.
 
 See [examples/advanced_interactive_webview_form.js](examples/advanced_interactive_webview_form.js) for the full example.
 
@@ -364,18 +367,19 @@ Here's a comprehensive list of integrated nodes available in qflow, along with a
 
 `qflow` includes a built-in event system for `AsyncFlow` that provides detailed insights into the execution of your workflows. This allows for powerful, real-time monitoring, logging, and debugging.
 
-You can attach listeners to an `AsyncFlow` instance to subscribe to key lifecycle events.
+You can attach listeners with `on(name, handler)`, subscribe to everything with `onAny(handler)` / `on('*', handler)`, or emit custom events from a node with `observer.emit(name, payload)`.
 
-### Available Events
+### Built-in Events
 
-*   `flow:start`: Emitted when the flow begins.
-    *   **Payload:** `{ flowId, startTime }`
-*   `flow:end`: Emitted when the flow finishes, either successfully or with an error.
-    *   **Payload:** `{ flowId, endTime, duration, status, error }`
-*   `node:start`: Emitted just before a node executes.
-    *   **Payload:** `{ flowId, nodeClass, startTime, params }`
-*   `node:end`: Emitted right after a node finishes.
-    *   **Payload:** `{ flowId, nodeClass, endTime, duration, status, result, error }`
+*   `flow:start`: `{ flowId, startTime }`
+*   `flow:end`: `{ flowId, endTime, duration, status, error }`
+*   `node:start`: `{ flowId, nodeClass, startTime, params }`
+*   `node:retry`: `{ flowId, nodeClass, attempt, maxRetries, error }`
+*   `node:end`: `{ flowId, nodeClass, endTime, duration, status, result, error }`
+*   `llm:delta` / `llm:reasoning` / `llm:done`: streaming payloads from `StreamingLLMNode`
+*   `run:start` / `run:end` / `run:resumed` / `checkpoint:saved`: durable-run events
+
+Nested flow events are forwarded to the parent with `nested: true` and `parentFlowId`.
 
 
 This example demonstrates how to use the built-in event system to monitor the execution of a flow.
@@ -485,6 +489,65 @@ await myFlow.runAsync({});
 
 
 
+## Trace Viewer and Snapshots
+
+Capture events with `recordFlow()`, write a JSON trace, and open `site/index.html#trace` (or the deployed docs site with `#trace`) to inspect the timeline, spans, token deltas, checkpoints, and payloads.
+
+```javascript
+import { recordFlow } from '@fractal-solutions/qflow/testing';
+import { writeTraceFile } from '@fractal-solutions/qflow/trace';
+
+const recorder = recordFlow(flow);
+await flow.runAsync({ prompt: 'Hello' });
+
+await writeTraceFile(recorder.events, './trace.json');
+```
+
+For durable runs, merge persisted checkpoints with captured events:
+
+```javascript
+import { recordFlow } from '@fractal-solutions/qflow/testing';
+import { createRunTrace } from '@fractal-solutions/qflow/durable';
+import { writeTraceFile } from '@fractal-solutions/qflow/trace';
+
+const recorder = recordFlow(flow);
+const { runId } = await flow.runDurable({ shared: {} });
+
+const trace = createRunTrace(checkpointer, runId, {
+  events: recorder.events,
+  includeState: true,
+});
+await writeTraceFile(trace, `./runs/${runId}.json`);
+```
+
+`createTraceSnapshot(recorder.events)` remains available for deterministic Bun snapshots; `normalizeTrace()` converts either raw events or snapshots into the viewer's JSON shape.
+
+## Optional Integrations
+
+Core imports stay lightweight. Browser automation, webviews, spreadsheets, serial ports, SSH, Git, cron scheduling, HTML parsing, and schema validation are `optionalDependencies`. They are loaded with a guarded dynamic import only when a matching node action runs.
+
+| Node(s) | Package | Install |
+| --- | --- | --- |
+| `BrowserControlNode` | `playwright` | `bun add --optional playwright` |
+| `WebviewNode`, `InteractiveWebviewNode` | `webview-bun` | `bun add --optional webview-bun` |
+| `SpreadsheetNode` | `xlsx` | `bun add --optional xlsx` |
+| `HardwareInteractionNode` | `serialport`, `@serialport/parser-readline` | `bun add --optional serialport @serialport/parser-readline` |
+| `RemoteExecutionNode` | `ssh2` | `bun add --optional ssh2` |
+| `GitNode` | `simple-git` | `bun add --optional simple-git` |
+| `WebSocketsNode` | `ws` | `bun add --optional ws` |
+| `DuckDuckGoSearchNode`, `DataExtractorNode` (HTML) | `cheerio` | `bun add --optional cheerio` |
+| `DataValidationNode` | `ajv`, `ajv-formats` | `bun add --optional ajv ajv-formats` |
+| `SchedulerNode` (cron strings) | `node-cron` | `bun add --optional node-cron` |
+
+If a package is missing, the error includes the exact command to install it. You can also inspect the map programmatically:
+
+```javascript
+import { OPTIONAL_DEPENDENCIES, optionalInstallCommand } from '@fractal-solutions/qflow/optional';
+
+console.log(OPTIONAL_DEPENDENCIES.playwright); // 'playwright'
+console.log(optionalInstallCommand('playwright')); // 'bun add --optional playwright'
+```
+
 ## Logging
 
 `qflow` provides a simple yet powerful logging mechanism that gives you per-node control over how and where log messages are sent.
@@ -495,7 +558,7 @@ By default, all built-in nodes will log to the console. You don't need to config
 
 ### Per-Node Logging Configuration
 
-To customize the logging for a specific node, you can pass a `logging` object in its parameters. This gives you fine-grained control over the logging behavior of each node in your flow.
+To customize the logging for a specific node, pass a `logging` object in its parameters. `type` selects the severity (`info`, `warn`, `error`, `debug`, `none`) and `method` selects the destination (`console`, `file`, `event`, `remote`).
 
 ```javascript
 import { HttpRequestNode } from '@fractal-solutions/qflow/nodes';
@@ -777,7 +840,7 @@ try {
 Debugging `qflow` workflows can be done using standard JavaScript debugging tools and techniques.
 
 *   **`console.log`:** The simplest way to inspect data and execution flow. Strategically place `console.log` statements within `prep`, `exec`, `post`, and their `Async` counterparts to trace the `shared` object, `prepRes`, and `execRes` values.
-*   **Debugger:** Use your IDE's built-in debugger (e.g., VS Code's debugger) or Node.js/Bun's inspector (`node --inspect` or `bun --inspect`). Set breakpoints within your node's lifecycle methods to step through the execution and examine the state.
+*   **Debugger:** Use your IDE's built-in debugger or Bun's inspector (`bun --inspect`). Set breakpoints within your node's lifecycle methods to step through the execution and examine the state.
 *   **Error Messages:** Pay close attention to the error messages and stack traces. `qflow` aims to provide clear error messages that point to the source of the problem within your nodes.
 
 ## Testing
@@ -791,7 +854,7 @@ Testing `qflow` workflows involves unit testing individual nodes and integration
 *   **Integration Testing Flows:**
     *   Test entire `Flow`s or `AsyncFlow`s to ensure nodes are chained correctly and data flows as expected.
     *   Provide controlled `shared` state inputs and assert on the final `shared` state or the flow's return value.
-    *   Use your preferred testing framework (e.g., Jest, Mocha, Bun's built-in test runner).
+    *   Use Bun's built-in test runner (`bun test`).
 
 ```javascript
 // Example (using Bun's test runner syntax)
@@ -799,11 +862,15 @@ import { test, expect } from "bun:test";
 import { Node, Flow } from '@fractal-solutions/qflow';
 
 class TestNodeA extends Node {
-  exec(input) { return input + 1; }
+  prep(shared) { return shared.initialValue + 1; }
+  exec(prepRes) { return prepRes; }
+  post(shared, prepRes, execRes) { shared.value = execRes; return 'default'; }
 }
 
 class TestNodeB extends Node {
-  exec(input) { return input * 2; }
+  prep(shared) { return shared.value; }
+  exec(prepRes) { return prepRes * 2; }
+  post(shared, prepRes, execRes) { shared.value = execRes; return 'default'; }
 }
 
 test("Simple Flow should process data correctly", () => {
@@ -813,9 +880,10 @@ test("Simple Flow should process data correctly", () => {
 
   const flow = new Flow(nodeA);
   const sharedState = { initialValue: 5 };
-  const result = flow.run(sharedState); // Assuming run returns the final execRes of the last node
+  flow.run(sharedState);
 
-  expect(result).toBe(12); // (5 + 1) * 2 = 12
+  // Flow.run() returns the last action, so assert on shared state.
+  expect(sharedState.value).toBe(12);
 });
 
 test("Node should handle parameters via setParams", () => {
@@ -829,6 +897,25 @@ test("Node should handle parameters via setParams", () => {
 });
 ```
 
+2.0 also ships deterministic trace helpers:
+
+```javascript
+import { test, expect } from 'bun:test';
+import { AsyncFlow } from '@fractal-solutions/qflow';
+import { MockLLMNode, recordFlow, createTraceSnapshot } from '@fractal-solutions/qflow/testing';
+
+test('agent prompts the LLM', async () => {
+  const llm = new MockLLMNode({ responses: ['done'] });
+  const flow = new AsyncFlow(llm);
+  const recorder = recordFlow(flow);
+
+  await flow.runAsync({ prompt: 'Hello' });
+
+  expect(llm.calls).toHaveLength(1);
+  expect(createTraceSnapshot(recorder.events)).toMatchSnapshot();
+});
+```
+
 ## Integration
 
 `qflow` is designed to be highly flexible and can be integrated into various application architectures:
@@ -836,7 +923,7 @@ test("Node should handle parameters via setParams", () => {
 *   **CLI Tools:** Build powerful command-line tools that automate complex tasks.
 *   **Web Servers (e.g., Express.js, Koa):** Implement API endpoints that trigger workflows for data processing, background jobs, or agent-driven responses.
 *   **Background Services:** Run long-running processes or scheduled tasks.
-*   **Browser Applications:** Create interactive, client-side workflows (ensure appropriate polyfills for `SharedArrayBuffer` if using synchronous `wait` in `Node`).
+*   **Bun Services and Scripts:** Use `Bun.spawn`, `bun:sqlite`, and streaming `fetch` alongside workflows. Reach for the optional integration packages only when a node needs them.
 
 ## Contributing
 

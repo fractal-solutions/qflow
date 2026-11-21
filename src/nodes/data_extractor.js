@@ -1,5 +1,5 @@
 import { AsyncNode } from '../qflow.js';
-import * as cheerio from 'cheerio';
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 export class DataExtractorNode extends AsyncNode {
@@ -59,6 +59,7 @@ export class DataExtractorNode extends AsyncNode {
           throw new Error('HTML extraction requires a `selector`.');
         }
         log(`[DataExtractor] Extracting HTML with selector: ${selector}`, this.params.logging);
+        const cheerio = await loadOptional('cheerio');
         const $ = cheerio.load(input);
         result = $(selector).map((i, el) => $(el).text()).get();
         break;

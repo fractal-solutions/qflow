@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0-canary.2
+
+### Added
+- Site trace viewer at `#trace`: paste, upload, filter, inspect, and download flow/durable-run traces.
+- `./trace` export: `normalizeTrace()`, `buildTraceSpans()`, `serializeTrace()` and `writeTraceFile()`.
+- `SQLiteCheckpointer.exportRunTrace()` / `createRunTrace()` for viewer-friendly durable traces.
+- `./optional` export exposing the optional dependency map and `loadOptional()`.
+- `./logger` export, matching the documented per-node logging API.
+
+### Changed
+- Heavy integration packages are now `optionalDependencies` and load only when their node action runs.
+- Missing optional packages throw `QFLOW_OPTIONAL_DEPENDENCY_MISSING` with an exact `bun add --optional ...` command.
+- README examples and 2.0 export documentation were updated; Bun-only installation is now explicit.
+
+### Fixed
+- `Flow.run()` test example asserted the wrong return value.
+- Per-node logging with `type: 'none'` now actually disables output.
+- Logger module uses ESM imports instead of `require()`.
+
 ## 2.0.0-canary.1
 
 ### Added

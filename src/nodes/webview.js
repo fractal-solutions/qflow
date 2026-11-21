@@ -1,6 +1,6 @@
 
 import { AsyncNode } from '../qflow.js';
-import { Webview, SizeHint } from 'webview-bun';
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 /**
@@ -50,6 +50,7 @@ export class WebviewNode extends AsyncNode {
 
     log(`[WebviewNode] Creating webview window with title: "${title}"`, this.params.logging);
 
+    const { Webview, SizeHint } = await loadOptional('webview-bun');
     const webview = new Webview();
     webview.title = title;
     webview.size = { width, height, hint: SizeHint.NONE };

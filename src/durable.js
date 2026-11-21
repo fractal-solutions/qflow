@@ -1,5 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { AsyncFlow } from './qflow.js';
+import { normalizeTrace, serializeTrace } from './trace.js';
 
 function parseJson(value, fallback = null) {
   if (value == null) return fallback;
@@ -22,6 +23,57 @@ function abortError() {
   const error = new Error('Run aborted by AbortSignal.');
   error.name = 'AbortError';
   return error;
+}
+
+/** Build a viewer-ready trace from persisted run/checkpoint rows. */
+function buildRunTrace(run, checkpoints, { events = [], includeState = false } = {}) {
+  const publicCheckpoints = checkpoints.map(checkpoint => includeState
+    ? checkpoint
+    : {
+        runId: checkpoint.runId,
+        step: checkpoint.step,
+        nodeIndex: checkpoint.nodeIndex,
+        nodeClass: checkpoint.nodeClass,
+        action: checkpoint.action,
+        nextNodeIndex: checkpoint.nextNodeIndex,
+        createdAt: checkpoint.createdAt,
+      });
+
+  const observedCheckpointSteps = new Set(
+    events
+      .map(event => event?.step ?? event?.payload?.step)
+      .filter((step, index) => step != null && events[index]?.event === 'checkpoint:saved')
+  );
+  const syntheticCheckpointEvents = checkpoints
+    .filter(checkpoint => !observedCheckpointSteps.has(checkpoint.step))
+    .map(checkpoint => ({
+      event: 'checkpoint:saved',
+      runId: checkpoint.runId,
+      step: checkpoint.step,
+      nodeClass: checkpoint.nodeClass,
+      action: checkpoint.action,
+      nextNodeIndex: checkpoint.nextNodeIndex,
+      createdAt: checkpoint.createdAt,
+      ...(includeState ? { shared: checkpoint.shared, params: checkpoint.params, execRes: checkpoint.execRes } : {}),
+    }));
+
+  const traceEvents = [
+    { event: 'run:start', runId: run.runId, flowName: run.flowName, status: 'running', createdAt: run.createdAt },
+    ...events,
+    ...syntheticCheckpointEvents,
+    { event: 'run:end', runId: run.runId, status: run.status, step: run.step, result: run.result, error: run.error, updatedAt: run.updatedAt },
+  ];
+
+  return normalizeTrace({
+    runId: run.runId,
+    flowName: run.flowName,
+    status: run.status,
+    steps: run.step,
+    startedAt: run.createdAt,
+    endedAt: run.updatedAt,
+    events: traceEvents,
+    checkpoints: publicCheckpoints,
+  });
 }
 
 /** SQLite-backed run state. One checkpointer can back many DurableFlow instances. */
@@ -184,6 +236,18 @@ export class SQLiteCheckpointer {
     }));
   }
 
+  /** Export a run as a JSON-safe trace for the site viewer. */
+  exportRunTrace(runId, options = {}) {
+    const run = this.loadRun(runId);
+    if (!run) throw new Error(`Cannot export trace: no run found for '${runId}'.`);
+    return buildRunTrace(run, this.listCheckpoints(runId), options);
+  }
+
+  async writeTraceFile(runId, filepath, options = {}) {
+    await Bun.write(filepath, serializeTrace(this.exportRunTrace(runId, options)));
+    return filepath;
+  }
+
   close() {
     this.db.close();
   }
@@ -314,4 +378,14 @@ export class DurableFlow extends AsyncFlow {
     const outcome = await this.runDurable({ shared, observer });
     return outcome.result;
   }
+}
+
+/** Functional form for custom checkpointers implementing loadRun/listCheckpoints. */
+export function createRunTrace(checkpointer, runId, options = {}) {
+  if (typeof checkpointer?.exportRunTrace === 'function') {
+    return checkpointer.exportRunTrace(runId, options);
+  }
+  const run = checkpointer?.loadRun?.(runId);
+  if (!run) throw new Error(`Cannot export trace: no run found for '${runId}'.`);
+  return buildRunTrace(run, checkpointer.listCheckpoints(runId), options);
 }

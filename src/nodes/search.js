@@ -1,10 +1,10 @@
 import { AsyncNode } from '../qflow.js';
-import * as cheerio from 'cheerio';
+import { loadOptional } from '../optional.js';
 import { log } from '../logger.js';
 
 /**
  * Performs a web search using DuckDuckGo's HTML-only interface.
- * This node does not require an API key and is designed for reliability without heavy dependencies.
+ * This node does not require an API key. HTML parsing uses the optional `cheerio` package.
  * @param {object} params - The parameters for the node.
  * @param {string} params.query - The search query.
  * @returns {Promise<object[]>} A promise that resolves to an array of search result objects.
@@ -44,6 +44,7 @@ export class DuckDuckGoSearchNode extends AsyncNode {
     }
 
     const html = await response.text();
+    const cheerio = await loadOptional('cheerio');
     const $ = cheerio.load(html);
 
     const results = [];

@@ -16,6 +16,7 @@ window.Footer = () => {
                             <a href="#getting-started" className="nav-link">Quickstart</a>
                             <a href="#docs" className="nav-link">Docs</a>
                             <a href="#examples" className="nav-link">Examples</a>
+                            <a href="#trace" className="nav-link">Trace Viewer</a>
                         </div>
                     </div>
                     <div>

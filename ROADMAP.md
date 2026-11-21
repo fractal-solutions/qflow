@@ -55,12 +55,52 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 - [x] `AbortSignal` is checked at node boundaries and exposed to nodes via the observer.
 - [x] `listRuns()` / `listCheckpoints()` provide replay/debugging data; run/checkpoint events flow through the normal observer channel.
 - [x] New `./durable` subpath export and tests covering completion, resume, cancellation and return shapes.
-- [ ] Trace replay tooling / viewer *(next)*.
+- [x] `exportRunTrace()` / `createRunTrace()` produce JSON-safe run traces with checkpoints.
+- [x] `./trace` normalizes `recordFlow()`, snapshot, and durable-run shapes into one viewer format.
 
-### Track 4 — Graph semantics & DX *(in progress)*
+### Track 4 — Graph semantics, DX & trace viewer *(done)*
 - [x] Fan-out/fan-in (`./graph`), error edges (`onError`), guarded loops (`maxSteps`) and `timeout` on `Flow` / `AsyncFlow`.
 - [x] `@fractal-solutions/qflow/testing`: `MockNode`, `MockLLMNode`, `recordFlow()` and deterministic trace snapshots.
-- [ ] Reuse `site/` as a run-trace viewer instead of a static brochure.
+- [x] `site/#trace`: paste/upload/filter/download traces, view node spans, token deltas, checkpoints, and payloads.
+- [x] Heavy integrations are opt-in with guarded dynamic imports and actionable install errors.
+
+## Node innovation direction
+
+The next differentiator should be **nodes that understand they are part of an agent run**, not just wrappers around APIs.
+
+1. **Provider-neutral LLM node**
+   - One `LLMNode` with an adapter registry (`openai`, `anthropic`, `ollama`, `openrouter`, `gemini`) instead of one class per vendor.
+   - Capability negotiation: streaming, tool calls, structured output, reasoning tokens, token/cost accounting.
+   - Provider failures become normal flow events (`llm:retry`, `llm:fallback`) so durable flows can resume cleanly.
+
+2. **Reusable `ToolSpec` layer**
+   - Promote `getToolDefinition()` to a typed, provider-neutral spec with permissions, idempotency keys, timeouts, and dry-run support.
+   - The same spec powers agents, MCP export, and docs generation.
+   - Add `ToolRegistry` with namespaced tools and capability-based filtering, so an agent only sees tools it is allowed to call.
+
+3. **Agent-native control nodes**
+   - First-class `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode`, and `HumanApprovalNode` instead of hiding these inside agent strategies.
+   - Make strategies composable flow graphs: reasoning patterns become reusable subflows that can be checkpointed and traced.
+   - Add `AgentNode.asFlow()` to expose the engine loop as an inspectable graph.
+
+4. **Replay-safe side-effect nodes**
+   - `HttpNode`, `GitNode`, `WebhookNode`, and `DatabaseNode` gain stable operation IDs and exactly-once semantics backed by `SQLiteCheckpointer`.
+   - On replay, a completed side effect returns its recorded result instead of running twice.
+   - This is the missing piece that turns durable execution from "resume" into "safe replay."
+
+5. **Dataflow and graph nodes**
+   - `MapNode`, `ReduceNode`, `JoinNode`, `BranchNode`, and `CycleNode` with explicit budgets and typed shared-state schemas.
+   - Visual graph authoring becomes realistic once nodes expose input/output contracts and trace spans line up with graph edges.
+
+6. **Evaluation and testing nodes**
+   - `AssertNode`, `ScoreNode`, `CompareNode`, and `ReplayNode` turn saved traces into regression suites.
+   - Pair with the site viewer: select a trace, replay it against a new flow, diff the spans and payloads.
+
+7. **Bun-native performance nodes**
+   - `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, and streaming transform nodes built on Bun primitives.
+   - These should be small, composable, and free of optional native dependencies.
+
+**Recommended sequence:** provider-neutral LLM adapter + `ToolSpec` first, then replay-safe side effects, then trace-driven evaluation. That chain compounds: tracing makes agents debuggable, checkpoints make them safe, and shared tool specs make them portable.
 
 ## Shipping floor (kept deliberately small)
 

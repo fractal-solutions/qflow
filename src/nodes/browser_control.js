@@ -1,6 +1,6 @@
 
 import { AsyncNode } from '../qflow.js';
-import { chromium, firefox, webkit } from 'playwright';
+import { loadOptional } from '../optional.js';
 
 export class BrowserControlNode extends AsyncNode {
   static getToolDefinition() {
@@ -66,11 +66,12 @@ export class BrowserControlNode extends AsyncNode {
     let page = shared.page;
 
     try {
-      if (!browser || !browser.isConnected()) {
-        const browserLauncher = { chromium, firefox, webkit }[browserType];
-        if (!browserLauncher) {
+      if ((!browser || !browser.isConnected()) && action !== 'close') {
+        if (!['chromium', 'firefox', 'webkit'].includes(browserType)) {
           throw new Error(`Unsupported browser type: ${browserType}`);
         }
+        const { chromium, firefox, webkit } = await loadOptional('playwright');
+        const browserLauncher = { chromium, firefox, webkit }[browserType];
         browser = await browserLauncher.launch(launchOptions);
         const context = await browser.newContext();
         page = await context.newPage();

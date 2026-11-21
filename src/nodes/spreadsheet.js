@@ -1,7 +1,7 @@
 import { AsyncNode } from '../qflow.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import * as XLSX from 'xlsx'; // npm install xlsx
+import { loadOptional } from '../optional.js';
 
 export class SpreadsheetNode extends AsyncNode {
   static getToolDefinition() {
@@ -86,6 +86,7 @@ export class SpreadsheetNode extends AsyncNode {
     }
 
     const fileExtension = path.extname(filePath).toLowerCase();
+    const XLSX = await loadOptional('xlsx');
     let workbook;
     let result;
 

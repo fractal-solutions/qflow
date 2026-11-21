@@ -1,6 +1,6 @@
 
 import { AsyncNode } from '../qflow.js';
-import simpleGit from 'simple-git';
+import { loadOptional } from '../optional.js';
 
 export class GitNode extends AsyncNode {
   static getToolDefinition() {
@@ -63,6 +63,7 @@ export class GitNode extends AsyncNode {
       throw new Error('GitNode requires a `repoPath` for all actions except `clone`.');
     }
 
+    const { default: simpleGit } = await loadOptional('simple-git');
     const git = simpleGit(repoPath);
 
     let result = {};

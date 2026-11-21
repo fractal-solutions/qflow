@@ -1,6 +1,6 @@
 
 import { AsyncNode } from '../qflow.js';
-import WebSocket from 'ws';
+import { loadOptional } from '../optional.js';
 
 export class WebSocketsNode extends AsyncNode {
   static getToolDefinition() {
@@ -39,13 +39,17 @@ export class WebSocketsNode extends AsyncNode {
 
     const connection = shared.webSocketConnection;
 
+    if (action === 'connect' && !url) {
+      throw new Error('`url` parameter is required for `connect` action.');
+    }
+    const WebSocket = action === 'connect' ? (await loadOptional('ws')).default : null;
+
     return new Promise(async (resolve, reject) => {
       const timer = setTimeout(() => reject(new Error(`WebSocket action '${action}' timed out after ${timeout}ms`)), timeout);
 
       try {
         switch (action) {
           case 'connect':
-            if (!url) throw new Error('`url` parameter is required for `connect` action.');
             const ws = new WebSocket(url);
             ws.on('open', () => {
               clearTimeout(timer);

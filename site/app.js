@@ -1,4 +1,4 @@
-const { Navbar, Footer, LandingPage, GettingStartedPage, DocsPage, ExamplesPage } = window;
+const { Navbar, Footer, LandingPage, GettingStartedPage, DocsPage, ExamplesPage, TracePage } = window;
 
 const App = () => {
     const [hash, setHash] = React.useState(window.location.hash);
@@ -28,6 +28,8 @@ const App = () => {
                 return <DocsPage />;
             case '#examples':
                 return <ExamplesPage />;
+            case '#trace':
+                return <TracePage />;
             case '#home':
             default:
                 return <LandingPage />;

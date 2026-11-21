@@ -1,7 +1,6 @@
 import { AsyncNode } from '../qflow.js';
 import { promises as fs } from 'fs';
-import Ajv from 'ajv'; // npm install ajv
-import addFormats from 'ajv-formats'; // npm install ajv-formats
+import { loadOptional } from '../optional.js';
 
 export class DataValidationNode extends AsyncNode {
   static getToolDefinition() {
@@ -36,8 +35,24 @@ export class DataValidationNode extends AsyncNode {
 
   constructor(maxRetries = 1, wait = 0) {
     super(maxRetries, wait);
-    this.ajv = new Ajv({ allErrors: true, verbose: true }); // Configure AJV for detailed errors
-    addFormats(this.ajv); // Add format validators
+    this._ajvPromise = null;
+  }
+
+  async getAjv() {
+    if (!this._ajvPromise) {
+      this._ajvPromise = Promise.all([
+        loadOptional('ajv'),
+        loadOptional('ajv-formats'),
+      ]).then(([{ default: Ajv }, { default: addFormats }]) => {
+        const ajv = new Ajv({ allErrors: true, verbose: true });
+        addFormats(ajv);
+        return ajv;
+      }).catch(error => {
+        this._ajvPromise = null;
+        throw error;
+      });
+    }
+    return this._ajvPromise;
   }
 
   async execAsync() {
@@ -70,7 +85,7 @@ export class DataValidationNode extends AsyncNode {
       }
     }
 
-    const validate = this.ajv.compile(validationSchema);
+    const validate = (await this.getAjv()).compile(validationSchema);
     const isValid = validate(data);
 
     if (isValid) {

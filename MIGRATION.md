@@ -24,6 +24,9 @@ Node.js is no longer a supported runtime. 2.0 uses Bun APIs directly (`Bun.spawn
 | `@fractal-solutions/qflow/durable` | `SQLiteCheckpointer` and `DurableFlow` |
 | `@fractal-solutions/qflow/testing` | `MockNode`, `MockLLMNode`, `recordFlow()` and snapshot helpers |
 | `@fractal-solutions/qflow/graph` | `FanOutNode` and `FanInNode` |
+| `@fractal-solutions/qflow/trace` | `normalizeTrace()`, `serializeTrace()` and `writeTraceFile()` |
+| `@fractal-solutions/qflow/optional` | Optional dependency map and guarded loader |
+| `@fractal-solutions/qflow/logger` | `log`, `setLogLevel` and `LogLevel` |
 
 ## Async lifecycle methods
 
@@ -116,6 +119,35 @@ await flow.runDurable({ runId, resume: true });
 ```
 
 `runDurable()` returns `{ runId, result, shared, steps, resumed }`. `runAsync()` still returns only the result, backed by a new durable run.
+
+## Optional integrations
+
+Heavy integrations moved from `dependencies` to `optionalDependencies`. Importing qflow or the full node catalog no longer loads Playwright, webview-bun, xlsx, serialport, ssh2, simple-git, ws, cheerio, ajv, ajv-formats, or node-cron. Each node loads its package only when the action needs it.
+
+If you use one of those nodes, install its package explicitly:
+
+```bash
+bun add --optional playwright
+bun add --optional webview-bun
+bun add --optional xlsx
+```
+
+Missing packages throw an actionable `QFLOW_OPTIONAL_DEPENDENCY_MISSING` error containing the exact install command. The same commands work in CI and lockfiles because the packages remain declared in `package.json`.
+
+## Traces
+
+`recordFlow()` output can now be normalized and written as JSON for the site trace viewer:
+
+```js
+import { recordFlow } from '@fractal-solutions/qflow/testing';
+import { writeTraceFile } from '@fractal-solutions/qflow/trace';
+
+const recorder = recordFlow(flow);
+await flow.runAsync(shared);
+await writeTraceFile(recorder.events, './trace.json');
+```
+
+For durable runs, use `createRunTrace(checkpointer, runId, { events: recorder.events, includeState: true })`.
 
 ## License
 

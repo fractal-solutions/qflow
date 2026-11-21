@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 export const LogLevel = {
   DEBUG: 0,
@@ -82,7 +82,13 @@ class RemoteLogHandler {
 export function log(message, nodeLoggingConfig, defaultOptions = {}) {
   const options = { ...defaultOptions, ...nodeLoggingConfig };
   const { type = 'info', method = 'console', params = {} } = options;
-  const level = LogLevel[type.toUpperCase()];
+  const levelName = String(type).toUpperCase();
+
+  if (levelName === 'NONE' || method === 'none') {
+    return;
+  }
+
+  const level = LogLevel[levelName];
 
   if (level === undefined || level < currentLogLevel) {
     return;
