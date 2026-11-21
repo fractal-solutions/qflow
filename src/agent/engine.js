@@ -88,10 +88,10 @@ ${toolDescriptions}${flowRegistryDescription}
  Begin!`;
   }
 
-  async getLLMAction() {
+  async getLLMAction(observer = {}) {
     await this.manageConversationHistory();
     this.llmNode.setParams({ prompt: JSON.stringify(this.conversationHistory) });
-    return await this.llmNode.runAsync({});
+    return await this.llmNode.runAsync({}, observer);
   }
 
   async manageConversationHistory() {
@@ -259,12 +259,12 @@ ${toolDescriptions}${flowRegistryDescription}
     return true;
   }
 
-  async runPhase(phase) {
+  async runPhase(phase, observer = {}) {
     if (phase.prompt) {
       this.conversationHistory.push({ role: 'user', content: phase.prompt });
     }
 
-    const response = await this.getLLMAction();
+    const response = await this.getLLMAction(observer);
     let parsed;
     try {
       parsed = this.parseLLMResponse(response);
@@ -294,7 +294,7 @@ You MUST respond with a single JSON object containing 'thought' and 'tool_calls'
     return parsed;
   }
 
-  async execAsync() {
+  async execAsync(prepRes, shared, observer = {}) {
     const { goal } = this.params;
     if (!goal) throw new Error(`${this.constructor.name} requires a 'goal' parameter.`);
 
@@ -319,7 +319,7 @@ You MUST respond with a single JSON object containing 'thought' and 'tool_calls'
       for (const phase of this.strategy.phases) {
         let parsed;
         try {
-          parsed = await this.runPhase(phase);
+          parsed = await this.runPhase(phase, observer);
         } catch (error) {
           logger.error(`Failed to get LLM response: ${error.message}`);
           this.conversationHistory.push({ role: 'user', content: `Error: Failed to get LLM response: ${error.message}` });
@@ -375,7 +375,7 @@ You MUST respond with a single JSON object containing 'thought' and 'tool_calls'
         }
         let parsed;
         try {
-          parsed = await this.runPhase({ ...phase, prompt: null });
+          parsed = await this.runPhase({ ...phase, prompt: null }, observer);
         } catch (error) {
           logger.error(`Failed to get LLM response in ${phase.name} phase: ${error.message}`);
           break;

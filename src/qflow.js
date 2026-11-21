@@ -140,12 +140,12 @@ class BatchFlow extends Flow {
 // ----------- ASYNC VERSIONS ------------
 
 class AsyncNode extends Node {
-  async prepAsync(shared) {}
-  async execAsync(prepRes) {}
+  async prepAsync(shared, observer = {}) {}
+  async execAsync(prepRes, shared, observer = {}) {}
   async execFallbackAsync(prepRes, error) {
     throw error;
   }
-  async postAsync(shared, prepRes, execRes) {}
+  async postAsync(shared, prepRes, execRes, observer = {}) {}
 
   async _exec(prepRes, shared, observer = {}) {
     const { emit, flowId } = observer;
@@ -167,7 +167,7 @@ class AsyncNode extends Node {
     try {
         for (let i = 0; i < this.maxRetries; i++) {
             try {
-                finalResult = await this.execAsync(prepRes, shared);
+                finalResult = await this.execAsync(prepRes, shared, observer);
                 finalError = null; // Succeeded, clear any error from previous attempt
                 break; // Exit retry loop
             } catch (e) {
@@ -211,17 +211,17 @@ class AsyncNode extends Node {
     return finalResult;
   }
 
-  async runAsync(shared) {
+  async runAsync(shared, observer = {}) {
     if (Object.keys(this.successors).length) {
       console.warn("Node won't run successors. Use AsyncFlow.");
     }
-    return await this._runAsync(shared);
+    return await this._runAsync(shared, observer);
   }
 
-  async _runAsync(shared) {
-    const prepRes = await this.prepAsync(shared);
-    const execRes = await this._exec(prepRes, shared);
-    return await this.postAsync(shared, prepRes, execRes);
+  async _runAsync(shared, observer = {}) {
+    const prepRes = await this.prepAsync(shared, observer);
+    const execRes = await this._exec(prepRes, shared, observer);
+    return await this.postAsync(shared, prepRes, execRes, observer);
   }
 
   _run() {
@@ -230,7 +230,7 @@ class AsyncNode extends Node {
 }
 
 class AsyncBatchNode extends AsyncNode {
-  async _exec(items, shared, observer) {
+  async _exec(items, shared, observer = {}) {
     const results = [];
     for (const item of items) {
       results.push(await super._exec(item, shared, observer));
@@ -240,7 +240,7 @@ class AsyncBatchNode extends AsyncNode {
 }
 
 class AsyncParallelBatchNode extends AsyncNode {
-  async _exec(items, shared, observer) {
+  async _exec(items, shared, observer = {}) {
     return await Promise.all(items.map(item => super._exec(item, shared, observer)));
   }
 }
@@ -256,38 +256,77 @@ class AsyncFlow extends Flow {
       this.listeners[eventName] = [];
     }
     this.listeners[eventName].push(callback);
+    return this;
+  }
+
+  /** Listen to every event; callbacks receive `{ event, payload }`. */
+  onAny(callback) {
+    return this.on('*', callback);
   }
 
   emit(eventName, payload) {
-    if (this.listeners[eventName]) {
-      for (const callback of this.listeners[eventName]) {
+    for (const callback of this.listeners[eventName] ?? []) {
+      try {
+        callback(payload);
+      } catch (e) {
+        console.error(`Error in event listener for '${eventName}':`, e);
+      }
+    }
+
+    if (eventName !== '*') {
+      for (const callback of this.listeners['*'] ?? []) {
         try {
-          callback(payload);
+          callback({ event: eventName, payload });
         } catch (e) {
-          console.error(`Error in event listener for '${eventName}':`, e);
+          console.error(`Error in event listener for '*':`, e);
         }
       }
     }
   }
 
-  async prepAsync(shared) {}
-  async postAsync(shared, prepRes, execRes) {
+  _createFlowObserver(flowId, parentObserver = {}) {
+    const emit = (eventName, payload) => {
+      const event = { ...payload, flowId: payload?.flowId ?? flowId };
+      this.emit(eventName, event);
+
+      if (typeof parentObserver.emit === 'function') {
+        parentObserver.emit(eventName, {
+          ...event,
+          parentFlowId: parentObserver.flowId ?? null,
+          nested: true,
+        });
+      }
+    };
+
+    return {
+      emit,
+      flowId,
+      parentFlowId: parentObserver.flowId ?? null,
+    };
+  }
+
+  async prepAsync(shared, observer = {}) {}
+  async postAsync(shared, prepRes, execRes, observer = {}) {
     return execRes;
   }
 
-  async _orchAsync(flowId, shared, params = {}, initialNode = this.startNode) {
+  async _orchAsync(flowId, shared, params = {}, initialNode = this.startNode, observer = {}) {
     let curr = initialNode;
     let lastAction = null;
     let lastExecRes = null;
     let p = { ...this.params, ...params };
+    const observerContext = {
+      ...observer,
+      emit: typeof observer.emit === 'function' ? observer.emit : this.emit.bind(this),
+      flowId: observer.flowId ?? flowId,
+    };
 
     while (curr) {
       curr.setParams(p);
-      const observerContext = { emit: this.emit.bind(this), flowId };
-      
-      const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared) : curr.prep(shared);
+
+      const prepRes = curr instanceof AsyncNode ? await curr.prepAsync(shared, observerContext) : curr.prep(shared);
       const execRes = curr instanceof AsyncNode ? await curr._exec(prepRes, shared, observerContext) : curr._exec(prepRes, shared);
-      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes) : curr.post(shared, prepRes, execRes);
+      lastAction = curr instanceof AsyncNode ? await curr.postAsync(shared, prepRes, execRes, observerContext) : curr.post(shared, prepRes, execRes);
       lastExecRes = execRes;
       
       curr = this.getNextNode(curr, lastAction);
@@ -295,24 +334,25 @@ class AsyncFlow extends Flow {
     return lastExecRes;
   }
 
-  async _runAsync(shared) {
-    const flowId = crypto.randomUUID();
+  async _runAsync(shared, parentObserver = {}) {
+    const flowObserver = this._createFlowObserver(crypto.randomUUID(), parentObserver);
+    const flowId = flowObserver.flowId;
     const flowStartTime = performance.now();
-    this.emit('flow:start', { flowId, startTime: Date.now() });
+    flowObserver.emit('flow:start', { flowId, startTime: Date.now(), parentFlowId: flowObserver.parentFlowId });
 
     let result;
     let flowError = null;
 
     try {
-      const prepRes = await this.prepAsync(shared);
-      result = await this._orchAsync(flowId, shared);
-      return await this.postAsync(shared, prepRes, result);
+      const prepRes = await this.prepAsync(shared, flowObserver);
+      result = await this._orchAsync(flowId, shared, {}, this.startNode, flowObserver);
+      return await this.postAsync(shared, prepRes, result, flowObserver);
     } catch (e) {
       flowError = e;
       throw e; // Re-throw so the caller knows the flow failed
     } finally {
       const flowEndTime = performance.now();
-      this.emit('flow:end', {
+      flowObserver.emit('flow:end', {
         flowId,
         endTime: Date.now(),
         duration: flowEndTime - flowStartTime,
@@ -326,31 +366,33 @@ class AsyncFlow extends Flow {
     throw new Error("Use runAsync instead.");
   }
 
-  async runAsync(shared = {}) {
-    return await this._runAsync(shared);
+  async runAsync(shared = {}, observer = {}) {
+    return await this._runAsync(shared, observer);
   }
 }
 
 class AsyncBatchFlow extends AsyncFlow {
-  async _runAsync(shared) {
-    const prepResults = await this.prepAsync(shared) || [];
+  async _runAsync(shared, parentObserver = {}) {
+    const flowObserver = this._createFlowObserver(crypto.randomUUID(), parentObserver);
+    const prepResults = await this.prepAsync(shared, flowObserver) || [];
     const results = [];
     for (const bp of prepResults) {
-      results.push(await this._orchAsync(crypto.randomUUID(), shared, { ...this.params, ...bp }));
+      results.push(await this._orchAsync(flowObserver.flowId, shared, { ...this.params, ...bp }, this.startNode, flowObserver));
     }
-    return await this.postAsync(shared, prepResults, results);
+    return await this.postAsync(shared, prepResults, results, flowObserver);
   }
 }
 
 class AsyncParallelBatchFlow extends AsyncFlow {
-  async _runAsync(shared) {
-    const prepResults = await this.prepAsync(shared) || [];
+  async _runAsync(shared, parentObserver = {}) {
+    const flowObserver = this._createFlowObserver(crypto.randomUUID(), parentObserver);
+    const prepResults = await this.prepAsync(shared, flowObserver) || [];
     const results = await Promise.all(prepResults.map(bp => {
       const newStartNode = new this.startNode.constructor();
       Object.assign(newStartNode.successors, this.startNode.successors);
-      return this._orchAsync(crypto.randomUUID(), shared, { ...this.params, ...bp }, newStartNode);
+      return this._orchAsync(flowObserver.flowId, shared, { ...this.params, ...bp }, newStartNode, flowObserver);
     }));
-    return await this.postAsync(shared, prepResults, results);
+    return await this.postAsync(shared, prepResults, results, flowObserver);
   }
 }
 

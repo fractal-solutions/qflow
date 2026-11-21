@@ -1,4 +1,5 @@
 export * from './llm.js';
+export * from './streaming_llm.js';
 export * from './agent_llm.js';
 export * from './data_extractor.js';
 export * from './code_interpreter.js';

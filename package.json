@@ -24,6 +24,10 @@
     "./agent": {
       "types": "./dist/agent/index.d.ts",
       "default": "./dist/agent/index.js"
+    },
+    "./streaming": {
+      "types": "./dist/streaming.d.ts",
+      "default": "./dist/streaming.js"
     }
   },
   "files": [
