@@ -39,14 +39,15 @@ import { HttpServerNode } from '../nodes/http_server.js';
 import { InteractiveWebviewNode } from '../nodes/interactive_webview.js';
 import { WebviewNode } from '../nodes/webview.js';
 import { NavigatorNode } from '../nodes/navigator.js';
-import qflowConfig from '../../qflow.config.js'; // Import the config file
-import path from 'path';
-import { fileURLToPath } from 'url';
+import qflowConfig from '../../qflow.config.js';
+import { AsyncNode } from '../qflow.js';
+import path from 'node:path';
+import { existsSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '../../'); // Adjust based on actual project structure
+const packageRoot = path.resolve(__dirname, '../..');
 
 const coreToolClasses = [
   CodeInterpreterNode,
@@ -105,31 +106,49 @@ const coreToolClasses = [
 
 let customToolClasses = [];
 
-// Dynamically import custom nodes from qflow.config.js
-if (qflowConfig.customNodePaths && qflowConfig.customNodePaths.length > 0) {
-  for (const nodePath of qflowConfig.customNodePaths) {
-    try {
-      // Resolve the path relative to the project root
-      const absolutePath = path.resolve(projectRoot, nodePath);
-      // Dynamic import
-      const module = await import(absolutePath);
-      // Assuming the node class is the default export or a named export
-      // This might need refinement based on how users export their nodes
-      for (const key in module) {
-        const ExportedClass = module[key];
-        if (typeof ExportedClass === 'function' && ExportedClass.prototype instanceof AsyncNode && typeof ExportedClass.getToolDefinition === 'function') {
-          customToolClasses.push(ExportedClass);
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to load custom node from ${nodePath}:`, error);
+// Prefer the consuming project's config. The package-local config is only a fallback.
+let customNodePaths = Array.isArray(qflowConfig.customNodePaths) ? [...qflowConfig.customNodePaths] : [];
+
+for (const configFile of ['qflow.config.js', 'qflow.config.ts']) {
+  const configPath = path.resolve(process.cwd(), configFile);
+  if (configPath === path.resolve(packageRoot, 'qflow.config.js')) continue;
+  if (!existsSync(configPath)) continue;
+
+  try {
+    const userConfig = (await import(pathToFileURL(configPath).href)).default;
+    if (Array.isArray(userConfig?.customNodePaths)) {
+      customNodePaths = userConfig.customNodePaths.map(p => path.isAbsolute(p) ? p : path.resolve(process.cwd(), p));
+      break;
     }
+  } catch (error) {
+    console.warn(`[qflow] Could not load ${configFile}: ${error.message}`);
   }
+}
+
+for (const absolutePath of customNodePaths) {
+  try {
+    const module = await import(pathToFileURL(absolutePath).href);
+    for (const key in module) {
+      const ExportedClass = module[key];
+      if (typeof ExportedClass === 'function' &&
+          ExportedClass.prototype instanceof AsyncNode &&
+          typeof ExportedClass.getToolDefinition === 'function' &&
+          !customToolClasses.includes(ExportedClass)) {
+        customToolClasses.push(ExportedClass);
+      }
+    }
+  } catch (error) {
+    console.warn(`[qflow] Failed to load custom node from ${absolutePath}: ${error.message}`);
+  }
+}
+
+export function getToolClasses() {
+  return [...coreToolClasses, ...customToolClasses];
 }
 
 export function getToolDefinitions() {
   const definitions = [];
-  const allToolClasses = [...coreToolClasses, ...customToolClasses];
+  const allToolClasses = getToolClasses();
 
   for (const ToolClass of allToolClasses) {
     if (typeof ToolClass.getToolDefinition === 'function') {

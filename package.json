@@ -2,8 +2,12 @@
   "name": "@fractal-solutions/qflow",
   "version": "1.0.84",
   "description": "A lightweight and flexible JavaScript library for creating and managing workflows and agents.",
+  "type": "module",
   "main": "dist/qflow.js",
   "types": "dist/qflow.d.ts",
+  "bin": {
+    "qflow-mcp": "dist/mcp/stdio.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/qflow.d.ts",
@@ -12,6 +16,10 @@
     "./nodes": {
       "types": "./dist/nodes/index.d.ts",
       "default": "./dist/nodes/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "default": "./dist/mcp/index.js"
     }
   },
   "files": [
@@ -20,7 +28,7 @@
     "qflow.config.js"
   ],
   "scripts": {
-    "test": "bun test",
+    "test": "bun test tests",
     "clean": "rm -rf dist",
     "build": "bun run clean && tsc --project tsconfig.build.json",
     "postinstall": "bun scripts/postinstall.js"
