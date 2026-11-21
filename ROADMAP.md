@@ -57,10 +57,10 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 - [x] New `./durable` subpath export and tests covering completion, resume, cancellation and return shapes.
 - [ ] Trace replay tooling / viewer *(next)*.
 
-### Track 4 — Graph semantics & DX
-- Fan-out/fan-in, error edges, guarded loops, flow-level timeouts.
-- `@fractal-solutions/qflow/testing`: mock nodes, recorded runs, trace snapshots.
-- Reuse `site/` as a run-trace viewer instead of a static brochure.
+### Track 4 — Graph semantics & DX *(in progress)*
+- [ ] Fan-out/fan-in, error edges, guarded loops, flow-level timeouts.
+- [x] `@fractal-solutions/qflow/testing`: `MockNode`, `MockLLMNode`, `recordFlow()` and deterministic trace snapshots.
+- [ ] Reuse `site/` as a run-trace viewer instead of a static brochure.
 
 ## Shipping floor (kept deliberately small)
 

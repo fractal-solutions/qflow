@@ -60,6 +60,7 @@ bun add @fractal-solutions/qflow
     import { QFlowMCPServer, MCPClientNode } from '@fractal-solutions/qflow/mcp';
     import { streamChatCompletions } from '@fractal-solutions/qflow/streaming';
     import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
+    import { MockNode, recordFlow } from '@fractal-solutions/qflow/testing';
     ```
 
 See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.

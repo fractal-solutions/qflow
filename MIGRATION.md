@@ -22,6 +22,7 @@ Node.js is no longer a supported runtime. 2.0 uses Bun APIs directly (`Bun.spawn
 | `@fractal-solutions/qflow/mcp` | `QFlowMCPServer` and `MCPClientNode` |
 | `@fractal-solutions/qflow/streaming` | `streamChatCompletions()` and event-name constants |
 | `@fractal-solutions/qflow/durable` | `SQLiteCheckpointer` and `DurableFlow` |
+| `@fractal-solutions/qflow/testing` | `MockNode`, `MockLLMNode`, `recordFlow()` and snapshot helpers |
 
 ## Async lifecycle methods
 

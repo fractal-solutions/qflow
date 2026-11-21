@@ -32,6 +32,10 @@
     "./durable": {
       "types": "./dist/durable.d.ts",
       "default": "./dist/durable.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "files": [
