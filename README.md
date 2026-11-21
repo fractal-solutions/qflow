@@ -370,6 +370,7 @@ const charge = new ReplaySafeNode({
 });
 const checkpointer = new SQLiteCheckpointer('./runs.db');
 const flow = new DurableFlow(charge, { checkpointer });
+const runId = 'order-charge-1';
 
 await flow.runDurable({ runId, shared: { orderId: 'ord-1', input: { amount: 42 } } });
 await flow.runDurable({ runId, resume: true }); // no second charge
@@ -382,6 +383,7 @@ await flow.runDurable({ runId, resume: true }); // no second charge
 `MapNode`, `ReduceNode`, `JoinNode`, `BranchNode` and `CycleNode` add explicit dataflow routing. `StateContract` validates `shared` at node boundaries, and `describeGraph(flow.startNode)` returns JSON nodes/edges for visual authoring.
 
 ```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
 import { defineState } from '@fractal-solutions/qflow/contracts';
 import { MapNode, ReduceNode } from '@fractal-solutions/qflow/graph';
 
@@ -402,7 +404,7 @@ await new AsyncFlow(map).runAsync({ items: [1, 2, 3] }); // shared.reduceResult 
 `PlanNode`, `CriticNode`, `ReflectNode`, `FinishNode` and `HumanApprovalNode` are first-class nodes from `/agent`. `AgentEngine.asFlow()` turns any declarative strategy into a runnable, inspectable `AsyncFlow`; each phase becomes its own checkpointable node.
 
 ```javascript
-import { PlanNode, CriticNode } from '@fractal-solutions/qflow/agent';
+import { AgentNode, PlanNode, CriticNode } from '@fractal-solutions/qflow/agent';
 
 const plan = new PlanNode({ llmNode });
 const critic = new CriticNode({ llmNode });
@@ -431,6 +433,7 @@ const results = await suite.run();
 Small, composable nodes built on Bun primitives with no optional native dependencies: `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, `StreamTransformNode`, `StreamMapNode`, `StreamFilterNode` and `StreamReduceNode`.
 
 ```javascript
+import { AsyncFlow } from '@fractal-solutions/qflow';
 import { BunSpawnNode, SQLiteQueryNode, StreamMapNode } from '@fractal-solutions/qflow/bun';
 
 const spawn = new BunSpawnNode();
