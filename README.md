@@ -6,12 +6,15 @@
 
 *   **Modular & Extensible:** Easily define custom nodes and compose them into complex, reusable flows.
 *   **Synchronous & Asynchronous Flows:** Supports both blocking and non-blocking execution models.
-*   **Observability:** Monitor workflows with a built-in event system that emits detailed lifecycle events for flows and nodes.
+*   **Observability:** Monitor workflows with a built-in event system that emits detailed lifecycle events for flows and nodes, including custom and streaming events.
 *   **Shared State Management:** Pass and manipulate data across nodes using a central, mutable `shared` object.
 *   **Batch Processing:** Efficiently process collections of data through dedicated batch nodes and flows, including parallel execution.
 *   **Agents:** Built upon the `qflow` core functionality are plug and play agents with extensive tool integrations available.
 *   **Built-in Integrations:** Comes with pre-built nodes for multiple tasks like LLM interactions, browser use, pdf tools, webhooks, spreadsheet manipulation, code interpretation, media manipulation, web scraping, and popular API integrations (GitHub, Git, Open Router, HackerNews, Stripe, Maps).
 *   **Custom Agent Tools:** Build your own Agent tools using the flow registry pattern.
+*   **MCP Bridge:** Expose qflow nodes as MCP tools over stdio, or call external MCP servers from an agent.
+*   **Streaming LLM Output:** Surface token deltas as flow events with OpenAI-compatible providers.
+*   **Durable Execution:** Checkpoint flow state to `bun:sqlite` and resume runs after a crash.
 
 ## Installation
 
@@ -47,6 +50,20 @@ bun add @fractal-solutions/qflow
     import { DeepSeekLLMNode, GitHubNode, WebScraperNode } from '@fractal-solutions/qflow/nodes';
     ```
 
+*   **Agents:** Agent classes and strategies are imported from `/agent`:
+    ```javascript
+    import { AgentNode, RAORAgent, listStrategies } from '@fractal-solutions/qflow/agent';
+    ```
+
+*   **MCP, streaming and durability:**
+    ```javascript
+    import { QFlowMCPServer, MCPClientNode } from '@fractal-solutions/qflow/mcp';
+    import { streamChatCompletions } from '@fractal-solutions/qflow/streaming';
+    import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
+    ```
+
+See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.
+
 ## Core Abstractions
 
 `qflow` is built around a few core abstractions that enable powerful and flexible workflow definitions.
@@ -67,9 +84,11 @@ The fundamental building block of any `qflow` workflow. A `Node` represents a si
 
 **Asynchronous Nodes (`AsyncNode`, `AsyncBatchNode`, `AsyncParallelBatchNode`)**
 For operations that involve I/O or are inherently asynchronous, `qflow` provides `AsyncNode` and its variants. These nodes leverage `async`/`await` for non-blocking execution. When working within `AsyncFlow`s, it's crucial to implement the `async` versions of the lifecycle methods:
-*   `prepAsync(shared)`
-*   `execAsync(prepRes, shared)`
-*   `postAsync(shared, prepRes, execRes)`
+*   `prepAsync(shared, observer)`
+*   `execAsync(prepRes, shared, observer)`
+*   `postAsync(shared, prepRes, execRes, observer)`
+
+The `observer` is optional and can be used to emit custom flow events with `observer.emit(name, payload)`.
 *   `preparePrompt(shared)` (specifically for LLM nodes, allowing prompt construction based on `shared` state)
 
 These `async` methods ensure proper awaiting and data propagation within asynchronous workflows.

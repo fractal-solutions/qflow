@@ -64,10 +64,10 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 
 ## Shipping floor (kept deliberately small)
 
-- `type: module`, correct export map including `/logger` and `/mcp`, `prepublishOnly`, pinned toolchain + lockfile.
-- Real tests under `tests/`; keep `examples/*_test.js` demos out of test discovery.
-- CI: typecheck + tests on Bun.
-- Resolve license mismatch; CHANGELOG + migration guide.
+- [x] `type: module`, correct export map including `/mcp`, `/agent`, `/streaming` and `/durable`, pinned toolchain + lockfile.
+- [x] Real tests under `tests/`; keep `examples/*_test.js` demos out of test discovery.
+- [x] CI: typecheck + tests on Bun (`.github/workflows/ci.yml`).
+- [x] Resolve license mismatch; CHANGELOG + migration guide.
 
 ## Explicitly deferred
 
