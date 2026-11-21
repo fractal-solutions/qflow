@@ -28,6 +28,10 @@
     "./streaming": {
       "types": "./dist/streaming.d.ts",
       "default": "./dist/streaming.js"
+    },
+    "./durable": {
+      "types": "./dist/durable.d.ts",
+      "default": "./dist/durable.js"
     }
   },
   "files": [

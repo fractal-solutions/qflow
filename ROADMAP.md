@@ -46,10 +46,16 @@ qflow's differentiator is breadth of integrations plus usable agent patterns. 2.
 
 **Usage:** `flow.on('llm:delta', ({ delta, text }) => process.stdout.write(delta))`. LLM nodes can be called directly as `node.runAsync(shared, observer)` when outside a flow.
 
-### Track 3 — Durable execution (Bun-native)
-- Checkpoint flow graph + cursor + `shared` state to `bun:sqlite` at node boundaries.
-- Run IDs, resume-after-restart, replay/debugging of past runs.
-- Cancellation via `AbortSignal` propagated through async nodes.
+**Durable usage:** `const { runId } = await flow.runDurable({ shared })`; later, `await flow.runDurable({ runId, resume: true })`. The checkpointer can be shared across flow instances, so resume works after a process restart.
+
+### Track 3 — Durable execution (Bun-native) *(first slice done)*
+- [x] `SQLiteCheckpointer`: `bun:sqlite` store for runs and per-node checkpoints (`shared`, params, action, cursor).
+- [x] `DurableFlow`: run IDs, a checkpoint after every successful node, `runDurable()` with `resume: true`, and `runAsync()` compatibility.
+- [x] Failed runs keep their last committed cursor so a later process can resume without replaying completed nodes.
+- [x] `AbortSignal` is checked at node boundaries and exposed to nodes via the observer.
+- [x] `listRuns()` / `listCheckpoints()` provide replay/debugging data; run/checkpoint events flow through the normal observer channel.
+- [x] New `./durable` subpath export and tests covering completion, resume, cancellation and return shapes.
+- [ ] Trace replay tooling / viewer *(next)*.
 
 ### Track 4 — Graph semantics & DX
 - Fan-out/fan-in, error edges, guarded loops, flow-level timeouts.
