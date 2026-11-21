@@ -10,7 +10,7 @@ Branch: `canary/2.0` (from `main` @ `1.0.84`)
 | API compatibility | Breaking changes allowed in 2.0, with a migration guide. |
 | Priority | **New features and growth first.** Foundational debt is fixed only where it blocks shipping a feature. |
 | Package layout | One package (`@fractal-solutions/qflow`) with subpath exports and lazy boundaries. |
-| License | **Recommendation: MIT** (matches `package.json`, npm metadata and README). `LICENSE` currently says LGPL-2.1 — needs owner confirmation before replacing. |
+| License | **MIT** — owner confirmed; `LICENSE`, `package.json`, npm metadata and README now agree. |
 
 ## Product thesis
 
