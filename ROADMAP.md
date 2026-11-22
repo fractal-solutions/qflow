@@ -102,9 +102,44 @@ Nodes now understand they are part of an agent run, not just wrappers around API
    - [x] `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode` and Web Stream transform nodes in `src/bun_nodes.js` (`./bun`).
    - [x] Built on `Bun.spawn`, `bun:sqlite` and `Bun.watch` with no optional native dependencies.
 
+## Production gaps *(done in 2.0.0-canary.4)*
+
+The canary.3 node set was broad but could not run unattended in production.
+These six closures are implemented, tested and documented; the old roadmap
+wording about "not a great fit yet" is retired.
+
+1. **Durable human approval** *(done)*
+   - [x] `WaitForApprovalNode` (`./approval`) writes a pending decision to SQLite; `DurableFlow` returns `status: 'suspended'`.
+   - [x] Checkpointer `requestApproval()` / `approve()` / `reject()` / `listApprovals()`; resume re-enters the gate and reads the decision.
+   - [x] `approval:requested` / `approval:resolved` / `approval:pending` events and `QFLOW_APPROVAL_PENDING`.
+
+2. **Deterministic LLM replay** *(done)*
+   - [x] `LLMNode` cache object or `cache: true` via checkpointer, with `cacheKey` templates/functions and `cacheTtlMs`.
+   - [x] `llm:cache_hit` events; normalized results replay before provider calls and budget accounting.
+
+3. **Side-effect worker leases** *(done)*
+   - [x] Atomic `INSERT OR IGNORE` reservations with `workerId` / `leaseMs`, `failSideEffect()` for operator release.
+   - [x] `SideEffectClaimedError` (`QFLOW_SIDE_EFFECT_CLAIMED`) for live claims; uncertainty is never auto-retried.
+
+4. **Budget nodes** *(done)*
+   - [x] `BudgetTracker` and `BudgetNode` (`./budget`) for cost/token/duration/step limits, `continue` / `exceeded` edges and `QFLOW_BUDGET_EXCEEDED`.
+   - [x] `LLMNode` accepts a tracker and records real usage; cache hits are not charged.
+
+5. **Flow and checkpoint versioning** *(done)*
+   - [x] `version`, `onVersionMismatch` (`abort` / `migrate` / `ignore`) and `migrate` callback on `DurableFlow`.
+   - [x] Saved run/checkpoint versions, node-class fallback on resume, and `flow:version_*` / `flow:node_remapped` events.
+
+6. **Unified memory and scheduling** *(done)*
+   - [x] `MemoryStore`, `InMemoryMemoryStore`, `SQLiteMemoryStore` and `MemoryStoreNode` (`./memory`).
+   - [x] `ScheduleNode` and `nextCronTime()` (`./schedule`), `listScheduledRuns()` and `status: 'scheduled'`.
+
+Documentation for this stage: expanded [MIGRATION.md](MIGRATION.md), README
+production-gap section with 1-2-3 paths, ten-tutorial
+[index](documentation/tutorials/README.md) and five new tutorials.
+
 ## Shipping floor (kept deliberately small)
 
-- [x] `type: module`, export map including `/mcp`, `/agent`, `/streaming`, `/durable`, `/trace`, `/optional`, `/logger`, `/llm`, `/tool-spec`, `/contracts`, `/side-effects`, `/eval` and `/bun`; pinned toolchain + lockfile.
+- [x] `type: module`, export map including `/mcp`, `/agent`, `/streaming`, `/durable`, `/approval`, `/schedule`, `/budget`, `/memory`, `/trace`, `/optional`, `/logger`, `/llm`, `/tool-spec`, `/contracts`, `/side-effects`, `/eval` and `/bun`; pinned toolchain + lockfile.
 - [x] Real tests under `tests/`; keep `examples/*_test.js` demos out of test discovery.
 - [x] CI: typecheck + tests on Bun (`.github/workflows/ci.yml`).
 - [x] Resolve license mismatch; CHANGELOG + migration guide.

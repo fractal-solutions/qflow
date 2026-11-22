@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.0.0-canary.4
+
+Six production gaps closed. Every item below is additive; no existing import
+changes. See [MIGRATION.md](MIGRATION.md) and the
+[tutorial index](documentation/tutorials/README.md) for step-by-step guides with
+option and error-code tables.
+
+### Added
+- **Durable human approval** (`./approval`): `WaitForApprovalNode` and `resolveApprovalId()`; `DurableFlow` returns `status: 'suspended'` and checkpointer `approve()` / `reject()` record decisions for resumable runs. Events: `approval:requested`, `approval:resolved`, `approval:pending`; error `QFLOW_APPROVAL_PENDING`.
+- **Durable scheduling** (`./schedule`): `ScheduleNode` with `at` / `delayMs` / `cron`, a dependency-free `nextCronTime()`, `listScheduledRuns()` / `setRunDueAt()` and `status: 'scheduled'`. Events: `schedule:waiting`, `schedule:pending`; error `QFLOW_SCHEDULE_PENDING`.
+- **Deterministic LLM replay**: `LLMNode` cache support (`cache`, `cacheKey`, `cacheTtlMs`), checkpointer-backed `cacheGet` / `cacheSet` / `clearCache`, and the `llm:cache_hit` event.
+- **Budget guardrails** (`./budget`): `BudgetTracker`, `BudgetNode` and `BudgetExceededError` (`QFLOW_BUDGET_EXCEEDED`), with `budget:check` / `budget:exceeded` events and `continue` / `exceeded` routing.
+- **Unified memory** (`./memory`): `MemoryStore`, `InMemoryMemoryStore`, `SQLiteMemoryStore` and `MemoryStoreNode` with add/search/get/delete/list/clear operations and `memory:add` / `memory:search` events.
+- **Flow versioning**: `DurableFlow` `version`, `onVersionMismatch` (`abort` / `migrate` / `ignore`) and `migrate` callback; `FlowVersionMismatchError` (`QFLOW_FLOW_VERSION_MISMATCH`) plus `flow:version_migrated`, `flow:version_mismatch` and `flow:node_remapped` events.
+- **Side-effect worker leases**: `workerId` / `leaseMs` on checkpointer, flow and replay-safe nodes; atomic `INSERT OR IGNORE` reservations, `failSideEffect()` and `SideEffectClaimedError` (`QFLOW_SIDE_EFFECT_CLAIMED`).
+- New subpath exports: `./approval`, `./schedule`, `./budget`, `./memory`; durable helpers and errors are re-exported from `/durable`, and all new nodes from `/nodes`.
+- Tutorial index plus five new tutorials: approval, scheduling, LLM replay, budget guardrails and multi-tenant memory.
+
+### Changed
+- `runDurable()` now returns `status` (`completed`, `suspended`, `scheduled`) in addition to `{runId, result, shared, steps, resumed}`; ordinary failures still throw.
+- `SQLiteCheckpointer` constructor accepts `{workerId, leaseMs}` and migrates older databases by adding the new columns.
+- `DurableFlow` re-enters a waiting node on resume and reads recorded approval/schedule state from `shared` and SQLite.
+- `ReplaySafeNode` and `withReplaySafeSideEffect()` accept `workerId` / `leaseMs`.
+- Version bumped to `2.0.0-canary.4`.
+
+### Fixed
+- An expired or competing side-effect reservation can no longer be reset by another worker's upsert.
+- Stale resume cursors fall back to the saved node class name instead of silently starting over.
+- `MIGRATION.md` expanded into a guided reference; README now maps every production gap to 1-2-3 steps and links to the tutorials.
+
+### Tests
+- 18 new tests across `tests/durable_gaps.test.js` and `tests/node_gaps.test.js`; full suite: 92 passing tests across 18 files.
+
 ## 2.0.0-canary.3
 
 ### Added

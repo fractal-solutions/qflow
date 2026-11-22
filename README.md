@@ -25,6 +25,72 @@
 *   **Dataflow & Contracts:** Map/reduce/join/branch/cycle nodes with typed shared-state schemas and explicit iteration budgets.
 *   **Eval & Replay:** Assert, score, compare and replay nodes turn saved traces into regression suites.
 *   **Bun-Native Nodes:** Process spawning, SQLite queries, file watching and Web Stream transforms without optional native packages.
+*   **Durable Human Approval:** Suspend a run on a decision stored in SQLite, review it in any UI, and resume days later without losing context.
+*   **Durable Scheduling:** Suspend until a date, delay or cron slot; a worker resumes due runs without holding an in-process timer.
+*   **Deterministic LLM Replay:** Cache normalized completions across workers and restarts, with readable keys and a visible `llm:cache_hit` event.
+*   **Budget Guardrails:** Track cost, tokens, duration and steps, then route to a fallback or throw a coded error when a limit is crossed.
+*   **Flow Versioning & Worker Leases:** Resume old runs with an explicit migration policy; stop two workers from executing the same side effect.
+*   **Unified Memory:** One `MemoryStore` interface with in-memory and SQLite implementations, wrapped by a single `MemoryStoreNode`.
+
+## What qflow 2.0 is good for
+
+| Application | Why the 2.0 node set fits | Start here |
+| --- | --- | --- |
+| **Tool-using research and copilot agents** | One `LLMNode` switches providers without rewriting flows; `ToolSpec` gives tools permissions, timeouts and idempotency; strategies become inspectable flows with `asFlow()`. | [Unified tool contract example](examples/v2/unified-tool-contract.js) · [Agent flows tutorial](documentation/tutorials/agent-flows.md) |
+| **Durable transactional workflows** (checkout, refunds, onboarding) | `DurableFlow` checkpoints every node; replay-safe side effects reserve an operation ID and replay completed results instead of charging twice. | [Replay-safe checkout](examples/v2/replay-safe-checkout.js) · [Side effects tutorial](documentation/tutorials/durable-side-effects.md) |
+| **MCP tool servers and agent interoperability** | `ToolRegistry` exposes the same definitions to agents, MCP `tools/list`, LLM tool schemas and generated docs; `MCPClientNode` calls external servers from a flow. | [MCP tutorial](documentation/tutorials/mcp.md) |
+| **Data and LLM pipelines** (ETL, enrichment, batch scoring) | `MapNode` / `ReduceNode` / `JoinNode` / `BranchNode` / `CycleNode` add explicit routing and budgets; `StateContract` validates state at node boundaries; Bun stream nodes compose without optional packages. | [Dataflow regression example](examples/v2/dataflow-eval-regression.js) · [Bun ingest example](examples/v2/bun-stream-ingest.js) |
+| **Eval-driven LLM products** | Normalized traces are the contract between runtime and tests: replay a saved trace against a new flow, diff spans and payloads, then gate releases with assert/score nodes. | [Trace replay tutorial](documentation/tutorials/trace-driven-eval.md) |
+| **Local automation and scripting** | `BunSpawnNode`, `FileWatchNode`, `SQLiteQueryNode` and Web Stream transforms handle process, file and data work with Bun primitives only. | [Bun ingest example](examples/v2/bun-stream-ingest.js) |
+| **Visual workflow authoring** | `describeGraph()` and `strategyGraph()` emit JSON nodes/edges, while contracts declare what each boundary expects. | [Dataflow regression example](examples/v2/dataflow-eval-regression.js) |
+| **Human-in-the-loop operations** (refunds, overrides, deploys) | `WaitForApprovalNode` suspends a durable run with `status: 'suspended'`; decisions live in SQLite and can be recorded from any UI. | [Approval tutorial](documentation/tutorials/durable-approval.md) |
+| **Time-based workflows** (reminders, retries, nightly jobs) | `ScheduleNode` persists a due time, so a worker can resume due runs after any restart. Cron parsing needs no optional package. | [Scheduling tutorial](documentation/tutorials/durable-scheduling.md) |
+| **Cost-controlled agents** | `BudgetTracker` accumulates real usage; `BudgetNode` routes to `continue` / `exceeded` and `LLMNode` can hard-stop with `QFLOW_BUDGET_EXCEEDED`. | [Budget tutorial](documentation/tutorials/budget-guardrails.md) |
+| **Multi-tenant assistants** | A `MemoryStore` per tenant plus `MemoryStoreNode` keeps recall isolated while flow code stays identical. | [Memory tutorial](documentation/tutorials/multi-tenant-memory.md) |
+
+The earlier production gaps — long-lived approvals, deterministic LLM replay,
+distributed side effects and multi-tenant memory/scheduling — are now closed in
+`2.0.0-canary.4`. See [Production gaps closed](#production-gaps-closed-200-canary4)
+for the 1-2-3 paths, or [MIGRATION.md § 9-15](MIGRATION.md) for every option and
+error code.
+
+### 2.0 in three steps
+
+Every durable feature follows the same rhythm. Learn it once and the rest of
+the API is predictable:
+
+1. **Create the state owner.** A `SQLiteCheckpointer('./runs.db')` owns runs,
+   checkpoints, approvals, schedules, leases and the LLM cache. One file per
+   application; share it across workers.
+2. **Run with a caller-owned `runId` and read `status`.**
+   `await flow.runDurable({ runId, shared })` returns `completed`, `suspended`
+   (approval), `scheduled` (time) or throws a coded error. Never assume a call
+   finishes just because the process stayed up.
+3. **Act on the state, then resume the same run.**
+   Record a decision, wait for a due time, or release a stale lease, then call
+   `runDurable({ runId, resume: true })`. The waiting node re-enters and reads
+   what you recorded.
+
+```javascript
+import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';
+
+const checkpointer = new SQLiteCheckpointer('./runs.db', {
+  workerId: 'worker-1', // unique per worker: protects side effects with a lease
+  leaseMs: 60_000,
+});
+const flow = new DurableFlow(startNode, { checkpointer, name: 'checkout', version: '1.0.0' });
+
+const outcome = await flow.runDurable({ runId: 'order-1', shared: { orderId: 'ord-1' } });
+if (outcome.status === 'suspended' || outcome.status === 'scheduled') {
+  // Decide or wait, using checkpointer.listApprovals() / listScheduledRuns().
+}
+await flow.runDurable({ runId: 'order-1', resume: true });
+```
+
+**Why a `runId` you control?** Because the id is the join key between your
+system (order, request, invoice) and every checkpoint, decision, reservation and
+trace. A generated id is fine for one-off runs; a business id is what makes
+recovery possible.
 
 ## Installation
 
@@ -73,13 +139,26 @@ qflow 2.0 is **Bun-only**. Node.js is not a supported runtime.
     import { normalizeTrace, writeTraceFile } from '@fractal-solutions/qflow/trace';
     import { OPTIONAL_DEPENDENCIES, loadOptional } from '@fractal-solutions/qflow/optional';
     import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';
-    // 2.0 canary.3 node families
+
+    // 2.0 node families
     import { LLMNode, registerLLMAdapter, listLLMAdapters } from '@fractal-solutions/qflow/llm';
     import { ToolSpec, ToolRegistry, generateToolDocs } from '@fractal-solutions/qflow/tool-spec';
     import { StateContract, defineState } from '@fractal-solutions/qflow/contracts';
     import { ReplaySafeNode, SideEffectUncertainError } from '@fractal-solutions/qflow/side-effects';
     import { AssertNode, ScoreNode, CompareNode, ReplayNode } from '@fractal-solutions/qflow/eval';
     import { BunSpawnNode, SQLiteQueryNode, FileWatchNode } from '@fractal-solutions/qflow/bun';
+
+    // Production-gap closures (canary.4), also re-exported from /nodes
+    import { WaitForApprovalNode } from '@fractal-solutions/qflow/approval';
+    import { ScheduleNode, nextCronTime } from '@fractal-solutions/qflow/schedule';
+    import { BudgetNode, BudgetTracker, BudgetExceededError } from '@fractal-solutions/qflow/budget';
+    import { MemoryStoreNode, InMemoryMemoryStore, SQLiteMemoryStore } from '@fractal-solutions/qflow/memory';
+
+    // /durable is the single entry point for long-lived run control
+    import {
+      DurableFlow, WaitForApprovalNode, ScheduleNode, BudgetNode,
+      FlowVersionMismatchError, SideEffectClaimedError,
+    } from '@fractal-solutions/qflow/durable';
     ```
 
 See [MIGRATION.md](./MIGRATION.md) when upgrading from 1.x, and [CHANGELOG.md](./CHANGELOG.md) for release notes.
@@ -305,7 +384,9 @@ See [examples/webview_data_visualization.js](examples/webview_data_visualization
 
 ## 2.0 Node Families
 
-These families ship in `2.0.0-canary.3`. They are additive: the older vendor-specific nodes and agent classes keep working.
+These families shipped in `2.0.0-canary.3`; the production-gap closures below
+arrived in `2.0.0-canary.4`. All of them are additive: the older
+vendor-specific nodes and agent classes keep working.
 
 ### Provider-neutral LLM
 
@@ -450,6 +531,196 @@ await new AsyncFlow(stream).runAsync({ streamInput: [1, 2, 3] }); // shared.stre
 
 Events include `spawn:exit`, `file:change` and `stream:item`.
 
+## Production gaps closed (2.0.0-canary.4)
+
+The canary.3 families gave qflow breadth. This release closes the six gaps that
+prevented those features from running unattended in production. Each subsection
+answers three questions: **why it exists**, **the 1-2-3 steps**, and **which
+options matter**. Full tables and failure modes live in
+[MIGRATION.md](MIGRATION.md) and the linked tutorials.
+
+| Gap | What closes it | Why it matters | Deep dive |
+| --- | --- | --- | --- |
+| Long-lived human decisions | `WaitForApprovalNode`, `approve()` / `reject()` | A review can take days and outlive the worker | [Approval tutorial](documentation/tutorials/durable-approval.md) |
+| Time-based suspension | `ScheduleNode`, `listScheduledRuns()` | Reminders must survive restarts | [Scheduling tutorial](documentation/tutorials/durable-scheduling.md) |
+| Non-deterministic model calls | `LLMNode` cache + `llm:cache_hit` | Replay should not re-pay or re-roll a prompt | [LLM replay tutorial](documentation/tutorials/llm-deterministic-cache.md) |
+| Unbounded agent spend | `BudgetTracker`, `BudgetNode` | Limits must be enforceable, not documented | [Budget tutorial](documentation/tutorials/budget-guardrails.md) |
+| Competing workers / stale graphs | side-effect leases, flow versioning | Exactly-once effects and safe resume after a deploy | [MIGRATION § 9](MIGRATION.md#9-side-effects-replay-and-worker-leases) · [§ 10](MIGRATION.md#10-flow-versioning) |
+| Tenant-isolated recall | `MemoryStoreNode`, two store implementations | One flow, separate data per customer | [Memory tutorial](documentation/tutorials/multi-tenant-memory.md) |
+
+### 1. Suspend on a human decision
+
+**Why:** a callback held in process memory cannot wait three days. The approval
+is a row in SQLite; the flow returns `status: 'suspended'` and resumes from the
+saved decision.
+
+1. Add the gate with a stable id: `new WaitForApprovalNode({ approvalId: '{{requestId}}', prompt: 'Approve?' })` and register `approve` / `reject` successors.
+2. Run durably and show `checkpointer.listApprovals(runId, { status: 'pending' })` to a reviewer.
+3. Call `checkpointer.approve(runId, decision, approvalId)` (or `reject`), then `runDurable({ runId, resume: true })`.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `approvalId` | template string / function / `true` | `true` | Stable decision key; templates use `{{sharedKey}}` and get an `approval:` prefix |
+| `prompt` | string | `null` | Reviewer question; also read from `shared.approvalPrompt` |
+| `resultKey` / `approvalsKey` | string | `'approval'` / `'approvals'` | Where the decision and the id→decision map are written in `shared` |
+| `metadata` | JSON object | `null` | Extra reviewer context (amount, links, UI hints) |
+
+```javascript
+import { DurableFlow, SQLiteCheckpointer, WaitForApprovalNode } from '@fractal-solutions/qflow/durable';
+
+const gate = new WaitForApprovalNode({ approvalId: '{{requestId}}', prompt: 'Approve refund?' });
+gate.next(approvedNode, 'approve');
+gate.next(rejectedNode, 'reject');
+
+const checkpointer = new SQLiteCheckpointer('./runs.db');
+const flow = new DurableFlow(gate, { checkpointer, version: '1.0.0' });
+const pending = await flow.runDurable({ runId: 'refund-req-1', shared: { requestId: 'req-1' } });
+// pending.status === 'suspended', pending.approvalId === 'approval:req-1'
+
+checkpointer.approve('refund-req-1', { by: 'alice' }, 'approval:req-1');
+const finished = await flow.runDurable({ runId: 'refund-req-1', resume: true });
+// finished.shared.approval = { approved: true, by: 'alice', ... }
+```
+
+### 2. Suspend until a time
+
+**Why:** a timer that lives in a process disappears on restart. The due time is
+stored with the run; any worker can pick it up when it is due.
+
+1. Add `ScheduleNode` with `at` (absolute), `delayMs` (relative) or `cron` (five fields) and register the `due` successor.
+2. Read `status === 'scheduled'` and `dueAt`; poll `checkpointer.listScheduledRuns({ before: Date.now() })` in a worker.
+3. Resume each due `runId` with `{ resume: true }`; the node re-checks the same stored time.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `at` | `Date` / ISO string / epoch ms | `null` | Absolute due time (highest priority) |
+| `delayMs` | number | `null` | Relative delay, resolved once |
+| `cron` | string | `null` | Five fields: `minute hour day month weekday`, no optional package |
+| `dueAtKey` / `scheduleIdKey` | string | `'scheduledAt'` / `'scheduleId'` | Shared keys holding the persisted schedule |
+
+```javascript
+import { DurableFlow, SQLiteCheckpointer, ScheduleNode } from '@fractal-solutions/qflow/durable';
+
+const wait = new ScheduleNode({ delayMs: 60_000 });
+wait.next(sendReminder, 'due');
+const checkpointer = new SQLiteCheckpointer('./runs.db');
+const flow = new DurableFlow(wait, { checkpointer });
+
+const paused = await flow.runDurable({ runId: 'reminder-1', shared: {} });
+// paused.status === 'scheduled'
+for (const run of checkpointer.listScheduledRuns({ before: Date.now() })) {
+  await flow.runDurable({ runId: run.runId, resume: true });
+}
+```
+
+### 3. Replay LLM calls instead of re-paying for them
+
+**Why:** a checkpoint knows a node ran, but the model call itself is external.
+A cache makes replay deterministic and emits `llm:cache_hit` so traces show it.
+
+1. Add `cache: true` to `LLMNode` inside a `DurableFlow` (the checkpointer becomes the store), or pass `{ get, set }`.
+2. Keep the default request hash, or set `cacheKey: '{{tenant}}:{{prompt}}'` for readable keys.
+3. Use `cacheTtlMs` for changing data and listen for `llm:cache_hit` in tests.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `cache` | `true` / `{ get, set }` / `null` | `null` | Cache store; `true` uses the checkpointer's `llm` namespace |
+| `cacheKey` | template / function `({request, shared})` / `null` | request hash | Must include every input that changes the answer |
+| `cacheTtlMs` | number / `null` | `null` | Entry lifetime; `null` never expires |
+
+```javascript
+import { LLMNode, LLM_CACHE_HIT_EVENT } from '@fractal-solutions/qflow/llm';
+
+const llm = new LLMNode({
+  provider: 'openai', model: 'gpt-4o-mini',
+  cache: true, cacheKey: '{{tenant}}:{{prompt}}',
+  cacheTtlMs: 24 * 60 * 60 * 1000,
+});
+flow.on(LLM_CACHE_HIT_EVENT, ({ key }) => console.log('replayed', key));
+```
+
+### 4. Enforce a spend limit
+
+**Why:** "keep costs reasonable" is not a control; a limit with a coded error
+and a fallback edge is.
+
+1. Create `new BudgetTracker({ maxCost, maxTokens, maxDurationMs, maxSteps })`.
+2. Pass it to `LLMNode` via `budget`, and add `BudgetNode` where the run can branch.
+3. Wire `exceeded` to a fallback node, or set `throwOnExceed: true` for `QFLOW_BUDGET_EXCEEDED`.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `maxCost` / `maxTokens` | number | `Infinity` | Spend and token ceilings |
+| `maxDurationMs` / `maxSteps` | number | `Infinity` | Wall-clock and step ceilings |
+| `tracker` | `BudgetTracker` | `null` | Usage source for `BudgetNode`; without it, reads `shared.llmCost` / `llmUsage` |
+| `throwOnExceed` | boolean | `false` | Throw instead of routing to `exceeded` |
+
+```javascript
+import { BudgetTracker, BudgetNode } from '@fractal-solutions/qflow/budget';
+
+const budget = new BudgetTracker({ maxCost: 0.50, maxTokens: 20_000 });
+const guard = new BudgetNode({ tracker: budget, maxCost: 0.50 });
+guard.next(llm, 'continue');       // within limits
+guard.next(fallbackNode, 'exceeded'); // over a limit
+flow.on('budget:check', result => console.log(result.cost, result.tokens));
+```
+
+### 5. Keep workers honest and resumes safe
+
+**Why:** replay protection must also stop two workers starting the same
+operation, and a resumed run must not follow a graph that no longer exists.
+
+1. Give each worker a distinct `workerId` and a `leaseMs` longer than the effect.
+2. Use stable `operationId` templates (`'{{orderId}}'`) on replay-safe nodes.
+3. Set `version` and `onVersionMismatch` (`abort` / `migrate` / `ignore`) on every durable flow that can be resumed.
+
+```javascript
+const checkpointer = new SQLiteCheckpointer('./runs.db', {
+  workerId: `worker-${process.pid}`, leaseMs: 60_000,
+});
+const flow = new DurableFlow(charge, {
+  checkpointer,
+  version: '2.0.0',
+  onVersionMismatch: 'migrate',
+  migrate: ({ shared }) => ({ ...shared, customerTier: shared.plan ?? 'free' }),
+});
+// A second live worker gets QFLOW_SIDE_EFFECT_CLAIMED instead of executing.
+// A stale resume gets QFLOW_FLOW_VERSION_MISMATCH unless you migrate or ignore.
+```
+
+### 6. Isolate tenant memory
+
+**Why:** recall is only useful if it belongs to the right customer. A store per
+tenant makes that a construction detail rather than a query filter.
+
+1. Construct `new SQLiteMemoryStore('./tenant-acme.db')` (or `InMemoryMemoryStore()` for tests).
+2. Put it in `shared.memoryStore`, then use `MemoryStoreNode` with `operation: 'add'` / `'search'`.
+3. Close SQLite stores when a tenant is removed.
+
+| Operation | Reads | Result |
+| --- | --- | --- |
+| `add` | `text`, `id?`, `tags?`, `metadata?` | stored record |
+| `search` | `query` / `text`, `tags?`, `limit?` | scored records |
+| `get` / `delete` | `id` | record / boolean |
+| `list` / `clear` | — | records / count removed |
+
+```javascript
+import { SQLiteMemoryStore, MemoryStoreNode } from '@fractal-solutions/qflow/memory';
+
+const store = new SQLiteMemoryStore('./tenant-acme.db');
+const add = new MemoryStoreNode({ operation: 'add', store });
+const search = new MemoryStoreNode({ operation: 'search', store, limit: 3 });
+await new AsyncFlow(add).runAsync({ memoryInput: { text: 'Net-30 terms', tags: ['policy'] } });
+const hits = await new AsyncFlow(search).runAsync({ memoryInput: { query: 'payment terms' } });
+```
+
+### Where to go next
+
+- [Tutorial index](documentation/tutorials/README.md) — ten guided paths with option tables.
+- [MIGRATION.md](MIGRATION.md) — old→new mapping, every parameter, error codes and troubleshooting.
+- [`examples/v2/`](examples/v2/README.md) — four offline, end-to-end stories (`bun run examples:v2`).
+- [CHANGELOG.md](CHANGELOG.md) — exact release contents.
+
 ## 2.0 End-to-End Examples
 
 The snippets above show individual APIs. For the *why*, see [`examples/v2/`](examples/v2/README.md): four offline stories that compose the new families around real failure modes. Run them all with `bun run examples:v2`.
@@ -460,6 +731,23 @@ The snippets above show individual APIs. For the *why*, see [`examples/v2/`](exa
 | [`unified-tool-contract.js`](examples/v2/unified-tool-contract.js) | Tools get re-described in the agent, MCP server, LLM schema and docs. | One `ToolSpec` feeding all four, plus capability grants, idempotency and `AgentEngine.asFlow()`. |
 | [`dataflow-eval-regression.js`](examples/v2/dataflow-eval-regression.js) | A graph changes behavior and nobody notices. | Contract rejection, explicit routing, saved trace replay with zero diffs, and an assert/score suite. |
 | [`bun-stream-ingest.js`](examples/v2/bun-stream-ingest.js) | Local ingest shouldn't need optional native packages. | Child-process output through Web Streams into SQLite, plus a real file-watch event. |
+
+## Tutorials
+
+Step-by-step guides for the 2.0 families. Start with the
+[full tutorial index](documentation/tutorials/README.md) for two guided learning
+paths; the short list below is the quick route.
+
+1. [MCP tool servers and clients](documentation/tutorials/mcp.md)
+2. [Provider-neutral LLM nodes](documentation/tutorials/provider-neutral-llm.md)
+3. [Durable side effects and safe replay](documentation/tutorials/durable-side-effects.md)
+4. [Durable human approval](documentation/tutorials/durable-approval.md)
+5. [Durable scheduling](documentation/tutorials/durable-scheduling.md)
+6. [Deterministic LLM replay and caching](documentation/tutorials/llm-deterministic-cache.md)
+7. [Budget guardrails](documentation/tutorials/budget-guardrails.md)
+8. [Multi-tenant memory](documentation/tutorials/multi-tenant-memory.md)
+9. [Agent strategies as flows](documentation/tutorials/agent-flows.md)
+10. [Trace-driven evaluation](documentation/tutorials/trace-driven-eval.md)
 
 ## Integrated Nodes and their Examples
 
@@ -549,16 +837,37 @@ You can attach listeners with `on(name, handler)`, subscribe to everything with 
 *   `node:retry`: `{ flowId, nodeClass, attempt, maxRetries, error }`
 *   `node:end`: `{ flowId, nodeClass, endTime, duration, status, result, error }`
 *   `llm:delta` / `llm:reasoning` / `llm:done`: streaming payloads from `StreamingLLMNode` and `LLMNode`
-*   `llm:retry` / `llm:fallback` / `llm:negotiated` / `llm:capability` / `llm:usage` / `llm:tool_call`: provider-neutral LLM lifecycle
+*   `llm:retry` / `llm:fallback` / `llm:negotiated` / `llm:capability` / `llm:usage` / `llm:tool_call` / `llm:cache_hit`: provider-neutral LLM lifecycle and deterministic replay
 *   `side_effect:replay` / `side_effect:committed`: replay-safe side-effect outcomes
+*   `approval:requested` / `approval:resolved` / `approval:pending`: durable human decisions
+*   `schedule:waiting` / `schedule:pending`: durable time-based suspension
+*   `budget:check` / `budget:exceeded`: spend, token, duration and step guardrails
+*   `memory:add` / `memory:search`: unified memory operations
+*   `flow:version_migrated` / `flow:version_mismatch` / `flow:node_remapped`: safe resume after a graph change
 *   `eval:assert` / `eval:score` / `eval:compare` / `eval:replay`: evaluation results
 *   `cycle:iteration` / `map:item_error` / `reduce:step`: dataflow progress
 *   `spawn:exit` / `file:change` / `stream:item`: Bun-native node progress
-*   `agent:approval`: human approval decisions
+*   `agent:approval`: in-process agent approval decisions
 *   `run:start` / `run:end` / `run:resumed` / `checkpoint:saved`: durable-run events
 
 Nested flow events are forwarded to the parent with `nested: true` and `parentFlowId`.
 
+### Coded errors you should handle
+
+Every production-gap failure has a stable `code`, so you can branch on the code
+without importing the class:
+
+| Code | Meaning | Usual response |
+| --- | --- | --- |
+| `QFLOW_APPROVAL_PENDING` | A decision is required | Record it, resume the run |
+| `QFLOW_SCHEDULE_PENDING` | The due time has not arrived | Wait, then resume |
+| `QFLOW_SIDE_EFFECT_UNCERTAIN` | Effect may have committed; no result recorded | Reconcile with the provider, never retry blindly |
+| `QFLOW_SIDE_EFFECT_CLAIMED` | Another worker owns the operation | Wait or let that worker finish |
+| `QFLOW_FLOW_VERSION_MISMATCH` | Resume targets a different graph version | Migrate, ignore deliberately, or redeploy the old version |
+| `QFLOW_BUDGET_EXCEEDED` | A limit was crossed | Route to a fallback or stop |
+| `QFLOW_OPTIONAL_DEPENDENCY_MISSING` | A heavy integration is not installed | Run the printed `bun add --optional ...` command |
+
+Full descriptions are in [MIGRATION.md § 20](MIGRATION.md#20-error-code-reference).
 
 This example demonstrates how to use the built-in event system to monitor the execution of a flow.
 

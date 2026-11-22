@@ -1,7 +1,7 @@
 import { AsyncNode } from './qflow.js';
-import { stableHash, resolveTemplate, SideEffectUncertainError } from './util.js';
+import { stableHash, resolveTemplate, SideEffectClaimedError, SideEffectUncertainError } from './util.js';
 
-export { SideEffectUncertainError };
+export { SideEffectClaimedError, SideEffectUncertainError };
 
 export async function resolveOperationId(operationId, { params = {}, shared = {}, kind = 'side_effect' } = {}) {
   if (typeof operationId === 'function') {
@@ -27,6 +27,8 @@ export async function withReplaySafeSideEffect({
   kind = 'side_effect',
   operationId = null,
   onPending = 'error',
+  workerId = null,
+  leaseMs = null,
 }) {
   if (typeof execute !== 'function') throw new Error('withReplaySafeSideEffect requires an execute function.');
 
@@ -45,6 +47,8 @@ export async function withReplaySafeSideEffect({
     operationId: id,
     kind,
     onPending,
+    workerId: workerId ?? params.workerId ?? observer.workerId,
+    leaseMs: leaseMs ?? params.leaseMs ?? observer.leaseMs,
     execute,
   });
 
@@ -75,6 +79,8 @@ export class ReplaySafeNode extends AsyncNode {
     resultKey = 'replaySafeResult',
     inputKey = 'input',
     onPending = 'error',
+    workerId = null,
+    leaseMs = null,
     maxRetries = 1,
     wait = 0,
   } = {}) {
@@ -86,6 +92,8 @@ export class ReplaySafeNode extends AsyncNode {
     this.resultKey = resultKey;
     this.inputKey = inputKey;
     this.onPending = onPending;
+    this.workerId = workerId;
+    this.leaseMs = leaseMs;
   }
 
   async prepAsync(shared = {}) {
@@ -100,6 +108,8 @@ export class ReplaySafeNode extends AsyncNode {
       kind: this.kind,
       operationId: this.params.operationId ?? this.operationId,
       onPending: this.params.onPendingSideEffect ?? this.onPending,
+      workerId: this.params.workerId ?? this.workerId,
+      leaseMs: this.params.leaseMs ?? this.leaseMs,
       execute: () => this.execute({ input: prepRes, params: this.params, shared, observer }),
     });
     return outcome.result;

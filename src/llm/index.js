@@ -1,4 +1,5 @@
 import { AsyncNode } from '../qflow.js';
+import { resolveTemplate, stableHash } from '../util.js';
 import {
   streamChatCompletions,
   LLM_DELTA_EVENT,
@@ -14,6 +15,7 @@ export const LLM_NEGOTIATED_EVENT = 'llm:negotiated';
 export const LLM_CAPABILITY_EVENT = 'llm:capability';
 export const LLM_USAGE_EVENT = 'llm:usage';
 export const LLM_TOOL_CALL_EVENT = 'llm:tool_call';
+export const LLM_CACHE_HIT_EVENT = 'llm:cache_hit';
 
 export const LLM_EVENTS = {
   delta: LLM_DELTA_EVENT,
@@ -25,6 +27,7 @@ export const LLM_EVENTS = {
   capability: LLM_CAPABILITY_EVENT,
   usage: LLM_USAGE_EVENT,
   toolCall: LLM_TOOL_CALL_EVENT,
+  cacheHit: LLM_CACHE_HIT_EVENT,
 };
 
 const DEFAULT_URLS = {
@@ -758,6 +761,46 @@ export function negotiateCapabilities(adapter, requested = []) {
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+/** Accept a cache object, or build one from a durable checkpointer. */
+function resolveLLMCache(request, shared, observer = {}) {
+  const cache = request.cache ?? shared.llmCache ?? null;
+  if (!cache) return null;
+  if (typeof cache.get === 'function' && typeof cache.set === 'function') return cache;
+  if (cache === true) {
+    const checkpointer = request.checkpointer ?? observer.checkpointer ?? shared.checkpointer;
+    if (checkpointer && typeof checkpointer.cacheGet === 'function' && typeof checkpointer.cacheSet === 'function') {
+      return {
+        get: key => checkpointer.cacheGet('llm', key),
+        set: (key, value, ttlMs) => checkpointer.cacheSet('llm', key, value, ttlMs),
+      };
+    }
+  }
+  throw new Error('LLMNode caching requires a cache object or a checkpointer with cacheGet/cacheSet().');
+}
+
+/** Stable cache key: explicit template/function, or a hash of the request. */
+export function buildLLMCacheKey(request, shared = {}) {
+  if (typeof request.cacheKey === 'function') {
+    return String(request.cacheKey({ request, shared }));
+  }
+  const template = request.cacheKey ?? request.operationId;
+  if (typeof template === 'string' && template.includes('{{')) {
+    const rendered = resolveTemplate(template, { ...shared, ...request, shared });
+    if (rendered.trim()) return rendered;
+  }
+  return `llm:${stableHash({
+    provider: request.provider,
+    model: request.model,
+    messages: Array.isArray(request.messages)
+      ? request.messages
+      : [{ role: 'user', content: String(request.prompt ?? '') }],
+    tools: request.tools ?? null,
+    responseFormat: request.responseFormat ?? null,
+    temperature: request.temperature ?? null,
+    maxTokens: request.maxTokens ?? null,
+  })}`;
+}
+
 /** One LLM node for every provider, with retries, fallbacks and usage events. */
 export class LLMNode extends AsyncNode {
   static getToolDefinition() {
@@ -801,6 +844,20 @@ export class LLMNode extends AsyncNode {
     const request = prepRes.request;
     const providers = [request.provider, ...(request.fallbackProviders ?? [])].filter(Boolean);
     if (!providers.length) throw new Error('LLMNode requires a provider or an adapter.');
+
+    const cache = resolveLLMCache(request, prepRes.shared ?? {}, observer);
+    const cacheKey = cache ? buildLLMCacheKey(request, prepRes.shared ?? {}) : null;
+    if (cache) {
+      const hit = await cache.get(cacheKey);
+      if (hit) {
+        observer.emit?.(LLM_CACHE_HIT_EVENT, {
+          key: cacheKey,
+          provider: hit.provider ?? providers[0],
+          model: hit.model ?? request.model ?? null,
+        });
+        return hit;
+      }
+    }
 
     const requested = new Set(request.capabilities ?? request.requireCapabilities ?? []);
     if (request.stream) requested.add('streaming');
@@ -875,6 +932,14 @@ export class LLMNode extends AsyncNode {
             finishReason: result.finishReason,
             usage,
           });
+
+          if (request.budget && typeof request.budget.record === 'function') {
+            request.budget.record(result.usage, result.cost);
+            if (typeof request.budget.assertWithin === 'function') {
+              request.budget.assertWithin({ steps: (prepRes.shared ?? {}).agentFlowSteps ?? 0 });
+            }
+          }
+          if (cache) await cache.set(cacheKey, result, request.cacheTtlMs ?? null);
           return result;
         } catch (error) {
           lastError = error;
