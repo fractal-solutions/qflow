@@ -97,14 +97,18 @@
   "files": [
     "dist/",
     "README.md",
-    "qflow.config.js"
+    "MIGRATION.md",
+    "CHANGELOG.md",
+    "qflow.config.js",
+    "scripts/"
   ],
   "scripts": {
     "test": "bun test tests",
     "clean": "rm -rf dist",
     "build": "bun run clean && tsc --project tsconfig.build.json",
     "examples:v2": "bun examples/v2/run-all.js",
-    "postinstall": "bun scripts/postinstall.js"
+    "postinstall": "bun scripts/postinstall.js",
+    "prepublishOnly": "bun scripts/verify-package.js"
   },
   "keywords": [
     "workflow",
@@ -143,9 +147,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5.9.2"
   }
 }

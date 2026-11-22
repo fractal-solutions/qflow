@@ -108,6 +108,19 @@ bun add @fractal-solutions/qflow
 
 qflow 2.0 is **Bun-only**. Node.js is not a supported runtime.
 
+### Canary channel
+
+While 2.0 is in prerelease it is published under the `canary` dist-tag, so
+`latest` stays on the stable 1.x line. Install it explicitly:
+
+```bash
+bun add @fractal-solutions/qflow@canary
+# or pin an exact prerelease
+bun add @fractal-solutions/qflow@2.0.0-canary.4
+```
+
+Read [MIGRATION.md](MIGRATION.md) before upgrading — 2.0 is a breaking release.
+
 ## Module Imports
 
 `qflow` provides different entry points for its core functionalities and built-in nodes to keep your imports clean and specific.
