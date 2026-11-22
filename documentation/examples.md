@@ -1,3 +1,12 @@
+## qflow 2.0 End-to-End Examples
+
+These examples compose the new node families around production problems rather than single APIs. Run `bun run examples:v2` from the repo root, or see [examples/v2/README.md](../examples/v2/README.md) for details.
+
+*   [Replay-safe checkout](../examples/v2/replay-safe-checkout.js) — durable side effects, replay after a crash, and uncertain reservations
+*   [Unified tool contract](../examples/v2/unified-tool-contract.js) — one `ToolSpec` for agent, MCP, LLM schemas and docs
+*   [Dataflow regression loop](../examples/v2/dataflow-eval-regression.js) — contracts, routing, trace replay and eval suites
+*   [Bun stream ingest](../examples/v2/bun-stream-ingest.js) — spawn, Web Streams, SQLite and file watching
+
 ## Basic Usage & Examples
 
 *   [1. Simple Node](examples/simple_node.md)

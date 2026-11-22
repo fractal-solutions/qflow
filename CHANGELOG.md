@@ -13,6 +13,7 @@
 - Bun-native nodes (`./bun`): `BunSpawnNode`, `SQLiteQueryNode`, `FileWatchNode`, `StreamTransformNode`, `StreamMapNode`, `StreamFilterNode` and `StreamReduceNode`.
 - New subpath exports: `./llm`, `./tool-spec`, `./contracts`, `./side-effects`, `./eval`, `./bun`; new node families are also re-exported from `./nodes` / `./agent`.
 - Tests for every new family; the suite now has 74 passing tests.
+- Four offline end-to-end examples in `examples/v2/` (with `bun run examples:v2`) showing replay-safe checkout, one tool spec across agent/MCP/docs, dataflow trace replay, and Bun-native ingest.
 
 ### Changed
 - `AgentEngine` accepts `toolRegistry`, `grantedCapabilities` and `grantedPermissions`, and shares one `initialize()` path with `asFlow()`.

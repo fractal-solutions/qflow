@@ -450,6 +450,17 @@ await new AsyncFlow(stream).runAsync({ streamInput: [1, 2, 3] }); // shared.stre
 
 Events include `spawn:exit`, `file:change` and `stream:item`.
 
+## 2.0 End-to-End Examples
+
+The snippets above show individual APIs. For the *why*, see [`examples/v2/`](examples/v2/README.md): four offline stories that compose the new families around real failure modes. Run them all with `bun run examples:v2`.
+
+| Example | Problem it solves | What you'll see |
+| --- | --- | --- |
+| [`replay-safe-checkout.js`](examples/v2/replay-safe-checkout.js) | A retry after a payment must not charge twice. | A simulated post-commit crash, replay of the recorded charge, and `SideEffectUncertainError` when a reservation has no result. |
+| [`unified-tool-contract.js`](examples/v2/unified-tool-contract.js) | Tools get re-described in the agent, MCP server, LLM schema and docs. | One `ToolSpec` feeding all four, plus capability grants, idempotency and `AgentEngine.asFlow()`. |
+| [`dataflow-eval-regression.js`](examples/v2/dataflow-eval-regression.js) | A graph changes behavior and nobody notices. | Contract rejection, explicit routing, saved trace replay with zero diffs, and an assert/score suite. |
+| [`bun-stream-ingest.js`](examples/v2/bun-stream-ingest.js) | Local ingest shouldn't need optional native packages. | Child-process output through Web Streams into SQLite, plus a real file-watch event. |
+
 ## Integrated Nodes and their Examples
 
 Here's a comprehensive list of integrated nodes available in qflow, along with a brief description and a link to their detailed documentation.

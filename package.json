@@ -87,6 +87,7 @@
     "test": "bun test tests",
     "clean": "rm -rf dist",
     "build": "bun run clean && tsc --project tsconfig.build.json",
+    "examples:v2": "bun examples/v2/run-all.js",
     "postinstall": "bun scripts/postinstall.js"
   },
   "keywords": [
