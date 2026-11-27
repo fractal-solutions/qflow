@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0
+
+Stable promotion of `2.0.0-canary.4`. No source changes from the final canary;
+the same package is now published as `latest`.
+
+### Changed
+- Version bumped to `2.0.0`; the npm `latest` dist-tag now points here.
+- README and MIGRATION.md describe the stable install path. The `canary` dist-tag still points to `2.0.0-canary.4`.
+- MCP client/server metadata now reports `2.0.0`.
+
+See [2.0.0-canary.4](#200-canary4) below for the full feature list.
+
 ## 2.0.0-canary.4
 
 Six production gaps closed. Every item below is additive; no existing import

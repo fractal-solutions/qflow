@@ -49,8 +49,8 @@
 | **Multi-tenant assistants** | A `MemoryStore` per tenant plus `MemoryStoreNode` keeps recall isolated while flow code stays identical. | [Memory tutorial](documentation/tutorials/multi-tenant-memory.md) |
 
 The earlier production gaps — long-lived approvals, deterministic LLM replay,
-distributed side effects and multi-tenant memory/scheduling — are now closed in
-`2.0.0-canary.4`. See [Production gaps closed](#production-gaps-closed-200-canary4)
+distributed side effects and multi-tenant memory/scheduling — are closed in
+`2.0.0`. See [Production gaps closed](#production-gaps-closed-200)
 for the 1-2-3 paths, or [MIGRATION.md § 9-15](MIGRATION.md) for every option and
 error code.
 
@@ -108,17 +108,17 @@ bun add @fractal-solutions/qflow
 
 qflow 2.0 is **Bun-only**. Node.js is not a supported runtime.
 
-### Canary channel
+### Install 2.0
 
-While 2.0 is in prerelease it is published under the `canary` dist-tag, so
-`latest` stays on the stable 1.x line. Install it explicitly:
+`2.0.0` is now the `latest` release, so the normal install command gets it:
 
 ```bash
-bun add @fractal-solutions/qflow@canary
-# or pin an exact prerelease
-bun add @fractal-solutions/qflow@2.0.0-canary.4
+bun add @fractal-solutions/qflow
+# or pin the exact release
+bun add @fractal-solutions/qflow@2.0.0
 ```
 
+The `canary` dist-tag still points to `2.0.0-canary.4` for prerelease trackers.
 Read [MIGRATION.md](MIGRATION.md) before upgrading — 2.0 is a breaking release.
 
 ## Module Imports
@@ -544,9 +544,9 @@ await new AsyncFlow(stream).runAsync({ streamInput: [1, 2, 3] }); // shared.stre
 
 Events include `spawn:exit`, `file:change` and `stream:item`.
 
-## Production gaps closed (2.0.0-canary.4)
+## Production gaps closed (2.0.0)
 
-The canary.3 families gave qflow breadth. This release closes the six gaps that
+The canary.3 families gave qflow breadth. Stable 2.0 closes the six gaps that
 prevented those features from running unattended in production. Each subsection
 answers three questions: **why it exists**, **the 1-2-3 steps**, and **which
 options matter**. Full tables and failure modes live in

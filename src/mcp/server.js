@@ -25,7 +25,7 @@ function toMCPTool(definition) {
  */
 export class QFlowMCPServer {
   constructor(options = {}) {
-    const { name = 'qflow', version = '2.0.0-canary', toolClasses, toolRegistry } = options;
+    const { name = 'qflow', version = '2.0.0', toolClasses, toolRegistry } = options;
 
     this.name = name;
     this.version = version;

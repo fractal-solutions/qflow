@@ -5,7 +5,7 @@ window.GettingStartedPage = () => {
     const installScaffold = `bunx create-qflow@latest my-new-project`;
     const usageScaffold = `bunx create-qflow@latest <project-name>`;
 
-    const coreInstall = `npm install @fractal-solutions/qflow\n# or\nbun add @fractal-solutions/qflow`;
+    const coreInstall = `bun add @fractal-solutions/qflow`;
 
     const step1Code = `bunx create-qflow@latest my-weather-cli\ncd my-weather-cli`;
 

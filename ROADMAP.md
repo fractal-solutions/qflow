@@ -1,6 +1,6 @@
-# qflow 2.0 — Canary Roadmap
+# qflow 2.0 — Roadmap
 
-Branch: `canary/2.0` (from `main` @ `1.0.84`)
+Shipped on `main` as `2.0.0` (from `main` @ `1.0.84`; developed on `canary/2.0`).
 
 ## Agreed direction
 

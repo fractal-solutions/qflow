@@ -1,7 +1,7 @@
 # Migrating to qflow 2.0
 
-> Applies to `2.0.0-canary.4`. Earlier canaries introduced the provider-neutral
-> node families; this canary closes the production gaps around approval,
+> Applies to `2.0.0`. Earlier canaries introduced the provider-neutral
+> node families; 2.0 closes the production gaps around approval,
 > scheduling, replay, budgets, versioning and memory.
 >
 > This guide is written to be read in order the first time, then used as a

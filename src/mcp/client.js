@@ -123,7 +123,7 @@ export class MCPClientNode extends AsyncNode {
       await send('initialize', {
         protocolVersion: '2024-11-05',
         capabilities: {},
-        clientInfo: { name: 'qflow', version: '2.0.0-canary' },
+        clientInfo: { name: 'qflow', version: '2.0.0' },
       });
       await notify('notifications/initialized', {});
 
