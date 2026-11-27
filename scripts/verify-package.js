@@ -6,6 +6,29 @@ const root = path.resolve(import.meta.dir, '..');
 const npmCommand = ['npm'];
 const tmp = path.join(os.tmpdir(), `qflow-prepublish-${crypto.randomUUID()}`);
 const consumer = path.join(tmp, 'consumer');
+const bunConsumer = path.join(tmp, 'bun-consumer');
+const optionalPackages = [
+  '@serialport/parser-readline',
+  'ajv',
+  'ajv-formats',
+  'cheerio',
+  'node-cron',
+  'playwright',
+  'serialport',
+  'simple-git',
+  'ssh2',
+  'webview-bun',
+  'ws',
+  'xlsx',
+];
+
+function assertNoOptionalPackages(label, directory) {
+  for (const packageName of optionalPackages) {
+    if (existsSync(path.join(directory, 'node_modules', packageName))) {
+      throw new Error(`${label}: ${packageName} was installed without opt-in`);
+    }
+  }
+}
 
 // `npm publish` leaks config such as npm_config_dry_run into lifecycle
 // scripts. The verifier must run its own pack/install for real.
@@ -86,18 +109,29 @@ try {
   if (!tarball?.endsWith('.tgz')) throw new Error(`Could not read tarball name from npm pack: ${packed.stdout}`);
   console.log(`[verify-package]   ${tarball}`);
 
-  console.log('[verify-package] 4/5 install tarball in a clean consumer project (runs postinstall)');
+  console.log('[verify-package] 4/5 install tarball in clean npm and Bun consumers (runs postinstall)');
   mkdirSync(consumer, { recursive: true });
   writeFileSync(
     path.join(consumer, 'package.json'),
     JSON.stringify({ name: 'qflow-package-smoke', version: '1.0.0', private: true, type: 'module' }, null, 2)
   );
   run(npmCommand, [
-    'install', path.join(tmp, tarball),
-    '--omit=optional', '--no-audit', '--no-fund',
+    'install', path.join(tmp, tarball), '--no-audit', '--no-fund',
   ], consumer, { env: npmEnv() });
+  assertNoOptionalPackages('npm consumer', consumer);
   if (existsSync(path.join(consumer, 'node_modules', 'typescript'))) {
-    throw new Error('typescript was installed for the consumer; it must stay a devDependency.');
+    throw new Error('typescript was installed for the npm consumer; it must stay a devDependency.');
+  }
+
+  mkdirSync(bunConsumer, { recursive: true });
+  writeFileSync(
+    path.join(bunConsumer, 'package.json'),
+    JSON.stringify({ name: 'qflow-package-smoke-bun', version: '1.0.0', private: true, type: 'module' }, null, 2)
+  );
+  run(['bun'], ['add', path.join(tmp, tarball)], bunConsumer);
+  assertNoOptionalPackages('Bun consumer', bunConsumer);
+  if (existsSync(path.join(bunConsumer, 'node_modules', 'typescript'))) {
+    throw new Error('typescript was installed for the Bun consumer; it must stay a devDependency.');
   }
 
   console.log('[verify-package] 5/5 import every published subpath');

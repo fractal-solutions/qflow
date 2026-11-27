@@ -310,11 +310,15 @@ await writeTraceFile(recorder.events, './trace.json');
 // Paste trace.json into this viewer.`;
 
     const durableCode = `import { recordFlow } from '@fractal-solutions/qflow/testing';
-import { SQLiteCheckpointer, createRunTrace } from '@fractal-solutions/qflow/durable';
+import { DurableFlow, SQLiteCheckpointer, createRunTrace } from '@fractal-solutions/qflow/durable';
 import { writeTraceFile } from '@fractal-solutions/qflow/trace';
 
+const checkpointer = new SQLiteCheckpointer('./runs.db');
+const flow = new DurableFlow(startNode, { checkpointer, version: '1.0.0' });
 const recorder = recordFlow(flow);
-const { runId } = await flow.runDurable({ shared: {} });
+
+const runId = 'run-' + Date.now();
+await flow.runDurable({ runId, shared: {} });
 
 const trace = createRunTrace(checkpointer, runId, {
   events: recorder.events,
@@ -329,7 +333,7 @@ await writeTraceFile(trace, './runs/' + runId + '.json');`;
                     <p className="text-xs uppercase tracking-[0.2em] text-muted">Developer tools</p>
                     <h1 className="mt-2 text-4xl font-display text-ink">Trace Viewer</h1>
                     <p className="mt-3 text-muted max-w-2xl">
-                        Inspect flow events, node spans, token deltas, checkpoints, and payloads from a 2.0 run.
+                        Inspect flow events, node spans, token deltas, checkpoints, and payloads from a qflow 2.0.0 run.
                         Everything stays in your browser — paste JSON, upload a trace file, or reload your last trace.
                     </p>
                 </div>

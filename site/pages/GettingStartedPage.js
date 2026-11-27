@@ -46,7 +46,7 @@ window.GettingStartedPage = () => {
     const step5Code = step5Variants[styleId];
     const step6Code = step6Variants[styleId];
 
-    const step7Code = `node weather-flow.js`;
+    const step7Code = `bun weather-flow.js`;
 
     const workflowStyles = [
         {

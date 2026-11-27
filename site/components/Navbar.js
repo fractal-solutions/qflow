@@ -30,9 +30,12 @@ window.Navbar = () => {
             <nav className="glass shadow-soft">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
-                        <a href="#home" className="text-2xl font-semibold font-display tracking-tight text-ink">
-                            qflow
-                        </a>
+                        <div className="flex items-center gap-3">
+                            <a href="#home" className="text-2xl font-semibold font-display tracking-tight text-ink">
+                                qflow
+                            </a>
+                            <span className="hidden sm:inline-flex rounded-full chip-accent px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">v2.0.0 · Bun-only</span>
+                        </div>
                         <div className="hidden md:flex items-center space-x-8">
                             <a href="#home" className={navLinkClass}>Home</a>
                             <a href="#getting-started" className={navLinkClass}>Getting Started</a>

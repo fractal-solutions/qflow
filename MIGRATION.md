@@ -958,14 +958,16 @@ A string payload is treated as `{ text: payload }`. Search reads
 
 ---
 
-## 16. Optional dependencies
+## 16. Optional integrations
 
 ### What changed and why
 
 Heavy packages (Playwright, webview-bun, xlsx, serialport, ssh2, simple-git,
-ws, cheerio, ajv, node-cron, …) moved from `dependencies` to
-`optionalDependencies`. Nothing loads them until the specific node action runs.
-Importing the catalog is now cheap and CI no longer needs a browser to install.
+ws, cheerio, ajv, node-cron, …) are declared as **optional peer dependencies**
+(`peerDependencies` plus `peerDependenciesMeta`), not `optionalDependencies`.
+A plain `bun add @fractal-solutions/qflow` installs none of them. Nothing loads
+them until the specific node action runs. Importing the catalog is now cheap
+and CI no longer needs a browser to install.
 
 ### 1-2-3 steps
 

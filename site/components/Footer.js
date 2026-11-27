@@ -5,6 +5,7 @@ window.Footer = () => {
                 <div className="grid gap-8 md:grid-cols-4">
                     <div>
                         <h3 className="text-xl font-display text-ink">qflow</h3>
+                        <span className="mt-2 inline-flex rounded-full chip-accent px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">v2.0.0 · Bun-only</span>
                         <p className="mt-3 text-sm text-muted">
                             Lightweight workflows and agents for ambitious builders.
                         </p>
@@ -23,8 +24,11 @@ window.Footer = () => {
                         <h4 className="text-sm font-semibold text-ink uppercase tracking-wide">Resources</h4>
                         <div className="mt-3 flex flex-col space-y-2 text-sm text-muted">
                             <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className="nav-link">GitHub</a>
-                            <a href="#docs" className="nav-link">API Reference</a>
-                            <a href="#getting-started" className="nav-link">Examples</a>
+                            <a href="https://www.npmjs.com/package/@fractal-solutions/qflow" target="_blank" rel="noopener noreferrer" className="nav-link">npm package</a>
+                            <a href="https://github.com/fractal-solutions/qflow/blob/main/README.md" target="_blank" rel="noopener noreferrer" className="nav-link">README</a>
+                            <a href="https://github.com/fractal-solutions/qflow/blob/main/MIGRATION.md" target="_blank" rel="noopener noreferrer" className="nav-link">Migration guide</a>
+                            <a href="https://github.com/fractal-solutions/qflow/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer" className="nav-link">Changelog</a>
+                            <a href="#examples" className="nav-link">Examples</a>
                         </div>
                     </div>
                     <div>
