@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Heavy integration packages are opt-in optional peer dependencies instead of `optionalDependencies`; a plain install no longer pulls Playwright, serialport, webview-bun, and the other integration packages.
+- Updated the website to qflow 2.0.0 stable: Bun-only install, public subpath imports, new node families, durable/agent/MCP/LLM/budget/approval/schedule/memory docs, and corrected 2.0 API examples.
+- Added package metadata and clean-consumer install regression checks for optional integrations.
+
+Publishing this fix requires a new version; the npm `latest` tag remains `2.0.0` until then.
+
 ## 2.0.0
 
 Stable promotion of `2.0.0-canary.4`. No source changes from the final canary;

@@ -10,13 +10,14 @@ window.DocsPage = () => {
         'overview': {
             title: 'Overview',
             content: `
-                <p>qflow is a lightweight JavaScript library for building workflows and autonomous, tool-using agents. It gives you a compact set of primitives to orchestrate synchronous and asynchronous tasks with shared state, observability, and a growing catalog of integrations.</p>
+                <p>qflow 2.0.0 is a Bun-only JavaScript library for building workflows and autonomous, tool-using agents. Install it with <code>bun add @fractal-solutions/qflow</code> and import from focused public subpaths.</p>
                 <p>Use qflow to chain operations, automate systems, process data, and build agentic workflows that can reason, call tools, and react to real-time inputs.</p>
                 <ul>
                     <li><strong>Minimal surface area:</strong> Nodes and flows are the core primitives.</li>
                     <li><strong>Async-first:</strong> AsyncNode and AsyncFlow are built in.</li>
-                    <li><strong>Agent-ready:</strong> Tools are nodes with JSON schema definitions.</li>
-                    <li><strong>Composable:</strong> Subflows and batch flows let you reuse logic across tasks.</li>
+                    <li><strong>Agent-ready:</strong> ToolSpec, ToolRegistry and five reasoning strategies.</li>
+                    <li><strong>Durable:</strong> SQLite checkpoints, approvals, schedules and replay-safe effects.</li>
+                    <li><strong>Bun-native:</strong> 2.0.0 runs on Bun only, with ESM subpath exports.</li>
                 </ul>
             `
         },
@@ -78,27 +79,27 @@ window.DocsPage = () => {
         'agents-and-tools': {
             title: 'Agents and Tools',
             content: `
-                <p>Agents wrap the qflow runtime with a tool-using reasoning loop. Tools are nodes with JSON schema definitions that make them callable by the LLM.</p>
+                                <p>Agents use one <code>AgentEngine</code> with declarative strategies. Tools are defined once with <code>ToolSpec</code> and shared with agents, MCP, and LLM schemas.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">AgentNode</h4>
-                <p>Provide an LLM node plus a map of tool nodes. The agent chooses tools based on the goal, then observes tool output.</p>
+                <p>Use an options object with an <code>llmNode</code> and a <code>toolRegistry</code>. The agent chooses tools based on the goal and observes tool output.</p>
                 <ul>
-                    <li><strong>Goal-driven:</strong> set a single goal and let the agent plan actions.</li>
-                    <li><strong>Tool registry:</strong> tools are simply node instances in a map.</li>
-                    <li><strong>Memory-aware:</strong> pair with MemoryNode/SemanticMemoryNode for context.</li>
+                    <li><strong>One engine:</strong> strategy is data, not duplicated loops.</li>
+                    <li><strong>Tool contract:</strong> permissions, capabilities, and idempotency live on the ToolSpec.</li>
+                    <li><strong>Memory-aware:</strong> pair with MemoryStoreNode or SemanticMemoryNode for context.</li>
                 </ul>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Tool definitions</h4>
-                <p>Tool nodes expose a static <code>getToolDefinition()</code> JSON schema. This schema informs and validates tool calls.</p>
+                <p><code>ToolSpec</code> and <code>toolSpecFromNode()</code> produce JSON schemas that inform and validate tool calls.</p>
                 <ul>
                     <li><strong>Safe by design:</strong> parameters must match schema.</li>
-                    <li><strong>Readable:</strong> descriptions become the agent’s tool guide.</li>
+                    <li><strong>Shared:</strong> the same spec feeds agents, MCP, and generated LLM tools.</li>
                     <li><strong>Composable:</strong> tools are reusable in any flow.</li>
                 </ul>
-                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Agent cycles</h4>
-                <p>qflow ships with multiple reasoning cycles (RAOR, OODA, PEMA) to structure the loop.</p>
+                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Agent strategies</h4>
+                <p>qflow ships five declarative reasoning strategies.</p>
                 <ul>
-                    <li><strong>RAOR:</strong> Reflect, Act, Observe, Refine.</li>
-                    <li><strong>OODA:</strong> Observe, Orient, Decide, Act.</li>
-                    <li><strong>PEMA:</strong> Plan, Execute, Monitor, Adapt.</li>
+                    <li><strong>default / RAOR:</strong> reason, act, observe, refine.</li>
+                    <li><strong>OODA:</strong> observe, orient, decide, act.</li>
+                    <li><strong>LPAVRL, PEMA:</strong> planning and adaptive loops for longer tasks.</li>
                 </ul>
             `
         },
@@ -129,7 +130,7 @@ window.DocsPage = () => {
                 <p>Every scaffolded project includes an <code>AGENTS.md</code> file that documents core principles, architecture, and best practices for qflow projects.</p>
                 <p>Learn more about the library on the <a href="https://www.npmjs.com/package/@fractal-solutions/qflow" target="_blank" rel="noopener noreferrer">npm package</a> and the <a href="https://github.com/fractal-solutions/qflow" target="_blank" rel="noopener noreferrer">GitHub repository</a>.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Installation</h4>
-                <p>Bun is required. Use bunx to run the scaffolder:</p>
+                <p>Bun is required. Install qflow with <code>bun add @fractal-solutions/qflow</code>; use bunx to run the scaffolder:</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Usage</h4>
                 <p>Replace the project name and follow the prompts to select a workflow style:</p>
             `
@@ -151,11 +152,11 @@ window.DocsPage = () => {
         'custom-tools': {
             title: 'Custom Tools',
             content: `
-                <p>Extend qflow agents by adding your own tool nodes.</p>
-                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Define a tool node</h4>
-                <p>Extend <code>AsyncNode</code> and provide a <code>getToolDefinition()</code> JSON schema.</p>
-                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Register the node</h4>
-                <p>Add your node path to <code>qflow.config.js</code> so agents can discover it automatically.</p>
+                                <p>Extend qflow agents with a <code>ToolSpec</code>, then register it in a <code>ToolRegistry</code>.</p>
+                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Define a tool</h4>
+                <p>Use <code>new ToolSpec({ name, description, parameters, execute })</code>. Add capabilities and permissions for fine-grained access.</p>
+                <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Register the tool</h4>
+                <p>Add it to a <code>ToolRegistry</code> and pass that registry to your agent or MCP server.</p>
                 <h4 class="text-xl font-semibold text-accent mt-6 mb-2">Design tips</h4>
                 <ul>
                     <li><strong>Small surface area:</strong> keep parameters tight and explicit.</li>
@@ -177,10 +178,102 @@ window.DocsPage = () => {
                 </ul>
             `
         },
+        'stable-2': {
+            title: "What's new in 2.0.0",
+            content: `
+                <p>qflow 2.0.0 is the stable release. It is <strong>Bun-only</strong> and ESM-only, published as one package with focused subpath exports.</p>
+                <ul>
+                    <li><strong>Install:</strong> <code>bun add @fractal-solutions/qflow</code>.</li>
+                    <li><strong>Core stays familiar:</strong> Node/Flow and AsyncNode/AsyncFlow still work.</li>
+                    <li><strong>New boundaries:</strong> <code>/durable</code>, <code>/llm</code>, <code>/agent</code>, <code>/mcp</code>, <code>/tool-spec</code>, <code>/graph</code>, <code>/eval</code>, <code>/bun</code>, <code>/approval</code>, <code>/schedule</code>, <code>/budget</code>, and <code>/memory</code>.</li>
+                    <li><strong>Optional integrations:</strong> heavy packages are opt-in optional peer dependencies; qflow prints the exact <code>bun add</code> command when one is missing.</li>
+                </ul>
+                <p>Read the <a href="https://github.com/fractal-solutions/qflow/blob/main/MIGRATION.md" target="_blank" rel="noopener noreferrer">migration guide</a> before upgrading a 1.x project.</p>
+            `
+        },
+        'mcp': {
+            title: 'MCP',
+            content: `
+                <p>Expose registered qflow nodes as MCP tools over stdio, or call external MCP servers from a flow.</p>
+                <ul>
+                    <li><strong>QFlowMCPServer:</strong> <code>initialize</code>, <code>tools/list</code>, and <code>tools/call</code>.</li>
+                    <li><strong>MCPClientNode:</strong> spawn an MCP server and dispatch tool calls.</li>
+                    <li><strong>One contract:</strong> <code>ToolSpec</code> feeds agents, MCP, LLM schemas, and generated docs.</li>
+                </ul>
+            `
+        },
+        'durable': {
+            title: 'Durable Flows',
+            content: `
+                <p><code>DurableFlow</code> and <code>SQLiteCheckpointer</code> persist steps, side effects, approvals, schedules, and traces so a run can resume after a restart.</p>
+                <ul>
+                    <li><strong>Caller-owned runId:</strong> reusing the same id resumes the same run.</li>
+                    <li><strong>Status:</strong> <code>completed</code>, <code>suspended</code>, or <code>scheduled</code>.</li>
+                    <li><strong>Version policy:</strong> <code>abort</code>, <code>migrate</code>, or <code>ignore</code>.</li>
+                </ul>
+            `
+        },
+        'llm': {
+            title: 'Provider-neutral LLM',
+            content: `
+                <p><code>LLMNode</code> speaks one interface to OpenAI-compatible providers, Anthropic, Ollama, and Gemini.</p>
+                <ul>
+                    <li><strong>Adapters:</strong> register or negotiate capabilities per provider.</li>
+                    <li><strong>Caching:</strong> deterministic replay with <code>cache</code>, <code>cacheKey</code>, and <code>cacheTtlMs</code>.</li>
+                    <li><strong>Budgets:</strong> real token and cost accounting with <code>BudgetTracker</code>.</li>
+                </ul>
+            `
+        },
+        'tool-spec': {
+            title: 'ToolSpec & ToolRegistry',
+            content: `
+                <p>Define each tool once. <code>ToolSpec</code> carries parameters, capabilities, permissions, timeout, and idempotency; <code>ToolRegistry</code> grants, filters, and executes it.</p>
+                <ul>
+                    <li><strong>Agent tools:</strong> consume the same definition as prompts.</li>
+                    <li><strong>MCP tools:</strong> no second schema to maintain.</li>
+                    <li><strong>LLM tools:</strong> generated JSON schemas stay in sync.</li>
+                </ul>
+            `
+        },
+        'graph-eval': {
+            title: 'Graph, Contracts & Eval',
+            content: `
+                <p>Model routing explicitly, validate boundaries, then replay saved traces as regression tests.</p>
+                <ul>
+                    <li><strong>Graph:</strong> <code>MapNode</code>, <code>ReduceNode</code>, <code>JoinNode</code>, <code>BranchNode</code>, and <code>CycleNode</code>.</li>
+                    <li><strong>Contracts:</strong> <code>defineState()</code> and <code>StateContract</code>.</li>
+                    <li><strong>Eval:</strong> <code>AssertNode</code>, <code>ScoreNode</code>, <code>CompareNode</code>, and <code>ReplayNode</code>.</li>
+                </ul>
+            `
+        },
+        'bun-native': {
+            title: 'Bun-native Nodes',
+            content: `
+                <p>No optional native package is required for local process, stream, file-watch, or SQLite work.</p>
+                <ul>
+                    <li><code>BunSpawnNode</code> for child processes.</li>
+                    <li><code>StreamMapNode</code>, <code>StreamFilterNode</code>, and <code>StreamReduceNode</code>.</li>
+                    <li><code>SQLiteQueryNode</code> and <code>FileWatchNode</code>.</li>
+                </ul>
+            `
+        },
+        'production-gaps': {
+            title: 'Approval, Schedule, Budget & Memory',
+            content: `
+                <p>Four durable primitives close the production gaps in 2.0.0.</p>
+                <ul>
+                    <li><strong>Approval:</strong> suspend a run until a reviewer decides.</li>
+                    <li><strong>Schedule:</strong> persist a due time and resume later.</li>
+                    <li><strong>Budget:</strong> stop before cost, tokens, steps, or duration exceed a limit.</li>
+                    <li><strong>Memory:</strong> per-tenant stores with add/search/get/delete/list/clear.</li>
+                </ul>
+                <p>Each path has a 1-2-3 tutorial in the repository's <code>documentation/tutorials</code> folder.</p>
+            `
+        },
         'node-catalog': {
             title: 'Node Catalog',
             content: `
-                <p>qflow ships with built-in nodes covering data, system, web, flow control, LLMs, and integrations. Use the search to filter and click a node for full documentation.</p>
+                <p>qflow 2.0 ships built-in catalogs for data, system, web, agents, LLMs, graphs, evaluation, Bun-native work, and production-gap primitives. Use the search to filter and click a node for full documentation.</p>
             `
         }
     };
@@ -194,7 +287,7 @@ window.DocsPage = () => {
 
     const classExample = `class MyCustomNode extends AsyncNode {\n  async execAsync(prepRes, shared) {\n    console.log('Executing MyCustomNode');\n    shared.data = 'Hello from class-based node!';\n  }\n  async postAsync(shared, prepRes, execRes) {\n    return 'next';\n  }\n}\nconst myNode = new MyCustomNode();`;
 
-    const agentExample = `const agent = new AgentNode(llm, tools);\nagent.setParams({ goal: 'Summarize recent metrics.' });\nconst flow = new AsyncFlow(agent);\nawait flow.runAsync({});`;
+    const agentExample = `const agent = new AgentNode({ llmNode: llm, toolRegistry });\nagent.setParams({ goal: 'Summarize recent metrics.' });\nconst flow = new AsyncFlow(agent);\nawait flow.runAsync({});`;
 
     const coreDiagram = `Shared State\n    │\n    ▼\n[Node A] -> [Node B] -> [Node C]\n    │             │\n    └── event: node:start / node:end\n          flow:start / flow:end`;
 
@@ -204,15 +297,15 @@ window.DocsPage = () => {
 
     const batchSnippet = `const iterator = new IteratorNode();\niterator.setParams({\n  items: ['a', 'b', 'c'],\n  flow: new AsyncFlow(processNode)\n});\nawait new AsyncFlow(iterator).runAsync({});`;
 
-    const agentToolSnippet = `class MyTool extends AsyncNode {\n  static getToolDefinition() {\n    return {\n      name: 'my_tool',\n      description: 'Does a thing',\n      parameters: { type: 'object', properties: { input: { type: 'string' } }, required: ['input'] }\n    };\n  }\n}\nconst tools = { my_tool: new MyTool() };\nconst agent = new AgentNode(llm, tools);`;
+    const agentToolSnippet = `import { ToolSpec, ToolRegistry } from '@fractal-solutions/qflow/tool-spec';\n\nconst myTool = new ToolSpec({\n  name: 'my_tool',\n  description: 'Does a thing',\n  parameters: { type: 'object', properties: { input: { type: 'string' } }, required: ['input'] },\n  execute: async ({ input }) => ({ input }),\n});\nconst toolRegistry = new ToolRegistry({ tools: [myTool] });\nconst agent = new AgentNode({ llmNode: llm, toolRegistry });`;
 
     const observabilitySnippet = `const flow = new AsyncFlow(startNode);\nflow.on('flow:start', ({ flowId }) => console.log('Flow', flowId));\nflow.on('node:end', ({ nodeClass, duration }) => console.log(nodeClass, duration));\nawait flow.runAsync({});`;
 
     const loggingSnippet = `import { setLogLevel, LogLevel } from '@fractal-solutions/qflow/logger';\nsetLogLevel(LogLevel.INFO);\n\nconst node = new HttpRequestNode();\nnode.setParams({\n  url: 'https://api.example.com',\n  logging: { method: 'file', params: { filePath: './logs/http.log' } }\n});`;
 
-    const customToolSnippet = `// my_nodes/MyCustomToolNode.js\nimport { AsyncNode } from '@fractal-solutions/qflow';\n\nexport class MyCustomToolNode extends AsyncNode {\n  static getToolDefinition() {\n    return {\n      name: 'my_custom_tool',\n      description: 'Greets a user with a custom message.',\n      parameters: {\n        type: 'object',\n        properties: {\n          name: { type: 'string', description: 'Name to greet.' },\n          greeting: { type: 'string', description: 'Optional greeting.' }\n        },\n        required: ['name']\n      }\n    };\n  }\n\n  async execAsync() {\n    const { name, greeting = 'Hello' } = this.params;\n    return { message: \`\${greeting}, \${name}!\` };\n  }\n\n  async postAsync(shared, _, execRes) {\n    shared.customToolOutput = execRes.message;\n    return 'default';\n  }\n}`;
+    const customToolSnippet = `// my_tools/MyCustomTool.js\nimport { toolSpecFromNode } from '@fractal-solutions/qflow/tool-spec';\nimport { MyCustomToolNode } from './MyCustomToolNode.js';\n\nexport const myCustomTool = toolSpecFromNode(MyCustomToolNode, {\n  namespace: 'custom',\n  permissions: ['public'],\n});`;
 
-    const customToolConfigSnippet = `// qflow.config.js\n/** @type {import('./src/types').QFlowConfig} */\nconst qflowConfig = {\n  customNodePaths: [\n    './my_nodes/MyCustomToolNode.js'\n  ]\n};\n\nexport default qflowConfig;`;
+    const toolRegistrySnippet = `// tools.js\nimport { ToolRegistry, toolSpecFromNode } from '@fractal-solutions/qflow/tool-spec';\nimport { MyCustomToolNode } from './my_nodes/MyCustomToolNode.js';\n\nconst tool = toolSpecFromNode(MyCustomToolNode, {\n  namespace: 'custom',\n  permissions: ['public'],\n});\n\nexport const toolRegistry = new ToolRegistry({ tools: [tool] });`;
 
     const commonPatterns = [
         {
@@ -228,12 +321,12 @@ window.DocsPage = () => {
         {
             title: 'Multi-step approval workflow',
             description: 'Collect approval, log decisions, and notify stakeholders.',
-            code: `const request = new InteractiveInputNode();\nrequest.setParams({ prompt: 'Approve deployment? (yes/no)' });\n\nconst validate = new TransformNode();\nvalidate.setParams({\n  transform: (shared, _, execRes) => ({ approved: execRes.trim().toLowerCase() === 'yes' })\n});\n\nconst notify = new SystemNotificationNode();\nnotify.setParams({ title: 'Deployment', message: 'Approval captured.' });\n\nrequest.next(validate).next(notify);\nconst flow = new AsyncFlow(request);\nawait flow.runAsync({});`
+            code: `import { DurableFlow, SQLiteCheckpointer, WaitForApprovalNode } from '@fractal-solutions/qflow/durable';\n\nconst gate = new WaitForApprovalNode({\n  approvalId: 'req-1',\n  prompt: 'Approve deployment?',\n});\ngate.next(approvedNode, 'approve');\ngate.next(rejectedNode, 'reject');\n\nconst checkpointer = new SQLiteCheckpointer('./runs.db');\nconst flow = new DurableFlow(gate, { checkpointer, version: '1.0.0' });\n\nconst pending = await flow.runDurable({\n  runId: 'deploy-approval-1',\n  shared: { requestId: 'req-1' },\n});\n\ncheckpointer.approve('deploy-approval-1', { by: 'alice' }, 'approval:req-1');\nawait flow.runDurable({ runId: 'deploy-approval-1', resume: true });`
         },
         {
             title: 'Agent + tool registry',
             description: 'Expose tools as nodes and let an agent plan the workflow.',
-            code: `const tools = {\n  http_request: new HttpRequestNode(),\n  shell_command: new ShellCommandNode(),\n  web_scraper: new WebScraperNode(),\n};\nconst agent = new AgentNode(llm, tools);\nconst flow = new AsyncFlow(agent);\nawait flow.runAsync({});`
+            code: `import { ToolRegistry, ToolSpec } from '@fractal-solutions/qflow/tool-spec';\nimport { AgentNode } from '@fractal-solutions/qflow/agent';\n\nconst httpTool = new ToolSpec({\n  name: 'http_request',\n  description: 'Call an HTTP endpoint',\n  parameters: { type: 'object' },\n  execute: async input => input,\n});\nconst toolRegistry = new ToolRegistry({ tools: [httpTool] });\nconst agent = new AgentNode({ llmNode: llm, toolRegistry });\nawait new AsyncFlow(agent).runAsync({});`
         },
         {
             title: 'File processing batch',
@@ -321,7 +414,7 @@ window.DocsPage = () => {
             returns: 'HTTP responses, scraped content, screenshots, or socket data.',
             nodes: [
                 { name: 'HttpRequestNode', docKey: 'http_request', summary: 'Make HTTP requests with headers and body.', uses: 'APIs, webhooks, data fetching.' },
-                { name: 'WebScraperNode', docKey: 'web_scraper', summary: 'Fetch and parse HTML content.', uses: 'Scraping, content extraction.' },
+                { name: 'ScrapeURLNode', docKey: 'web_scraper', summary: 'Fetch and parse HTML content.', uses: 'Scraping, content extraction.' },
                 { name: 'DuckDuckGoSearchNode', docKey: 'duckduckgo_search', summary: 'Run web search queries.', uses: 'Research, discovery.' },
                 { name: 'GoogleSearchNode', docKey: 'google_search', summary: 'Search via Google Custom Search API.', uses: 'Curated web search.' },
                 { name: 'BrowserControlNode', docKey: 'browser_control', summary: 'Drive Playwright to interact with pages.', uses: 'Form automation, testing.' },
@@ -380,6 +473,52 @@ window.DocsPage = () => {
                 { name: 'AgentDeepSeekLLMNode', docKey: 'agent_llm', summary: 'Agent-optimized DeepSeek adapter.', uses: 'Agent reasoning.' },
                 { name: 'AgentOpenAILLMNode', docKey: 'agent_llm', summary: 'Agent-optimized OpenAI adapter.', uses: 'Agent reasoning.' },
                 { name: 'AgentGeminiLLMNode', docKey: 'agent_llm', summary: 'Agent-optimized Gemini adapter.', uses: 'Agent reasoning.' },
+            ]
+        },
+        {
+            category: 'Bun-native',
+            description: 'Process, stream, file-watch, and SQLite nodes backed by Bun built-ins.',
+            params: 'Commands, streams, SQL, watch paths, and transform functions.',
+            returns: 'Process results, transformed chunks, query rows, and watch events.',
+            nodes: [
+                { name: 'BunSpawnNode', docKey: 'bun_spawn', summary: 'Run a child process with Bun.spawn.', uses: 'Shell tasks, CLI wrappers.' },
+                { name: 'SQLiteQueryNode', docKey: 'sqlite_query', summary: 'Query SQLite through bun:sqlite.', uses: 'Local persistence, reporting.' },
+                { name: 'StreamMapNode / StreamFilterNode / StreamReduceNode', docKey: 'stream_map', summary: 'Compose Web Stream transforms.', uses: 'Streaming ingest, aggregation.' },
+            ]
+        },
+        {
+            category: 'Durability and Production Gaps',
+            description: 'Resumable runs, human gates, schedules, budgets, and tenant memory.',
+            params: 'Checkpointer, runId, approval ids, due times, limits, and tenants.',
+            returns: 'Run status, suspended decisions, usage snapshots, and stored memories.',
+            nodes: [
+                { name: 'DurableFlow', docKey: 'durable_flow', summary: 'Persist steps and resume runs after restart.', uses: 'Checkout, long-lived jobs.' },
+                { name: 'WaitForApprovalNode', docKey: 'approval_node', summary: 'Suspend for reviewer approval or rejection.', uses: 'Deploy gates, manual review.' },
+                { name: 'ScheduleNode', docKey: 'schedule_node', summary: 'Persist a due time without a cron package.', uses: 'Reminders, nightly jobs.' },
+                { name: 'BudgetNode', docKey: 'budget_node', summary: 'Enforce cost, token, step, and duration limits.', uses: 'LLM cost control.' },
+                { name: 'MemoryStoreNode', docKey: 'memory_store', summary: 'Per-tenant add, search, get, delete, list, clear.', uses: 'Agent context, recall.' },
+            ]
+        },
+        {
+            category: 'LLM, Agents and MCP',
+            description: 'Provider-neutral models, one tool contract, and MCP stdio tooling.',
+            params: 'Provider config, prompts, ToolSpec definitions, and registries.',
+            returns: 'Completions, agent decisions, tool results, and MCP responses.',
+            nodes: [
+                { name: 'LLMNode', docKey: 'llm_node', summary: 'One interface for OpenAI, Anthropic, Ollama, and Gemini.', uses: 'Generation, extraction, routing.' },
+                { name: 'AgentNode', docKey: 'agent_engine', summary: 'Tool-using engine with five strategies.', uses: 'Autonomous workflows.' },
+                { name: 'QFlowMCPServer', docKey: 'mcp_server', summary: 'Expose tools over MCP stdio.', uses: 'Editor and agent integrations.' },
+                { name: 'ToolSpec / ToolRegistry', docKey: 'tool_spec', summary: 'Define a tool once for agents, MCP, and LLM schemas.', uses: 'Tool governance, docs.' },
+            ]
+        },
+        {
+            category: 'Graph and Eval',
+            description: 'Explicit routing, state contracts, and trace-based regression tests.',
+            params: 'Items, routes, fields, expected values, and saved traces.',
+            returns: 'Aggregated results, validation errors, scores, and replay outcomes.',
+            nodes: [
+                { name: 'MapNode / ReduceNode / BranchNode', docKey: 'graph_nodes', summary: 'Explicit dataflow routing primitives.', uses: 'Pipelines, triage.' },
+                { name: 'AssertNode / ReplayNode', docKey: 'eval_nodes', summary: 'Assert and replay saved traces.', uses: 'CI gates, regression tests.' },
             ]
         }
     ];
@@ -540,9 +679,9 @@ window.DocsPage = () => {
 
                     <div className="mt-6">
                         <h3 className="text-sm font-semibold text-ink">Usage</h3>
-                        {doc.example ? (
+                        {(doc.example || doc.examplesText) ? (
                             <div className="mt-2">
-                                <CodeBlock code={doc.example} title="Example" language="js" />
+                                <CodeBlock code={doc.example || doc.examplesText.replace(/^```(?:javascript|js)?\n|\n```$/g, '')} title="Example" language="js" />
                             </div>
                         ) : (
                             <p className="mt-2 text-xs text-muted">Example not available for this node.</p>
@@ -561,6 +700,14 @@ window.DocsPage = () => {
             <div className="glass rounded-3xl p-8 shadow-soft">
                 <h1 className="text-3xl font-display text-ink mb-6">{topic.title}</h1>
                 <div className="prose max-w-none text-muted" dangerouslySetInnerHTML={{ __html: topic.content }} />
+
+                {topicSnippets[activeTopic] && (
+                    <div className="mt-6">
+                        <div className="surface rounded-2xl p-4">
+                            <CodeBlock code={topicSnippets[activeTopic]} title="2.0 Example" language="js" />
+                        </div>
+                    </div>
+                )}
 
                 {activeTopic === 'overview' && (
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -641,7 +788,7 @@ window.DocsPage = () => {
                             <p className="text-sm font-semibold text-ink">Structured node telemetry</p>
                             <p className="mt-2 text-sm text-muted">Record node timings and errors into shared state.</p>
                             <div className="mt-4">
-                                <CodeBlock code={`const flow = new AsyncFlow(startNode);\nflow.on('node:end', ({ nodeClass, duration, status }) => {\n  shared.metrics = shared.metrics || [];\n  shared.metrics.push({ nodeClass, duration, status });\n});\nawait flow.runAsync({});`} title="Telemetry Capture" language="js" />
+                                <CodeBlock code={`const shared = {};\nconst flow = new AsyncFlow(startNode);\nflow.on('node:end', ({ nodeClass, duration, status }) => {\n  shared.metrics = shared.metrics || [];\n  shared.metrics.push({ nodeClass, duration, status });\n});\nawait flow.runAsync(shared);`} title="Telemetry Capture" language="js" />
                             </div>
                         </div>
                     </div>
@@ -669,17 +816,17 @@ window.DocsPage = () => {
                 {activeTopic === 'custom-tools' && (
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                         <div className="surface rounded-2xl p-4">
-                            <p className="text-sm font-semibold text-ink">Define a custom tool node</p>
-                            <p className="mt-2 text-sm text-muted">Expose a JSON schema so agents can call it safely.</p>
+                            <p className="text-sm font-semibold text-ink">Define a ToolSpec from a node</p>
+                            <p className="mt-2 text-sm text-muted">toolSpecFromNode() adapts an existing node with a schema.</p>
                             <div className="mt-4">
                                 <CodeBlock code={customToolSnippet} title="Custom Tool Node" language="js" />
                             </div>
                         </div>
                         <div className="surface rounded-2xl p-4">
-                            <p className="text-sm font-semibold text-ink">Register in qflow.config.js</p>
-                            <p className="mt-2 text-sm text-muted">Add your tool path so agents discover it automatically.</p>
+                            <p className="text-sm font-semibold text-ink">Register in a ToolRegistry</p>
+                            <p className="mt-2 text-sm text-muted">Share the registry with agents and MCP servers.</p>
                             <div className="mt-4">
-                                <CodeBlock code={customToolConfigSnippet} title="Tool Registry" language="js" />
+                                <CodeBlock code={toolRegistrySnippet} title="Tool Registry" language="js" />
                             </div>
                         </div>
                     </div>
@@ -841,10 +988,22 @@ window.DocsPage = () => {
         </a>
     );
 
+    const topicSnippets = {
+        'stable-2': "import { AsyncFlow, AsyncNode } from '@fractal-solutions/qflow';\nimport { DurableFlow } from '@fractal-solutions/qflow/durable';\nimport { LLMNode } from '@fractal-solutions/qflow/llm';\n\n// One package, focused subpaths, Bun-only runtime.\nawait new AsyncFlow(new AsyncNode()).runAsync({});",
+        'mcp': "import { QFlowMCPServer } from '@fractal-solutions/qflow/mcp';\n\nconst server = new QFlowMCPServer({ name: 'qflow', version: '2.0.0' });\nawait server.start();",
+        'durable': "import { DurableFlow, SQLiteCheckpointer } from '@fractal-solutions/qflow/durable';\n\nconst checkpointer = new SQLiteCheckpointer('./runs.db');\nconst flow = new DurableFlow(startNode, { checkpointer, version: '1.0.0' });\nconst { runId, status } = await flow.runDurable({ runId: 'run-1', shared: {} });",
+        'llm': "import { LLMNode } from '@fractal-solutions/qflow/llm';\n\nconst llm = new LLMNode({ provider: 'openai', model: 'gpt-4o-mini', apiKey: Bun.env.OPENAI_API_KEY });\nconst answer = await llm.execAsync({ prompt: 'Hello' });",
+        'tool-spec': "import { ToolRegistry, ToolSpec } from '@fractal-solutions/qflow/tool-spec';\n\nconst tool = new ToolSpec({\n  name: 'echo',\n  description: 'Echo input',\n  parameters: { type: 'object' },\n  execute: async input => input,\n});\nconst registry = new ToolRegistry({ tools: [tool] });",
+        'graph-eval': "import { BranchNode, MapNode, ReduceNode } from '@fractal-solutions/qflow/graph';\nimport { defineState } from '@fractal-solutions/qflow/contracts';\nimport { AssertNode, ReplayNode } from '@fractal-solutions/qflow/eval';\n\nconst State = defineState({ name: 'State', fields: { items: { type: 'array', required: true } } });",
+        'bun-native': "import { BunSpawnNode, SQLiteQueryNode, StreamMapNode } from '@fractal-solutions/qflow/bun';\n\nconst spawn = new BunSpawnNode();\nspawn.setParams({ command: 'echo', args: ['hello'] });\nconst map = new StreamMapNode();\nspawn.next(map).next(new SQLiteQueryNode());",
+        'production-gaps': "import { WaitForApprovalNode } from '@fractal-solutions/qflow/approval';\nimport { ScheduleNode } from '@fractal-solutions/qflow/schedule';\nimport { BudgetTracker, BudgetNode } from '@fractal-solutions/qflow/budget';\nimport { SQLiteMemoryStore } from '@fractal-solutions/qflow/memory';"
+    };
+
     const sections = [
         {
             title: 'Getting Oriented',
             items: [
+                { id: 'stable-2', label: 'What is new in 2.0.0' },
                 { id: 'overview', label: 'Overview' },
                 { id: 'core-primitives', label: 'Core Primitives' },
                 { id: 'async-and-batch', label: 'Async and Batch' },
@@ -855,18 +1014,25 @@ window.DocsPage = () => {
             title: 'Node Reference',
             items: [
                 { id: 'node-catalog', label: 'Node Catalog' },
+                { id: 'bun-native', label: 'Bun-native Nodes' },
             ]
         },
         {
-            title: 'Agents & Tools',
+            title: 'Agents, Tools and Models',
             items: [
                 { id: 'agents-and-tools', label: 'Agents and Tools' },
+                { id: 'tool-spec', label: 'ToolSpec and ToolRegistry' },
+                { id: 'llm', label: 'Provider-neutral LLM' },
+                { id: 'mcp', label: 'MCP' },
                 { id: 'custom-tools', label: 'Custom Tools' },
             ]
         },
         {
-            title: 'Operations',
+            title: 'Durability and Operations',
             items: [
+                { id: 'durable', label: 'Durable Flows' },
+                { id: 'production-gaps', label: 'Approval, Schedule, Budget and Memory' },
+                { id: 'graph-eval', label: 'Graph, Contracts and Eval' },
                 { id: 'observability', label: 'Observability' },
                 { id: 'logging', label: 'Logging' },
             ]

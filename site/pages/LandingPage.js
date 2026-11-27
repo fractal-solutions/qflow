@@ -3,36 +3,47 @@ window.LandingPage = () => {
 
     const installCode = `bunx create-qflow@latest my-qflow-project`;
 
-    const featureCode = `import { AgentNode, AgentDeepSeekLLMNode } from '@fractal-solutions/qflow/nodes';
-import { AsyncFlow } from '@fractal-solutions/qflow';
+    const featureCode = `import { AsyncFlow } from '@fractal-solutions/qflow';
+import { AgentNode } from '@fractal-solutions/qflow/agent';
+import { LLMNode } from '@fractal-solutions/qflow/llm';
+import { ToolRegistry } from '@fractal-solutions/qflow/tool-spec';
 
-const llm = new AgentDeepSeekLLMNode({ apiKey: process.env.DEEPSEEK_API_KEY });
-const availableTools = { /* ... */ };
+const llmNode = new LLMNode({
+  provider: 'openai',
+  model: 'gpt-4o-mini',
+  apiKey: Bun.env.OPENAI_API_KEY,
+});
 
-const agent = new AgentNode(llm, availableTools);
+const toolRegistry = new ToolRegistry({ tools: [] });
+const agent = new AgentNode({ llmNode, toolRegistry });
 agent.setParams({ goal: 'Summarize the top 5 stories on Hacker News.' });
 
-const flow = new AsyncFlow(agent);
-await flow.runAsync();`;
+await new AsyncFlow(agent).runAsync();`;
 
     const showcaseItems = [
         {
-            title: 'Interactive webview workflows',
-            file: 'examples/interactive_webview_test.js',
-            description: 'Build dialogs, prompts, and custom UI flows for collecting user input with themed webviews.',
-            tags: ['UI', 'Interactive', 'Webview']
+            title: 'Replay-safe checkout',
+            file: 'examples/v2/replay-safe-checkout.js',
+            description: 'Persist side effects with worker leases and deterministic replay after a simulated crash.',
+            tags: ['Durable', 'Side Effects', '2.0']
         },
         {
-            title: 'Browser automation',
-            file: 'examples/browser_control_test.js',
-            description: 'Drive Playwright to navigate pages, fill forms, validate DOM state, and capture screenshots.',
-            tags: ['Browser', 'Automation', 'Playwright']
+            title: 'Unified tool contract',
+            file: 'examples/v2/unified-tool-contract.js',
+            description: 'One ToolSpec drives an agent, an MCP server, generated LLM schemas, and docs.',
+            tags: ['Tools', 'MCP', 'Agents']
         },
         {
-            title: 'Data visualization',
-            file: 'examples/webview_data_visualization.js',
-            description: 'Generate data and render interactive charts inside a WebviewNode using Chart.js.',
-            tags: ['Charts', 'Webview', 'Reporting']
+            title: 'Dataflow + eval regression',
+            file: 'examples/v2/dataflow-eval-regression.js',
+            description: 'Validate boundaries, route explicitly through a graph, and replay traces in CI.',
+            tags: ['Graph', 'Contracts', 'Eval']
+        },
+        {
+            title: 'Bun-native stream ingest',
+            file: 'examples/v2/bun-stream-ingest.js',
+            description: 'Spawn, stream, query SQLite, and watch files without optional native packages.',
+            tags: ['Bun', 'Streams', 'SQLite']
         },
         {
             title: 'Agent reasoning loop',
@@ -45,12 +56,6 @@ await flow.runAsync();`;
             file: 'examples/observability_test.js',
             description: 'Inspect flow and node lifecycle events to monitor and debug asynchronous runs.',
             tags: ['Observability', 'Events', 'Async']
-        },
-        {
-            title: 'RAG from files',
-            file: 'examples/rag_agent_from_files.js',
-            description: 'Turn local documents into a retrievable knowledge base for agent workflows.',
-            tags: ['RAG', 'Files', 'Embeddings']
         },
     ];
 
@@ -86,12 +91,12 @@ await flow.runAsync();`;
                             <p className="text-xs uppercase tracking-wide text-muted">Built-in nodes</p>
                         </div>
                         <div>
-                            <p className="text-2xl font-display text-ink">3</p>
-                            <p className="text-xs uppercase tracking-wide text-muted">Agent cycles</p>
+                            <p className="text-2xl font-display text-ink">5</p>
+                            <p className="text-xs uppercase tracking-wide text-muted">Agent strategies</p>
                         </div>
                         <div>
-                            <p className="text-2xl font-display text-ink">Async-first</p>
-                            <p className="text-xs uppercase tracking-wide text-muted">Observability</p>
+                            <p className="text-2xl font-display text-ink">Bun-native</p>
+                            <p className="text-xs uppercase tracking-wide text-muted">Runtime</p>
                         </div>
                     </div>
                 </div>

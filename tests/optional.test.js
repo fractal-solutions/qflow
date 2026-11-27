@@ -32,6 +32,16 @@ describe('optional integrations', () => {
     expect(error.cause.message).toBe('missing');
   });
 
+  test('integrations are declared as optional peers, not installed dependencies', async () => {
+    const packageJson = JSON.parse(await Bun.file(new URL('../package.json', import.meta.url)).text());
+    expect(packageJson.optionalDependencies).toBeUndefined();
+    for (const packageName of OPTIONAL_PACKAGES) {
+      expect(packageJson.dependencies?.[packageName]).toBeUndefined();
+      expect(packageJson.peerDependencies?.[packageName]).toBeDefined();
+      expect(packageJson.peerDependenciesMeta?.[packageName]?.optional).toBe(true);
+    }
+  });
+
   test('missing package produces an actionable error', async () => {
     const missing = 'qflow-optional-package-that-does-not-exist';
     clearOptionalDependencyCache(missing);

@@ -1024,7 +1024,7 @@ await writeTraceFile(trace, `./runs/${runId}.json`);
 
 ## Optional Integrations
 
-Core imports stay lightweight. Browser automation, webviews, spreadsheets, serial ports, SSH, Git, cron scheduling, HTML parsing, and schema validation are `optionalDependencies`. They are loaded with a guarded dynamic import only when a matching node action runs.
+Core imports stay lightweight. Browser automation, webviews, spreadsheets, serial ports, SSH, Git, cron scheduling, HTML parsing, and schema validation are declared as **optional peer dependencies** (`peerDependencies` plus `peerDependenciesMeta`), so a plain `bun add @fractal-solutions/qflow` does not install them. They are loaded with a guarded dynamic import only when a matching node action runs; install only the integrations you use.
 
 | Node(s) | Package | Install |
 | --- | --- | --- |

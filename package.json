@@ -132,7 +132,7 @@
   "dependencies": {
     "chalk": "^5.6.2"
   },
-  "optionalDependencies": {
+  "peerDependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
@@ -145,6 +145,20 @@
     "webview-bun": "^2.4.0",
     "ws": "^8.18.3",
     "xlsx": "^0.18.5"
+  },
+  "peerDependenciesMeta": {
+    "@serialport/parser-readline": { "optional": true },
+    "ajv": { "optional": true },
+    "ajv-formats": { "optional": true },
+    "cheerio": { "optional": true },
+    "node-cron": { "optional": true },
+    "playwright": { "optional": true },
+    "serialport": { "optional": true },
+    "simple-git": { "optional": true },
+    "ssh2": { "optional": true },
+    "webview-bun": { "optional": true },
+    "ws": { "optional": true },
+    "xlsx": { "optional": true }
   },
   "devDependencies": {
     "@types/bun": "latest",
